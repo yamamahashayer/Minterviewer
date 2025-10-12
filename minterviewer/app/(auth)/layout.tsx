@@ -1,8 +1,10 @@
+import { Toaster } from '@/components/ui/sonner'
 import React from 'react'
 
-const Authlayout = ({children }: {children: React.ReactNode}) => {
+const Authlayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div>{children}</div>
+    <div className='auth-layout'>{children}</div>
+
   )
 }
 
