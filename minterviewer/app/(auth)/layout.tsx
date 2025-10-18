@@ -1,19 +1,31 @@
+"use client";
+
 import { Toaster } from '@/components/ui/sonner'
-import { isAuthenticated } from '@/lib/actions/auth.action';
-import { redirect } from 'next/dist/client/components/navigation';
-import React from 'react'
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
-const Authlayout = async ({ children }: { children: React.ReactNode }) => {
-  const isUserAuthenticated = await isAuthenticated();
+const AuthLayout = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
-  if (isUserAuthenticated) {
-    redirect("/");
+  useEffect(() => {
+    if (!loading && user) {
+      router.push("/");
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return <div>Loading...</div>; 
+  }
+
+  if (user) {
+    return null; 
   }
 
   return (
     <div className='auth-layout'>{children}</div>
-
   )
 }
 
-export default Authlayout
+export default AuthLayout

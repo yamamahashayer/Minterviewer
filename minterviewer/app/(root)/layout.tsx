@@ -1,16 +1,29 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
-import { ReactNode } from "react";
-import { redirect } from "next/navigation";
-import { isAuthenticated } from "@/lib/actions/auth.action";
+import { ReactNode, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
+const Layout = ({ children }: { children: ReactNode }) => {
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
-const Layout = async ({ children }: { children: ReactNode }) => {
-  // Check for existing session cookie
-  const isUserAuthenticated = await isAuthenticated();
-  if (!isUserAuthenticated) {
-    redirect("/sign-in");
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/sign-in");
+    }
+  }, [user, loading, router]);
+
+  if (loading) {
+    return <div>Loading...</div>; // Or a spinner component
   }
+
+  if (!user) {
+    return null; // Or a redirect component, but useEffect handles it
+  }
+
   return (
     <div className="root-layout">
       <nav>
