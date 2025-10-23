@@ -10,6 +10,6 @@ const nextConfig: NextConfig = {
     // Warn on all type errors in development
     ignoreBuildErrors: true,
   },
-};
 
+};
 export default nextConfig;
