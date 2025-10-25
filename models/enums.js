@@ -28,9 +28,9 @@ export const SessionType = Object.freeze({
   MIX: 'MIX',
 });
 
-// export const ReportType = Object.freeze({
-//   COMPREHENSIVE: 'COMPREHENSIVE',
-//   PERFORMANCE_SUMMARY: 'PERFORMANCE_SUMMARY',
-//   PROGRESS: 'PROGRESS',
-//   SKILLS_ANALYSIS: 'SKILLS_ANALYSIS',
-// });
+export const ReportType = Object.freeze({
+  COMPREHENSIVE: 'COMPREHENSIVE',
+  PERFORMANCE_SUMMARY: 'PERFORMANCE_SUMMARY',
+  PROGRESS: 'PROGRESS',
+  SKILLS_ANALYSIS: 'SKILLS_ANALYSIS',
+});
