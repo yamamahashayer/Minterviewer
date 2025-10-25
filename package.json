@@ -2,14 +2,18 @@
   "name": "minterviewwer",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "node scripts/seed.js"
   },
   "dependencies": {
+    "dotenv": "^17.2.3",
     "mongodb": "^6.20.0",
+    "mongoose": "^8.19.2",
     "next": "16.0.0",
     "react": "19.2.0",
     "react-dom": "19.2.0"
