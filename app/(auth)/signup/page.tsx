@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import Image from 'next/image';
-import { Eye, EyeOff, CheckCircle2, XCircle, AlertCircle, Sparkles, Plus, Trash2, ChevronDown } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle2, XCircle, AlertCircle, Sparkles,ChevronDown } from 'lucide-react';
 
 import { NeuralNetworkBackground } from '@/app/components/backgrounds/NeuralNetworkBackground';
 import { Button } from '@/app/components/ui/button';
@@ -17,17 +17,35 @@ type ApiResponse = { message?: string; user?: { id: string; email: string; role:
 type Strength = { score: number; label: string; color: string };
 
 const COUNTRIES = [
-  { code: 'PS', label: 'Palestine' }, { code: 'JO', label: 'Jordan' }, { code: 'EG', label: 'Egypt' },
-  { code: 'LB', label: 'Lebanon' }, { code: 'SY', label: 'Syria' }, { code: 'IQ', label: 'Iraq' },
-  { code: 'SA', label: 'Saudi Arabia' }, { code: 'AE', label: 'United Arab Emirates' }, { code: 'QA', label: 'Qatar' },
-  { code: 'KW', label: 'Kuwait' }, { code: 'BH', label: 'Bahrain' }, { code: 'OM', label: 'Oman' },
-  { code: 'YE', label: 'Yemen' }, { code: 'MA', label: 'Morocco' }, { code: 'DZ', label: 'Algeria' },
-  { code: 'TN', label: 'Tunisia' }, { code: 'LY', label: 'Libya' }, { code: 'SD', label: 'Sudan' },
-  { code: 'US', label: 'United States' }, { code: 'CA', label: 'Canada' }, { code: 'GB', label: 'United Kingdom' },
-  { code: 'DE', label: 'Germany' }, { code: 'FR', label: 'France' }, { code: 'TR', label: 'Turkey' },
-  { code: 'IN', label: 'India' }, { code: 'JP', label: 'Japan' },
-  { code: 'OTHER', label: 'Other' },
+  { code: 'Palestine', label: 'Palestine' },
+  { code: 'Jordan', label: 'Jordan' },
+  { code: 'Egypt', label: 'Egypt' },
+  { code: 'Lebanon', label: 'Lebanon' },
+  { code: 'Syria', label: 'Syria' },
+  { code: 'Iraq', label: 'Iraq' },
+  { code: 'Saudi Arabia', label: 'Saudi Arabia' },
+  { code: 'United Arab Emirates', label: 'United Arab Emirates' },
+  { code: 'Qatar', label: 'Qatar' },
+  { code: 'Kuwait', label: 'Kuwait' },
+  { code: 'Bahrain', label: 'Bahrain' },
+  { code: 'Oman', label: 'Oman' },
+  { code: 'Yemen', label: 'Yemen' },
+  { code: 'Morocco', label: 'Morocco' },
+  { code: 'Algeria', label: 'Algeria' },
+  { code: 'Tunisia', label: 'Tunisia' },
+  { code: 'Libya', label: 'Libya' },
+  { code: 'Sudan', label: 'Sudan' },
+  { code: 'United States', label: 'United States' },
+  { code: 'Canada', label: 'Canada' },
+  { code: 'United Kingdom', label: 'United Kingdom' },
+  { code: 'Germany', label: 'Germany' },
+  { code: 'France', label: 'France' },
+  { code: 'Turkey', label: 'Turkey' },
+  { code: 'India', label: 'India' },
+  { code: 'Japan', label: 'Japan' },
+  { code: 'Other', label: 'Other' },
 ];
+
 
 const EXPERTISE = [
   'Frontend Development','Backend Development','Full-Stack Development','Mobile Development (iOS/Android)',
@@ -37,7 +55,6 @@ const EXPERTISE = [
   'Blockchain / Web3','Computer Vision','NLP','Software Architecture','Other',
 ];
 
-const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] as const;
 
 export default function SignUpPage() {
   const [role, setRole] = useState<Role>('mentee');
@@ -54,7 +71,6 @@ export default function SignUpPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    // اختيارية:
     profile_photo: '',
     linkedin_url: '',
     area_of_expertise: '',
@@ -63,17 +79,12 @@ export default function SignUpPage() {
     country: '',
   });
 
-  // mentor-only (اختياري بالكامل)
   const [mentorFields, setMentorFields] = useState({
     yearsOfExperience: '',
     field: '',
     availabilities: [] as string[],
   });
 
-  // مؤقت لإضافة availability
-  const [slot, setSlot] = useState<{day: typeof DAYS[number] | ''; start: string; end: string}>({
-    day: '', start: '', end: '',
-  });
 
   const markTouched = (name: string) => setTouched(prev => ({ ...prev, [name]: true }));
   const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -102,7 +113,6 @@ export default function SignUpPage() {
   const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const passwordsMatch = !!form.password && !!form.confirmPassword && form.password === form.confirmPassword;
 
-  // ✅ المطلوب فقط: full_name, email, password, confirmPassword, role
   const validate = () => {
     const e: Record<string, string> = {};
     if (!form.full_name.trim()) e.full_name = 'Full name is required';
@@ -114,7 +124,6 @@ export default function SignUpPage() {
     return Object.keys(e).length === 0;
   };
 
-  // يطابق الباك: أسماء الحقول الأساسية + الاختيارية كما هي
   const buildPayload = () => {
     const payload: {
       full_name: string;
@@ -126,7 +135,7 @@ export default function SignUpPage() {
       area_of_expertise?: string;
       short_bio?: string;
       phoneNumber?: string;
-      Country?: string; // C كبيرة
+      Country?: string;
       yearsOfExperience?: number;
       field?: string;
       availabilities?: string[];
@@ -177,20 +186,12 @@ export default function SignUpPage() {
     }
   };
 
-  const addSlot = () => {
-    if (!slot.day || !slot.start || !slot.end) return;
-    const text = `${slot.day} ${slot.start}-${slot.end}`;
-    setMentorFields(s => ({ ...s, availabilities: [...s.availabilities, text] }));
-    setSlot({ day: '', start: '', end: '' });
-  };
-  const removeSlot = (i: number) => {
-    setMentorFields(s => ({ ...s, availabilities: s.availabilities.filter((_, idx) => idx !== i) }));
-  };
+
+
 
   const FieldError = ({ name }: { name: string }) =>
     errors[name] && touched[name] ? <p className="text-xs text-red-400 mt-1">{errors[name]}</p> : null;
 
-  // وسم النجمة
   const Req = () => <span className="text-[#00FFB2] ml-0.5">*</span>;
 
   return (
@@ -200,7 +201,6 @@ export default function SignUpPage() {
       <div className="flex items-center justify-center p-6 lg:p-10">
         <Card className="w-full max-w-md bg-[#0d1425]/90 backdrop-blur-xl border border-[#00FFB2]/20 shadow-2xl rounded-2xl">
           <div className="p-6 lg:p-7">
-            {/* رأس مبسّط */}
             <div className="text-center mb-5">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#00FFB2] to-[#00d4a0] flex items-center justify-center">
@@ -212,7 +212,6 @@ export default function SignUpPage() {
             </div>
 
             <form onSubmit={onSubmit} className="space-y-4">
-              {/* الدور (مطلوب) */}
               <div>
                 <Label className="text-gray-200">I am a<Req /></Label>
                 <div className="mt-2 grid grid-cols-2 gap-2">
@@ -235,7 +234,6 @@ export default function SignUpPage() {
                 <FieldError name="role" />
               </div>
 
-              {/* الاسم (مطلوب) */}
               <div>
                 <Label htmlFor="full_name" className="text-gray-200">Full Name<Req /></Label>
                 <Input
@@ -250,7 +248,6 @@ export default function SignUpPage() {
                 <FieldError name="full_name" />
               </div>
 
-              {/* الإيميل (مطلوب) */}
               <div>
                 <Label htmlFor="email" className="text-gray-200">Email<Req /></Label>
                 <Input
@@ -267,7 +264,6 @@ export default function SignUpPage() {
                 <FieldError name="email" />
               </div>
 
-              {/* كلمة المرور (مطلوب) */}
               <div>
                 <Label htmlFor="password" className="text-gray-200">Password<Req /></Label>
                 <div className="relative">
@@ -292,7 +288,6 @@ export default function SignUpPage() {
                   </button>
                 </div>
 
-                {/* مؤشر القوة */}
                 <div className="mt-2 flex gap-1">
                   {[0,1,2,3].map(i => (
                     <div key={i} className={`h-1 flex-1 rounded ${strength.score > i ? 'bg-[#00FFB2]' : 'bg-[#1a1f35]'}`} />
@@ -309,7 +304,6 @@ export default function SignUpPage() {
                 <FieldError name="password" />
               </div>
 
-              {/* تأكيد كلمة المرور (مطلوب) */}
               <div>
                 <Label htmlFor="confirmPassword" className="text-gray-200">Confirm Password<Req /></Label>
                 <div className="relative">
@@ -340,7 +334,6 @@ export default function SignUpPage() {
                 <FieldError name="confirmPassword" />
               </div>
 
-              {/* قسم متقدّم (اختياري بالكامل) */}
               <div className="border border-[#00FFB2]/15 rounded-lg">
                 <button
                   type="button"
@@ -446,8 +439,6 @@ export default function SignUpPage() {
                   </div>
                 )}
               </div>
-
-              {/* إرسال */}
               <Button
                 type="submit"
                 disabled={submitting}
