@@ -10,6 +10,7 @@ import { Label } from "@/app/components/ui/label";
 import { Button } from "@/app/components/ui/button";
 import { Separator } from "@/app/components/ui/separator";
 import { Brain } from "lucide-react";
+import Link from 'next/link';
 
 type ApiOk = {
   message: string;
@@ -158,12 +159,20 @@ export default function LoginPage() {
             </Button>
           </CardContent>
 
+          
           <CardFooter className="flex justify-center pt-2">
             <p className="text-sm text-gray-400">
-              Don&apos;t have an account?{' '}
-              <a href="#" className="text-[#00FFB2] hover:text-[#00FFB2]/80 transition-colors">Sign up</a>
+              Don&apos;t have an account?{" "}
+              <Link
+                href="/signup"
+                className="text-[#00FFB2] hover:text-[#00FFB2]/80 transition-colors"
+              >
+                Sign up
+              </Link>
             </p>
           </CardFooter>
+
+
         </Card>
 
         {/* Footer text */}

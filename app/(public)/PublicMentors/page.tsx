@@ -1,12 +1,12 @@
 'use client';
 import React, { useState, useMemo } from 'react';
-import HeroSection from '../components/MentorsComponents/HeroSection';
-import SearchFilters from '../components/MentorsComponents/SearchFilters';
-import MentorsGrid from '../components/MentorsComponents/MentorsGrid';
-import ContentSections from '../components/MentorsComponents/ContentSections';
-import type { Mentor, FilterState } from '../../types/types';
-import { useTheme } from "../../Context/ThemeContext";
-import MainLayout from '../main-layout';
+import HeroSection from '../../components/MentorsComponents/HeroSection';
+import SearchFilters from '../../components/MentorsComponents/SearchFilters';
+import MentorsGrid from '../../components/MentorsComponents/MentorsGrid';
+import ContentSections from '../../components/MentorsComponents/ContentSections';
+import type { Mentor, FilterState } from '../../../types/types';
+import { useTheme } from "../../../Context/ThemeContext";
+import MainLayout from '../../layout';
 
 const PublicMentors: React.FC = () => {
   const { isDark } = useTheme();

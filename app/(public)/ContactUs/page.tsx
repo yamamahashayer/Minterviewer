@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from "react";
-import { useTheme } from "../../Context/ThemeContext";
-import MainLayout from '../main-layout';
+import { useTheme } from "../../../Context/ThemeContext";
+import MainLayout from '../../layout';
 import {
   Mail,
   MessageCircle,

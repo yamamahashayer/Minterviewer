@@ -1,12 +1,12 @@
 'use client';
 import React from "react";
-import HeroSection from "../components/JoinUsComponents/HeroSection";
-import OpenPositionsSection from "../components/JoinUsComponents/OpenPositionsSection";
-import BenefitsSection from "../components/JoinUsComponents/BenefitsSection";
-import CTASection from "../components/JoinUsComponents/CTASection";
-import type { Position } from "../../types/types";
-import { useTheme } from "../../Context/ThemeContext";
-import MainLayout from '../main-layout';
+import HeroSection from "../../components/JoinUsComponents/HeroSection";
+import OpenPositionsSection from "../../components/JoinUsComponents/OpenPositionsSection";
+import BenefitsSection from "../../components/JoinUsComponents/BenefitsSection";
+import CTASection from "../../components/JoinUsComponents/CTASection";
+import type { Position } from "../../../types/types";
+import { useTheme } from "../../../Context/ThemeContext";
+import MainLayout from '../../layout';
 
 const JoinUsPage: React.FC = () => {
   const { isDark } = useTheme();

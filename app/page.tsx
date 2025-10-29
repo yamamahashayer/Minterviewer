@@ -7,7 +7,7 @@ import PlatformWalkthrough from "./components/HomePageComponents/WalkThrough";
 import TestimonialsSection from "./components/HomePageComponents/Testemotional";
 import FAQSection from "./components/HomePageComponents/FAQSection";
 import './components/HomePageComponents/FAQSection'
-import MainLayout from "./main-layout";
+import MainLayout from "./layout";
 
 export default function HomePage() {
   return (
