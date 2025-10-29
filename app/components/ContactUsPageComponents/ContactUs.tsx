@@ -144,7 +144,7 @@ Sent via MentorHub Contact Form
             className={`text-lg sm:text-xl ${themeClasses.textSecondary} max-w-3xl mx-auto drop-shadow-sm`}
           >
             Connect with experienced interview trainers and boost your career
-            success. We're here to help you prepare for your next opportunity.
+            success. We&apos;re here to help you prepare for your next opportunity.
           </p>
         </div>
 
@@ -171,7 +171,7 @@ Sent via MentorHub Contact Form
               >
                 <CheckCircle className="w-5 h-5 text-green-400" />
                 <p className="text-[#1e874e] text-sm">
-                  Message sent successfully! We'll get back to you soon.
+                  Message sent successfully! We&apos;ll get back to you soon.
                 </p>
               </div>
             )}

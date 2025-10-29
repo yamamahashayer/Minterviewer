@@ -85,11 +85,15 @@ const FAQItemComponent: React.FC<FAQItemProps> = ({ item, isOpen, onToggle, isDa
   const contentRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
 
-  useEffect(() => {
-    if (contentRef.current) {
-      setHeight(isOpen ? contentRef.current.scrollHeight : 0);
-    }
-  }, [isOpen]);
+ useEffect(() => {
+  if (contentRef.current) {
+    const frame = requestAnimationFrame(() => {
+      setHeight(isOpen ? contentRef.current!.scrollHeight : 0);
+    });
+    return () => cancelAnimationFrame(frame);
+  }
+}, [isOpen]);
+
 
   const cardBgClass = isDark ? "border-gray-600" : "border-gray-200";
   const textClass = isDark ? "text-gray-200" : "text-gray-800";
