@@ -24,7 +24,7 @@ const Nav = () => {
   }, []);
 
   const handleClick = () => {
-    router.push("/login");
+    router.push("login");
   };
 
   const navLinks = [
