@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/Context/ThemeContext";
-import { Toaster } from "react-hot-toast";
+//import { Toaster } from "react-hot-toast";
 
 const geist = Geist({
   subsets: ["latin"],
@@ -25,7 +25,7 @@ export default function RootLayout({
       <body className={geist.className}>
         <ThemeProvider>
           {children}
-          <Toaster />
+          {/* <Toaster /> */}
         </ThemeProvider>
       </body>
     </html>
