@@ -4,10 +4,11 @@ import CompanyLogosSection from "../components/HomePageComponents/CompanyLogosSe
 import LiveSessionsLanding from "../components/HomePageComponents/prossection";
 import WhatNumberssaySection from "../components/HomePageComponents/WhatNumberssaySection";
 import PlatformWalkthrough from "../components/HomePageComponents/WalkThrough";
+import Testemotional from "../components/HomePageComponents/Testemotional";
+import { useTheme } from "Context/ThemeContext";
+import FAQSection from "../components/HomePageComponents/FAQSection"; 
 import TestimonialsSection from "../components/HomePageComponents/Testemotional";
-import { useTheme } from "../../Context/ThemeContext";
-import FAQSection from "../components/HomePageComponents/FAQSection";
-import '../../components/HomePageComponents/FAQSection'
+
 
 const HomePage: React.FC = () => {
   const { isDark: themeIsDark } = useTheme();
