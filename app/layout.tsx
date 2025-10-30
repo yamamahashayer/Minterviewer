@@ -1,10 +1,15 @@
 import { Geist } from "next/font/google";
 import "./globals.css";
+import LayoutClient from "./components/LayoutClient";
 
-import { ThemeProvider } from "@/Context/ThemeContext";
-import { Toaster } from "react-hot-toast";
-import Nav from "./components/Navbar/Navbar";
-import Footer from "./components/Footer/Footer";
+export const metadata = {
+  title: 'Minterviewer',
+  description: 'Your personal interview coach',
+  icons: {
+    icon: '/MentorHubLogo.png',
+  },
+};
+
 const geist = Geist({
   subsets: ["latin"],
   display: "swap",
@@ -18,12 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={geist.className}>
-        <ThemeProvider>
-          <Nav />
-          <main className="flex-grow">{children}</main>
-          <Footer />
-          <Toaster />
-        </ThemeProvider>
+        <LayoutClient>{children}</LayoutClient>
       </body>
     </html>
   );

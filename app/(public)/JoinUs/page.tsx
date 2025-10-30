@@ -6,7 +6,6 @@ import BenefitsSection from "../../components/JoinUsComponents/BenefitsSection";
 import CTASection from "../../components/JoinUsComponents/CTASection";
 import type { Position } from "../../../types/types";
 import { useTheme } from "../../../Context/ThemeContext";
-import MainLayout from '../../layout';
 
 const JoinUsPage: React.FC = () => {
   const { isDark } = useTheme();
@@ -117,14 +116,12 @@ const JoinUsPage: React.FC = () => {
     : { backgroundColor: "#96fbf1", color: "#1f2937" };
 
   return (
-    <MainLayout>
-      <div style={containerStyle} className="w-full">
-        <HeroSection />
-        <OpenPositionsSection positions={openPositions} />
-        <BenefitsSection benefits={benefits} />
-        <CTASection />
-      </div>
-    </MainLayout>
+    <div style={containerStyle} className="w-full">
+      <HeroSection />
+      <OpenPositionsSection positions={openPositions} />
+      <BenefitsSection benefits={benefits} />
+      <CTASection />
+    </div>
   );
 };
 

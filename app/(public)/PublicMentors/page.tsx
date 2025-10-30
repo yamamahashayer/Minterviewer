@@ -6,7 +6,6 @@ import MentorsGrid from '../../components/MentorsComponents/MentorsGrid';
 import ContentSections from '../../components/MentorsComponents/ContentSections';
 import type { Mentor, FilterState } from '../../../types/types';
 import { useTheme } from "../../../Context/ThemeContext";
-import MainLayout from '../../layout';
 
 const PublicMentors: React.FC = () => {
   const { isDark } = useTheme();
@@ -151,23 +150,21 @@ const PublicMentors: React.FC = () => {
   };
 
   return (
-    <MainLayout>
-      <div className={`w-full transition-colors duration-300 ${isDark
-        ? 'bg-[#06171c] text-white'
-        : 'bg-[#96fbf1] text-gray-900'
-        }`}>
-        <HeroSection />
-        <SearchFilters
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          showFilters={showFilters}
-          onToggleFilters={() => setShowFilters(!showFilters)}
-          filteredCount={filteredMentors.length}
-        />
-        <MentorsGrid mentors={filteredMentors} />
-        <ContentSections />
-      </div>
-    </MainLayout>
+    <div className={`w-full transition-colors duration-300 ${isDark
+      ? 'bg-[#06171c] text-white'
+      : 'bg-[#96fbf1] text-gray-900'
+      }`}>
+      <HeroSection />
+      <SearchFilters
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        showFilters={showFilters}
+        onToggleFilters={() => setShowFilters(!showFilters)}
+        filteredCount={filteredMentors.length}
+      />
+      <MentorsGrid mentors={filteredMentors} />
+      <ContentSections />
+    </div>
   );
 };
 
