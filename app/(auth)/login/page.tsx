@@ -58,7 +58,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0a192f] via-[#112240] to-[#0d3d56] flex items-center justify-center p-4">
-      {/* Animated background effect */}
+    
       <NeuralNetworkBackground />
 
       {/* Glowing orbs */}
