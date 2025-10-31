@@ -14,8 +14,15 @@ const userSchema = new mongoose.Schema(
     short_bio: String,
     phoneNumber: String,
     Country: String,
+    // Password reset fields
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
   },
   { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } }
 );
 
-export default mongoose.model('User', userSchema);
+// Fix: Check if model exists before creating it
+// This prevents the "Cannot overwrite model" error in development
+const User = mongoose.models.User || mongoose.model('User', userSchema);
+
+export default User;

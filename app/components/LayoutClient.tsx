@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ThemeProvider } from '@/Context/ThemeContext';
 import { Toaster } from 'react-hot-toast';
 import Nav from './Navbar/Navbar';
 import Footer from './Footer/Footer';
@@ -18,6 +17,7 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
     return () => clearTimeout(timer);
   }, [pathname]);
 
+<<<<<<< HEAD
   // صفحات المصادقة
   const isAuthPage =
     pathname.startsWith('/login') || pathname.startsWith('/signup');
@@ -48,5 +48,29 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
         </>
       )}
     </ThemeProvider>
+=======
+  const isAuthPage =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/forgot-password');
+
+  const inDashboard =
+    pathname.startsWith('/mentee') ||
+    pathname.startsWith('/mentor') ||
+    pathname.startsWith('/company');
+
+  const showSiteChrome = !isAuthPage && !inDashboard;
+
+  return loading ? (
+    <Loader />
+  ) : (
+    <>
+      {showSiteChrome && <Nav />}
+      <main className="flex-grow">{children}</main>
+      {showSiteChrome && <Footer />}
+      <Toaster />
+    </>
+>>>>>>> 53bf86a13e150764588e70409a6d59e502d862e5
   );
 }
