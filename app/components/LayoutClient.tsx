@@ -13,20 +13,21 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
   const pathname = usePathname();
 
   useEffect(() => {
-    // Reset loading state on path change
     setLoading(true);
-
-    // Simulate a loading time (reduced to 600ms for faster transitions)
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 600);
-
-    return () => {
-      clearTimeout(timer);
-    };
+    const timer = setTimeout(() => setLoading(false), 600);
+    return () => clearTimeout(timer);
   }, [pathname]);
 
-  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup');
+  // صفحات المصادقة
+  const isAuthPage =
+    pathname.startsWith('/login') || pathname.startsWith('/signup');
+
+  // صفحات الداشبورد (اخفِ الـ Navbar/Footer فيها)
+  // يدعم /dashboard/* وكذلك /mentee لو كنتِ مستخدمة Route Group (dashboard)
+  const isDashboardPage =
+    /^\/dashboard(\/|$)/.test(pathname) || /^\/mentee(\/|$)/.test(pathname);
+
+  const hideChrome = isAuthPage || isDashboardPage;
 
   return (
     <ThemeProvider>
@@ -34,7 +35,7 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
         <Loader />
       ) : (
         <>
-          {isAuthPage ? (
+          {hideChrome ? (
             <main className="flex-grow">{children}</main>
           ) : (
             <>
