@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Toaster } from 'react-hot-toast';
-import Nav from './Navbar/Navbar';
-import Footer from './Footer/Footer';
-import Loader from './Loader';
-import { usePathname } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { ThemeProvider } from "@/Context/ThemeContext";
+import { Toaster } from "react-hot-toast";
+import Nav from "./Navbar/Navbar";
+import Footer from "./Footer/Footer";
+import Loader from "./Loader";
+import { usePathname } from "next/navigation";
 
 export default function LayoutClient({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -13,21 +14,13 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     setLoading(true);
-    const timer = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setLoading(false), 400);
+    return () => clearTimeout(t);
   }, [pathname]);
 
-<<<<<<< HEAD
-  // صفحات المصادقة
-  const isAuthPage =
-    pathname.startsWith('/login') || pathname.startsWith('/signup');
+  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/signup");
 
-  // صفحات الداشبورد (اخفِ الـ Navbar/Footer فيها)
-  // يدعم /dashboard/* وكذلك /mentee لو كنتِ مستخدمة Route Group (dashboard)
-  const isDashboardPage =
-    /^\/dashboard(\/|$)/.test(pathname) || /^\/mentee(\/|$)/.test(pathname);
-
-  const hideChrome = isAuthPage || isDashboardPage;
+  const isMenteeDashboard = pathname.startsWith("/mentee");
 
   return (
     <ThemeProvider>
@@ -35,42 +28,15 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
         <Loader />
       ) : (
         <>
-          {hideChrome ? (
-            <main className="flex-grow">{children}</main>
-          ) : (
-            <>
-              <Nav />
-              <main className="flex-grow">{children}</main>
-              <Footer />
-            </>
-          )}
+          {!isAuthPage && !isMenteeDashboard && <Nav />}
+
+          <main className="min-h-screen">{children}</main>
+
+          {!isAuthPage && !isMenteeDashboard && <Footer />}
+
           <Toaster />
         </>
       )}
     </ThemeProvider>
-=======
-  const isAuthPage =
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/signup') ||
-    pathname.startsWith('/reset-password') ||
-    pathname.startsWith('/forgot-password');
-
-  const inDashboard =
-    pathname.startsWith('/mentee') ||
-    pathname.startsWith('/mentor') ||
-    pathname.startsWith('/company');
-
-  const showSiteChrome = !isAuthPage && !inDashboard;
-
-  return loading ? (
-    <Loader />
-  ) : (
-    <>
-      {showSiteChrome && <Nav />}
-      <main className="flex-grow">{children}</main>
-      {showSiteChrome && <Footer />}
-      <Toaster />
-    </>
->>>>>>> 53bf86a13e150764588e70409a6d59e502d862e5
   );
 }
