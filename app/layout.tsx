@@ -1,29 +1,23 @@
 import { Geist } from "next/font/google";
 import "./globals.css";
-import LayoutClient from "./components/LayoutClient";
+import { ThemeProvider } from "@/Context/ThemeContext";
+import LayoutClient from "./components/LayoutClient"; // 👈 رجعناه هنا
+
+const geist = Geist({ subsets: ["latin"], display: "swap" });
 
 export const metadata = {
-  title: 'Minterviewer',
-  description: 'Your personal interview coach',
-  icons: {
-    icon: '/MentorHubLogo.png',
-  },
+  title: "Minterviewer",
+  description: "Your personal interview coach",
+  icons: { icon: "/MentorHubLogo.png" },
 };
 
-const geist = Geist({
-  subsets: ["latin"],
-  display: "swap",
-});
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={geist.className}>
-        <LayoutClient>{children}</LayoutClient>
+        <ThemeProvider>
+          <LayoutClient>{children}</LayoutClient>
+        </ThemeProvider>
       </body>
     </html>
   );

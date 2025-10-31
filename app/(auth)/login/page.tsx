@@ -58,7 +58,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0a192f] via-[#112240] to-[#0d3d56] flex items-center justify-center p-4">
-      {/* Animated background effect */}
+    
       <NeuralNetworkBackground />
 
       {/* Glowing orbs */}
@@ -109,7 +109,7 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-gray-300">Password</Label>
-                  <a href="#" className="text-sm text-[#00FFB2] hover:text-[#00FFB2]/80 transition-colors">Forgot password?</a>
+                  <a href="/forgot-password" className="text-sm text-[#00FFB2] hover:text-[#00FFB2]/80 transition-colors">Forgot password?</a>
                 </div>
                 <Input
                   id="password"
@@ -159,7 +159,7 @@ export default function LoginPage() {
             </Button>
           </CardContent>
 
-          
+
           <CardFooter className="flex justify-center pt-2">
             <p className="text-sm text-gray-400">
               Don&apos;t have an account?{" "}
