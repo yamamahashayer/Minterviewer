@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { Toaster } from 'react-hot-toast';
-import Nav from './Navbar/Navbar';
-import Footer from './Footer/Footer';
-import Loader from './Loader';
-import { usePathname } from 'next/navigation';
+import React, { useState, useEffect } from "react";
+import { ThemeProvider } from "@/Context/ThemeContext";
+import { Toaster } from "react-hot-toast";
+import Nav from "./Navbar/Navbar";
+import Footer from "./Footer/Footer";
+import Loader from "./Loader";
+import { usePathname } from "next/navigation";
 
 export default function LayoutClient({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
@@ -13,31 +14,29 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     setLoading(true);
-    const timer = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(timer);
+    const t = setTimeout(() => setLoading(false), 400);
+    return () => clearTimeout(t);
   }, [pathname]);
 
-  const isAuthPage =
-    pathname.startsWith('/login') ||
-    pathname.startsWith('/signup') ||
-    pathname.startsWith('/reset-password') ||
-    pathname.startsWith('/forgot-password');
+  const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/signup");
 
-  const inDashboard =
-    pathname.startsWith('/mentee') ||
-    pathname.startsWith('/mentor') ||
-    pathname.startsWith('/company');
+  const isMenteeDashboard = pathname.startsWith("/mentee");
 
-  const showSiteChrome = !isAuthPage && !inDashboard;
+  return (
+    <ThemeProvider>
+      {loading ? (
+        <Loader />
+      ) : (
+        <>
+          {!isAuthPage && !isMenteeDashboard && <Nav />}
 
-  return loading ? (
-    <Loader />
-  ) : (
-    <>
-      {showSiteChrome && <Nav />}
-      <main className="flex-grow">{children}</main>
-      {showSiteChrome && <Footer />}
-      <Toaster />
-    </>
+          <main className="min-h-screen">{children}</main>
+
+          {!isAuthPage && !isMenteeDashboard && <Footer />}
+
+          <Toaster />
+        </>
+      )}
+    </ThemeProvider>
   );
 }

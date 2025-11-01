@@ -1,7 +1,7 @@
 import { Geist } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/Context/ThemeContext";
-import LayoutClient from "./components/LayoutClient"; // 👈 رجعناه هنا
+import LayoutClient from "./components/LayoutClient"; 
 
 const geist = Geist({ subsets: ["latin"], display: "swap" });
 
