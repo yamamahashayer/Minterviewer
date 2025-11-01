@@ -43,6 +43,13 @@ export default function LoginPage() {
         setError(data?.message ?? 'Login failed');
         return;
       }
+        if (data.token) {
+        sessionStorage.setItem('token', data.token);
+      }
+      
+      if (data.user) {
+        sessionStorage.setItem('user', JSON.stringify(data.user));
+      }
 
       router.push(data.redirectUrl || '/');
     } catch {
