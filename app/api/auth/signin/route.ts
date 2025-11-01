@@ -53,6 +53,7 @@ export async function POST(req: Request) {
                 break;
             case "mentee":
                 redirectUrl = "/mentee";
+
                 break;
             case "company":
                 redirectUrl = "/company/dashboard";
