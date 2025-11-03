@@ -25,8 +25,6 @@ const menteeSchema = new mongoose.Schema(
       },
     ],
 
-    company: { type: String, default: "—" },
-    education: { type: String, default: "—" },
 
     active: { type: Boolean, default: true },
   },
