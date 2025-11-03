@@ -1,8 +1,12 @@
 'use client';
 
-import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import Image from 'next/image';
-import { Eye, EyeOff, CheckCircle2, XCircle, AlertCircle, Sparkles,ChevronDown } from 'lucide-react';
+import {
+  Eye, EyeOff, CheckCircle2, XCircle, AlertCircle, Sparkles,
+  UserCircle, ArrowLeft, ArrowRight, Briefcase, Upload,
+  User, Mail, Lock
+} from 'lucide-react';
 
 import { NeuralNetworkBackground } from '@/app/components/backgrounds/NeuralNetworkBackground';
 import { Button } from '@/app/components/ui/button';
@@ -11,10 +15,11 @@ import { Label } from '@/app/components/ui/label';
 import { Card } from '@/app/components/ui/card';
 import { Textarea } from '@/app/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/app/components/ui/select';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Progress } from '@radix-ui/react-progress';
 
 type Role = 'mentor' | 'mentee';
 type ApiResponse = { message?: string; user?: { id: string; email: string; role: string } };
-type Strength = { score: number; label: string; color: string };
 
 const COUNTRIES = [
   { code: 'Palestine', label: 'Palestine' },
@@ -46,7 +51,6 @@ const COUNTRIES = [
   { code: 'Other', label: 'Other' },
 ];
 
-
 const EXPERTISE = [
   'Frontend Development','Backend Development','Full-Stack Development','Mobile Development (iOS/Android)',
   'Data Science','Machine Learning / AI','MLOps','Data Engineering','DevOps / SRE',
@@ -55,44 +59,50 @@ const EXPERTISE = [
   'Blockchain / Web3','Computer Vision','NLP','Software Architecture','Other',
 ];
 
+export default function SignUp() {
+  // الخطوات: 1) Role فقط  2) Basic (Name/Email/Password)  3) Optional
+  const [currentStep, setCurrentStep] = useState(1);
+  const [role, setRole] = useState<Role | null>(null);
 
-export default function SignUpPage() {
-  const [role, setRole] = useState<Role>('mentee');
+  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false);
-
-  const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
     full_name: '',
     email: '',
     password: '',
     confirmPassword: '',
-    profile_photo: '',
     linkedin_url: '',
     area_of_expertise: '',
-    short_bio: '',
-    phoneNumber: '',
     country: '',
+    short_bio: ''
   });
 
+  // لراحة الباك: في حال role = mentor نرسل هذه الحقول (اختيارية)
   const [mentorFields, setMentorFields] = useState({
-    yearsOfExperience: '',
-    field: '',
-    availabilities: [] as string[],
+    yearsOfExperience: '',   // Number
+    field: '',               // string
+    // مبدئيًا أزلنا availabilities من الواجهة لتقليل التعقيد هنا
   });
 
+  useEffect(() => {
+    if (!profilePhoto) return setPhotoPreview(null);
+    const url = URL.createObjectURL(profilePhoto);
+    setPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [profilePhoto]);
 
-  const markTouched = (name: string) => setTouched(prev => ({ ...prev, [name]: true }));
-  const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-  };
+  const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }));
 
-  const strength: Strength = useMemo(() => {
+  const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const passwordStrength = useMemo(() => {
     const p = form.password;
     if (!p) return { score: 0, label: '', color: '' };
     let score = 0;
@@ -100,29 +110,48 @@ export default function SignUpPage() {
     if (/[a-z]/.test(p) && /[A-Z]/.test(p)) score++;
     if (/\d/.test(p)) score++;
     if (/[^a-zA-Z\d]/.test(p)) score++;
-    const map: Record<number, { label: string; color: string }> = {
+    const mapping: Record<number, {label: string, color: string}> = {
       0: { label: 'Too short', color: 'text-red-400' },
-      1: { label: 'Weak', color: 'text-red-400' },
-      2: { label: 'Medium', color: 'text-yellow-400' },
-      3: { label: 'Good', color: 'text-blue-400' },
-      4: { label: 'Strong', color: 'text-[#00FFB2]' },
+      1: { label: 'Weak',      color: 'text-red-400' },
+      2: { label: 'Medium',    color: 'text-yellow-400' },
+      3: { label: 'Good',      color: 'text-blue-400' },
+      4: { label: 'Strong',    color: 'text-[#00FFB2]' }
     };
-    return { score, ...map[score] };
+    return { score, ...mapping[score] };
   }, [form.password]);
 
-  const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   const passwordsMatch = !!form.password && !!form.confirmPassword && form.password === form.confirmPassword;
 
-  const validate = () => {
+  // فحص لكل خطوة
+  const validateStep = (step: number) => {
     const e: Record<string, string> = {};
-    if (!form.full_name.trim()) e.full_name = 'Full name is required';
-    if (!validateEmail(form.email)) e.email = 'Valid email is required';
-    if (!form.password || strength.score < 2) e.password = 'Use 8+ chars, upper/lower, number';
-    if (!passwordsMatch) e.confirmPassword = "Passwords don't match";
-    if (!role) e.role = 'Choose a role';
+    if (step === 1) {
+      if (!role) e.role = 'Please choose a role';
+    }
+    if (step === 2) {
+      if (!form.full_name.trim()) e.full_name = 'Full name is required';
+      if (!validateEmail(form.email)) e.email = 'Valid email is required';
+      if (!form.password || passwordStrength.score < 2) e.password = 'Use 8+ chars, upper/lower, number';
+      if (!passwordsMatch) e.confirmPassword = "Passwords don't match";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
+
+  // لتفعيل/تعطيل زر Next بناءً على صحة المدخلات
+  const canGoNext = useMemo(() => {
+    if (currentStep === 1) return !!role;
+    if (currentStep === 2)
+      return (
+        form.full_name.trim() &&
+        validateEmail(form.email) &&
+        passwordStrength.score >= 2 &&
+        passwordsMatch
+      );
+    return true;
+  }, [currentStep, role, form, passwordStrength, passwordsMatch]);
+
+  const progress = (currentStep / 3) * 100;
 
   const buildPayload = () => {
     const payload: {
@@ -134,28 +163,25 @@ export default function SignUpPage() {
       linkedin_url?: string;
       area_of_expertise?: string;
       short_bio?: string;
-      phoneNumber?: string;
+      phoneNumber?: string; // غير مستخدم بالواجهة الآن
       Country?: string;
       yearsOfExperience?: number;
       field?: string;
-      availabilities?: string[];
     } = {
       full_name: form.full_name,
       email: form.email,
       password: form.password,
-      role,
-      profile_photo: form.profile_photo || undefined,
+      role: role as Role,
+      profile_photo: undefined,
       linkedin_url: form.linkedin_url || undefined,
       area_of_expertise: form.area_of_expertise || undefined,
       short_bio: form.short_bio || undefined,
-      phoneNumber: form.phoneNumber || undefined,
       Country: form.country || undefined,
     };
 
     if (role === 'mentor') {
       if (mentorFields.yearsOfExperience) payload.yearsOfExperience = Number(mentorFields.yearsOfExperience);
-      if (mentorFields.field || form.area_of_expertise) payload.field = mentorFields.field || form.area_of_expertise;
-      if (mentorFields.availabilities.length) payload.availabilities = mentorFields.availabilities;
+      if (mentorFields.field) payload.field = mentorFields.field;
     }
     return payload;
   };
@@ -171,9 +197,25 @@ export default function SignUpPage() {
     return data;
   };
 
+  // الهاندلر الموحد: يمنع أي إرسال قبل الخطوة الأخيرة
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+
+    // لو لسه ما وصلنا للخطوة الأخيرة → فقط انتقلي للخطوة التالية (مع الفحص)
+    if (currentStep < 3) {
+      if (validateStep(currentStep)) {
+        setCurrentStep(s => s + 1);
+        setErrors({});
+      }
+      return; // لا يوجد أي network call هنا
+    }
+
+    // الخطوة الأخيرة: فحوصات أساسية قبل الإرسال
+    if (!validateStep(2) || !role) {
+      setCurrentStep(2);
+      return;
+    }
+
     setSubmitting(true);
     try {
       const data = await sendJSON(buildPayload());
@@ -186,274 +228,383 @@ export default function SignUpPage() {
     }
   };
 
-
-
-
-  const FieldError = ({ name }: { name: string }) =>
-    errors[name] && touched[name] ? <p className="text-xs text-red-400 mt-1">{errors[name]}</p> : null;
-
-  const Req = () => <span className="text-[#00FFB2] ml-0.5">*</span>;
+  const prevStep = () => {
+    setCurrentStep(s => Math.max(s - 1, 1));
+    setErrors({});
+  };
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden">
-      <NeuralNetworkBackground variant="clean" />
-
-      <div className="flex items-center justify-center p-6 lg:p-10">
-        <Card className="w-full max-w-md bg-[#0d1425]/90 backdrop-blur-xl border border-[#00FFB2]/20 shadow-2xl rounded-2xl">
-          <div className="p-6 lg:p-7">
-            <div className="text-center mb-5">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#00FFB2] to-[#00d4a0] flex items-center justify-center">
-                  <Sparkles className="w-5 h-5 text-[#0d1425]" />
-                </div>
-                <h1 className="text-white text-xl tracking-tight">Minterviewer</h1>
+    <div className="relative min-h-screen w-full overflow-hidden flex items-center justify-center p-4">
+      <NeuralNetworkBackground />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="relative z-10 w-full max-w-lg"
+      >
+        <Card className="bg-[#0d1425]/90 backdrop-blur-xl border border-[#00FFB2]/20 shadow-2xl rounded-2xl p-8">
+          {/* Header */}
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#00FFB2] to-[#00d4a0] flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-[#0d1425]" />
               </div>
-              <p className="text-gray-400 text-xs">Create your account</p>
+              <h1 className="text-white text-3xl tracking-tight">Minterviewer</h1>
             </div>
+            <p className="text-gray-300 text-sm">Create your account — Step {currentStep} of 3</p>
+          </div>
 
-            <form onSubmit={onSubmit} className="space-y-4">
-              <div>
-                <Label className="text-gray-200">I am a<Req /></Label>
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  {(['mentee', 'mentor'] as Role[]).map((r) => (
+          {/* Progress */}
+          <div className="mb-6">
+            <Progress value={progress} className="h-2 bg-[#1a1f35]/60" />
+            <div className="flex justify-between mt-2 text-xs text-gray-400">
+              <span className={currentStep >= 1 ? 'text-[#00FFB2]' : ''}>Role</span>
+              <span className={currentStep >= 2 ? 'text-[#00FFB2]' : ''}>Basic</span>
+              <span className={currentStep >= 3 ? 'text-[#00FFB2]' : ''}>Optional</span>
+            </div>
+          </div>
+
+          {/* Form */}
+          <form
+            onSubmit={onSubmit}
+            className="space-y-6"
+          >
+            <AnimatePresence mode="wait">
+              {/* STEP 1: Role ONLY */}
+              {currentStep === 1 && (
+                <motion.div
+                  key="step1"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-4"
+                >
+                  <div className="text-center mb-2">
+                    <h2 className="text-white text-xl mb-2">Choose Your Role</h2>
+                    <p className="text-gray-400 text-sm">Are you a mentee or a mentor?</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
                     <button
-                      key={r}
                       type="button"
-                      onClick={() => setRole(r)}
-                      aria-pressed={role === r}
-                      className={`px-3 py-2 rounded-lg border text-sm transition ${
-                        role === r
-                          ? 'border-[#00FFB2] bg-[#00FFB2]/10 text-[#00FFB2]'
-                          : 'border-[#00FFB2]/20 bg-[#1a1f35]/40 text-gray-300 hover:border-[#00FFB2]/40'
+                      onClick={() => setRole('mentee')}
+                      className={`relative p-6 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-3 group ${
+                        role === 'mentee'
+                          ? 'border-[#00FFB2] bg-[#00FFB2]/10 shadow-lg shadow-[#00FFB2]/20'
+                          : 'border-[#00FFB2]/20 bg-[#1a1f35]/40 hover:border-[#00FFB2]/40 hover:bg-[#1a1f35]/60'
                       }`}
                     >
-                      {r === 'mentee' ? '👩‍💻 Mentee' : '👩‍🏫 Mentor'}
+                      <UserCircle className={`w-12 h-12 ${role === 'mentee' ? 'text-[#00FFB2]' : 'text-gray-400 group-hover:text-[#00FFB2]/60'}`} />
+                      <div className="text-center">
+                        <p className={`mb-1 ${role === 'mentee' ? 'text-[#00FFB2]' : 'text-gray-300'}`}>Mentee</p>
+                        <p className="text-xs text-gray-500">I want to learn</p>
+                      </div>
+                      {role === 'mentee' && <CheckCircle2 className="w-5 h-5 text-[#00FFB2] absolute top-3 right-3" />}
                     </button>
-                  ))}
-                </div>
-                <FieldError name="role" />
-              </div>
 
-              <div>
-                <Label htmlFor="full_name" className="text-gray-200">Full Name<Req /></Label>
-                <Input
-                  id="full_name"
-                  name="full_name"
-                  value={form.full_name}
-                  onBlur={() => markTouched('full_name')}
-                  onChange={onChange}
-                  placeholder="John Doe"
-                  className="mt-1 h-11 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white"
-                />
-                <FieldError name="full_name" />
-              </div>
-
-              <div>
-                <Label htmlFor="email" className="text-gray-200">Email<Req /></Label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={form.email}
-                  onBlur={() => markTouched('email')}
-                  onChange={onChange}
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  className="mt-1 h-11 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white"
-                />
-                <FieldError name="email" />
-              </div>
-
-              <div>
-                <Label htmlFor="password" className="text-gray-200">Password<Req /></Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPass ? 'text' : 'password'}
-                    value={form.password}
-                    onBlur={() => markTouched('password')}
-                    onChange={onChange}
-                    placeholder="••••••••"
-                    autoComplete="new-password"
-                    className="mt-1 h-11 pr-10 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white"
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-2 flex items-center"
-                    onClick={() => setShowPass(v => !v)}
-                    aria-label="Toggle password"
-                  >
-                    {showPass ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
-                  </button>
-                </div>
-
-                <div className="mt-2 flex gap-1">
-                  {[0,1,2,3].map(i => (
-                    <div key={i} className={`h-1 flex-1 rounded ${strength.score > i ? 'bg-[#00FFB2]' : 'bg-[#1a1f35]'}`} />
-                  ))}
-                </div>
-                {form.password && (
-                  <div className="flex items-center gap-2 text-xs mt-1">
-                    {strength.score <= 1 && <XCircle className="w-3 h-3 text-red-400" />}
-                    {strength.score === 2 && <AlertCircle className="w-3 h-3 text-yellow-400" />}
-                    {strength.score >= 3 && <CheckCircle2 className="w-3 h-3 text-[#00FFB2]" />}
-                    <span className={strength.color}>{strength.label}</span>
+                    <button
+                      type="button"
+                      onClick={() => setRole('mentor')}
+                      className={`relative p-6 rounded-xl border-2 transition-all duration-300 flex flex-col items-center gap-3 group ${
+                        role === 'mentor'
+                          ? 'border-[#00FFB2] bg-[#00FFB2]/10 shadow-lg shadow-[#00FFB2]/20'
+                          : 'border-[#00FFB2]/20 bg-[#1a1f35]/40 hover:border-[#00FFB2]/40 hover:bg-[#1a1f35]/60'
+                      }`}
+                    >
+                      <Briefcase className={`w-12 h-12 ${role === 'mentor' ? 'text-[#00FFB2]' : 'text-gray-400 group-hover:text-[#00FFB2]/60'}`} />
+                      <div className="text-center">
+                        <p className={`mb-1 ${role === 'mentor' ? 'text-[#00FFB2]' : 'text-gray-300'}`}>Mentor</p>
+                        <p className="text-xs text-gray-500">I want to share</p>
+                      </div>
+                      {role === 'mentor' && <CheckCircle2 className="w-5 h-5 text-[#00FFB2] absolute top-3 right-3" />}
+                    </button>
                   </div>
-                )}
-                <FieldError name="password" />
-              </div>
+                  {errors.role && <p className="text-xs text-red-400 text-center">{errors.role}</p>}
+                </motion.div>
+              )}
 
-              <div>
-                <Label htmlFor="confirmPassword" className="text-gray-200">Confirm Password<Req /></Label>
-                <div className="relative">
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type={showConfirm ? 'text' : 'password'}
-                    value={form.confirmPassword}
-                    onBlur={() => markTouched('confirmPassword')}
-                    onChange={onChange}
-                    placeholder="••••••••"
-                    className="mt-1 h-11 pr-10 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white"
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-2 flex items-center"
-                    onClick={() => setShowConfirm(v => !v)}
-                    aria-label="Toggle confirm"
-                  >
-                    {showConfirm ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
-                  </button>
-                </div>
-                {form.confirmPassword && !passwordsMatch && (
-                  <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
-                    <XCircle className="w-3 h-3" /> {"Passwords don't match"}
-                  </p>
-                )}
-                <FieldError name="confirmPassword" />
-              </div>
-
-              <div className="border border-[#00FFB2]/15 rounded-lg">
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-between px-3 py-2 text-sm text-gray-300 hover:text-[#00FFB2]"
-                  onClick={() => setShowAdvanced(v => !v)}
+              {/* STEP 2: Basic (Name + Email + Password + Confirm) */}
+              {currentStep === 2 && (
+                <motion.div
+                  key="step2"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-4"
                 >
-                  <span>Advanced (optional)</span>
-                  <ChevronDown className={`w-4 h-4 transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
-                </button>
-
-                {showAdvanced && (
-                  <div className="px-3 pb-3 pt-1 space-y-3">
-                    <div>
-                      <Label htmlFor="area_of_expertise" className="text-gray-200">Area of Expertise</Label>
-                      <Select value={form.area_of_expertise} onValueChange={(v) => setForm(p => ({ ...p, area_of_expertise: v }))}>
-                        <SelectTrigger className="mt-1 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white">
-                          <SelectValue placeholder="Select your expertise" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#1a1f35] border-[#00FFB2]/30 text-white max-h-56">
-                          {EXPERTISE.map(x => <SelectItem key={x} value={x}>{x}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label className="text-gray-200">Country</Label>
-                      <Select value={form.country} onValueChange={(v) => setForm(p => ({ ...p, country: v }))}>
-                        <SelectTrigger className="mt-1 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white">
-                          <SelectValue placeholder="Select country" />
-                        </SelectTrigger>
-                        <SelectContent className="bg-[#1a1f35] border-[#00FFB2]/30 text-white max-h-56">
-                          {COUNTRIES.map(c => <SelectItem key={c.code} value={c.code}>{c.label}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-[11px] text-gray-500 mt-1">Will be sent as <span className="text-[#00FFB2]">Country</span> (capital C).</p>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="phoneNumber" className="text-gray-200">Phone</Label>
-                      <Input
-                        id="phoneNumber"
-                        name="phoneNumber"
-                        type="tel"
-                        value={form.phoneNumber}
-                        onChange={onChange}
-                        placeholder="+970 5X XXX XXXX"
-                        className="mt-1 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="linkedin_url" className="text-gray-200">LinkedIn / Portfolio</Label>
-                      <Input
-                        id="linkedin_url"
-                        name="linkedin_url"
-                        type="url"
-                        value={form.linkedin_url}
-                        onChange={onChange}
-                        placeholder="https://linkedin.com/in/yourname"
-                        className="mt-1 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="profile_photo" className="text-gray-200">Profile Photo URL</Label>
-                      <Input
-                        id="profile_photo"
-                        name="profile_photo"
-                        type="url"
-                        value={form.profile_photo}
-                        onChange={onChange}
-                        placeholder="https://drive.google.com/uc?export=view&id=FILE_ID"
-                        className="mt-1 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white"
-                      />
-                      {form.profile_photo && (
-                        <div className="mt-2">
-                          <Image
-                            src={form.profile_photo}
-                            alt="preview"
-                            width={44}
-                            height={44}
-                            className="rounded-md object-cover border border-[#00FFB2]/30"
-                          />
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <Label htmlFor="short_bio" className="text-gray-200">Short Bio</Label>
-                      <Textarea
-                        id="short_bio"
-                        name="short_bio"
-                        value={form.short_bio}
-                        onChange={onChange}
-                        placeholder="Tell us a bit about yourself..."
-                        className="mt-1 min-h-[80px] bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white"
-                        maxLength={200}
-                      />
-                      <p className="text-xs text-gray-500 text-right">{form.short_bio.length}/200</p>
-                    </div>
-
-                  
+                  <div className="text-center mb-2">
+                    <h2 className="text-white text-xl mb-2">Basic Information</h2>
+                    <p className="text-gray-400 text-sm">Enter your credentials</p>
                   </div>
-                )}
-              </div>
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="w-full h-11 bg-gradient-to-r from-[#00FFB2] to-[#00d4a0] text-[#0d1425] hover:opacity-90"
-              >
-                {submitting ? 'Creating account…' : 'Create account'}
-              </Button>
 
-              <p className="text-center text-gray-400 text-sm">
-                Already have an account? <a href="/sign-in" className="text-[#00FFB2] hover:text-[#00d4a0] underline-offset-4 hover:underline">Sign in</a>
-              </p>
-            </form>
+                  {/* Name */}
+                  <div className="space-y-1">
+                    <Label htmlFor="full_name" className="text-gray-200">Full Name <span className="text-[#00FFB2]">*</span></Label>
+                    <div className="relative">
+                      <Input
+                        id="full_name"
+                        name="full_name"
+                        value={form.full_name}
+                        onChange={onChange}
+                        placeholder="John Doe"
+                        className="pl-9 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white placeholder:text-gray-500 focus:border-[#00FFB2] focus:ring-[#00FFB2]/30"
+                      />
+                      <User className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                    {errors.full_name && <p className="text-xs text-red-400">{errors.full_name}</p>}
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-1">
+                    <Label htmlFor="email" className="text-gray-200">Email <span className="text-[#00FFB2]">*</span></Label>
+                    <div className="relative">
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        value={form.email}
+                        onChange={onChange}
+                        placeholder="you@example.com"
+                        className="pl-9 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white placeholder:text-gray-500 focus:border-[#00FFB2] focus:ring-[#00FFB2]/30"
+                      />
+                      <Mail className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                    {errors.email && <p className="text-xs text-red-400">{errors.email}</p>}
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-1">
+                    <Label htmlFor="password" className="text-gray-200">Password <span className="text-[#00FFB2]">*</span></Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        name="password"
+                        type={showPass ? 'text' : 'password'}
+                        value={form.password}
+                        onChange={onChange}
+                        placeholder="••••••••"
+                        className="pl-9 pr-9 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white placeholder:text-gray-500 focus:border-[#00FFB2] focus:ring-[#00FFB2]/30"
+                      />
+                      <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <button type="button" onClick={() => setShowPass(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {showPass ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
+                      </button>
+                    </div>
+                    {form.password && (
+                      <div className="flex items-center gap-2 text-xs">
+                        {passwordStrength.score <= 1 && <XCircle className="w-3 h-3 text-red-400" />}
+                        {passwordStrength.score === 2 && <AlertCircle className="w-3 h-3 text-yellow-400" />}
+                        {passwordStrength.score >= 3 && <CheckCircle2 className="w-3 h-3 text-[#00FFB2]" />}
+                        <span className={passwordStrength.color}>Password strength: {passwordStrength.label}</span>
+                      </div>
+                    )}
+                    {errors.password && <p className="text-xs text-red-400">{errors.password}</p>}
+                  </div>
+
+                  {/* Confirm */}
+                  <div className="space-y-1">
+                    <Label htmlFor="confirmPassword" className="text-gray-200">Confirm Password <span className="text-[#00FFB2]">*</span></Label>
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        name="confirmPassword"
+                        type={showConfirm ? 'text' : 'password'}
+                        value={form.confirmPassword}
+                        onChange={onChange}
+                        placeholder="••••••••"
+                        className="pl-9 pr-9 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white placeholder:text-gray-500 focus:border-[#00FFB2] focus:ring-[#00FFB2]/30"
+                      />
+                      <Lock className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <button type="button" onClick={() => setShowConfirm(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {showConfirm ? <EyeOff className="w-4 h-4 text-gray-400" /> : <Eye className="w-4 h-4 text-gray-400" />}
+                      </button>
+                    </div>
+                    {!passwordsMatch && form.confirmPassword && (
+                      <p className="text-xs text-red-400 flex items-center gap-1">
+                        <XCircle className="w-3 h-3" /> Passwords don't match
+                      </p>
+                    )}
+                    {errors.confirmPassword && <p className="text-xs text-red-400">{errors.confirmPassword}</p>}
+                  </div>
+
+                  {/* Mentor optional mini fields داخل Basic */}
+                  {role === 'mentor' && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                      <div className="space-y-1 md:col-span-1">
+                        <Label className="text-gray-200">Years (opt.)</Label>
+                        <Input
+                          type="number" min={0}
+                          value={mentorFields.yearsOfExperience}
+                          onChange={(e) => setMentorFields(s => ({ ...s, yearsOfExperience: e.target.value }))}
+                          placeholder="5"
+                          className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white placeholder:text-gray-500"
+                        />
+                      </div>
+                      <div className="space-y-1 md:col-span-1">
+                        <Label className="text-gray-200">Field (opt.)</Label>
+                        <Input
+                          value={mentorFields.field}
+                          onChange={(e) => setMentorFields(s => ({ ...s, field: e.target.value }))}
+                          placeholder="Software Architecture"
+                          className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white placeholder:text-gray-500"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+
+              {/* STEP 3: Optional (Country/Expertise/LinkedIn/Photo/Bio) */}
+              {currentStep === 3 && (
+                <motion.div
+                  key="step3"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="space-y-4"
+                >
+                  <div className="text-center mb-2">
+                    <h2 className="text-white text-xl mb-2">Additional (Optional)</h2>
+                    <p className="text-gray-400 text-sm">This helps personalize your experience</p>
+                  </div>
+
+                  {/* Country (يرسل كـ Country بحرف كبير) */}
+                  <div className="space-y-1">
+                    <Label className="text-gray-200">Country</Label>
+                    <Select value={form.country} onValueChange={(v) => setForm(p => ({ ...p, country: v }))}>
+                      <SelectTrigger className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white">
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#1a1f35] border-[#00FFB2]/30 text-white max-h-56">
+                        {COUNTRIES.map(c => (
+                          <SelectItem key={c.code} value={c.code} className="focus:bg-[#00FFB2]/10 focus:text-[#00FFB2]">
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      Will be sent as <span className="text-[#00FFB2]">Country</span> (capital C).
+                    </p>
+                  </div>
+
+                  {/* Expertise */}
+                  <div className="space-y-1">
+                    <Label className="text-gray-200">Area of Expertise</Label>
+                    <Select value={form.area_of_expertise} onValueChange={(v) => setForm(p => ({ ...p, area_of_expertise: v }))}>
+                      <SelectTrigger className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white">
+                        <SelectValue placeholder="Select your expertise" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#1a1f35] border-[#00FFB2]/30 text-white max-h-56">
+                        {EXPERTISE.map(x => (
+                          <SelectItem key={x} value={x}>
+                            {x}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* LinkedIn */}
+                  <div className="space-y-1">
+                    <Label htmlFor="linkedin_url" className="text-gray-200">LinkedIn / Portfolio</Label>
+                    <Input
+                      id="linkedin_url"
+                      name="linkedin_url"
+                      type="url"
+                      value={form.linkedin_url}
+                      onChange={onChange}
+                      placeholder="https://linkedin.com/in/yourname"
+                      className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white placeholder:text-gray-500"
+                    />
+                  </div>
+
+                  {/* Profile Photo (اختياري — رفع لاحقاً) */}
+                  <div className="space-y-2">
+                    <Label htmlFor="profilePhoto" className="text-gray-200">Profile Photo</Label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        id="profilePhoto"
+                        name="profilePhoto"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => { if (e.target.files?.[0]) setProfilePhoto(e.target.files[0]); }}
+                      />
+                      <label
+                        htmlFor="profilePhoto"
+                        className="flex items-center gap-2 px-4 py-2 bg-[#1a1f35]/60 border border-[#00FFB2]/30 rounded-md text-gray-300 hover:border-[#00FFB2]/50 hover:bg-[#1a1f35] cursor-pointer transition-all"
+                      >
+                        <Upload className="w-4 h-4" />
+                        <span className="text-sm">{profilePhoto ? profilePhoto.name : 'Choose file'}</span>
+                      </label>
+                      {photoPreview && <img src={photoPreview} alt="preview" className="w-10 h-10 rounded-md object-cover border border-[#00FFB2]/30" />}
+                    </div>
+                  </div>
+
+                  {/* Bio */}
+                  <div className="space-y-1">
+                    <Label htmlFor="short_bio" className="text-gray-200">Short Bio</Label>
+                    <Textarea
+                      id="short_bio"
+                      name="short_bio"
+                      value={form.short_bio}
+                      onChange={onChange}
+                      placeholder="Tell us a bit about yourself..."
+                      className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white placeholder:text-gray-500 min-h-[80px] resize-none"
+                      maxLength={200}
+                    />
+                    <p className="text-xs text-gray-500 text-right">{form.short_bio.length}/200</p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Navigation */}
+            <div className="flex gap-3 pt-4">
+              {currentStep > 1 && (
+                <Button
+                  type="button"
+                  onClick={prevStep}
+                  variant="outline"
+                  className="flex-1 bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white hover:bg-[#1a1f35] hover:border-[#00FFB2]/50"
+                >
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+              )}
+
+              {currentStep < 3 ? (
+                <Button
+                  type="submit"               // ← Next صار submit
+                  disabled={!canGoNext}       // ← تعطيل بحسب صحة الخطوة
+                  className="flex-1 bg-gradient-to-r from-[#00FFB2] to-[#00d4a0] hover:from-[#00d4a0] hover:to-[#00FFB2] text-[#0d1425] transition-all shadow-lg hover:shadow-xl hover:shadow-[#00FFB2]/30"
+                >
+                  Next
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex-1 bg-gradient-to-r from-[#00FFB2] to-[#00d4a0] hover:from-[#00d4a0] hover:to-[#00FFB2] text-[#0d1425] transition-all shadow-lg hover:shadow-xl hover:shadow-[#00FFB2]/30"
+                >
+                  {submitting ? 'Creating account…' : 'Create Account'}
+                </Button>
+              )}
+            </div>
+          </form>
+
+          <div className="text-center mt-6">
+            <p className="text-gray-400 text-sm">
+              Already have an account? <a href="/login" className="text-[#00FFB2] hover:text-[#00d4a0] underline-offset-4 hover:underline">Sign in</a>
+            </p>
           </div>
         </Card>
-      </div>
+      </motion.div>
     </div>
   );
 }
