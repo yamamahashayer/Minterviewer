@@ -5,21 +5,27 @@ import { useRouter, useParams } from "next/navigation";
 import {
   Mail, Phone, MapPin, Calendar, Briefcase, GraduationCap,
   Edit2, Save, X, Trophy, Target, TrendingUp, Award,
-  CheckCircle2, Clock
+  CheckCircle2, Clock,
+  Building2
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Textarea } from "../../components/ui/textarea";
 import { Badge } from "../../components/ui/badge";
+import MenteeBackgroundSection from "./MenteeBackgroundSection";
 
 type Theme = "dark" | "light";
 
+// ========== Types ==========
 type ApiUser = {
   _id: string;
   full_name?: string;
   email?: string;
   role?: string;
   created_at?: string;
+  short_bio?: string;
+  phoneNumber?: string;
+  Country?: string;      // ← انتِ بتخزّنيها C كبيرة
 };
 
 type ApiMentee = {
@@ -28,12 +34,20 @@ type ApiMentee = {
   overall_score: number;
   total_interviews: number;
   points_earned: number;
-  joined_date?: string; // ISO
+  joined_date?: string;
   active: boolean;
+  phone?: string;
+  location?: string;
+  education?: string;
+  company?: string;
+  skills?: { name: string; level: number; samples?: number; updated_at?: string }[];
+  time_invested_minutes?: number;
 };
 
-const EDITABLE_KEYS = ["name", "bio", "email", "phone", "location"] as const;
+// ========== Helpers ==========
+const EDITABLE_KEYS = ["name", "bio", "phone", "location"] as const; // email خارج التحرير
 type EditableKey = typeof EDITABLE_KEYS[number];
+
 function diff(next: Record<string, any>, prev: Record<string, any>) {
   const changed: Record<string, any> = {};
   for (const k of EDITABLE_KEYS) {
@@ -42,6 +56,10 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
   return changed;
 }
 
+const fmtMinutes = (m?: number) =>
+  typeof m !== "number" || m <= 0 ? "—" : `${Math.floor(m / 60)}h ${m % 60}m`;
+
+// ========== Component ==========
 export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
   const isDark = theme === "dark";
   const router = useRouter();
@@ -51,7 +69,6 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
   const [err, setErr] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
 
-  // بيانات العرض/التحرير
   const [profile, setProfile] = useState({
     name: "—",
     title: "Mentee",
@@ -63,6 +80,7 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
     company: "—",
     education: "—",
     active: true,
+    skills: [] as { name: string; level: number; samples?: number; updated_at?: string }[],
   });
   const [editedProfile, setEditedProfile] = useState(profile);
   const [isEditing, setIsEditing] = useState(false);
@@ -76,14 +94,6 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
     { label: "Achievements", value: "—", change: "", icon: Trophy },
   ]);
 
-  const skills = [
-    { name: "React", level: 95 },
-    { name: "Python", level: 90 },
-    { name: "TypeScript", level: 88 },
-    { name: "Node.js", level: 85 },
-    { name: "AI/ML", level: 80 },
-    { name: "System Design", level: 82 },
-  ];
   const achievements = [
     { id: 1, title: "Interview Master", description: "Completed 50+ AI interviews", icon: Trophy, color: "text-amber-400" },
     { id: 2, title: "Top Performer", description: "Ranked in top 10% this month", icon: Award, color: "text-teal-400" },
@@ -100,7 +110,6 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
   useEffect(() => {
     const fromUrl = params?.userId;
     if (fromUrl) { setUserId(fromUrl); return; }
-
     try {
       const raw = typeof window !== "undefined" ? sessionStorage.getItem("user") : null;
       if (!raw) { router.replace("/login"); return; }
@@ -136,25 +145,29 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
         const mapped = {
           name: user?.full_name ?? "—",
           title: "Mentee",
-          bio: "Passionate learner on Minterviewer.",
+          bio: user?.short_bio ?? "Passionate learner on Minterviewer.",
           email: user?.email ?? "—",
-          phone: "—",
-          location: "—",
+          phone: (user as any)?.phoneNumber ?? (mentee as any)?.phone ?? "—",
+          location: (user as any)?.Country ?? (user as any)?.country ?? (mentee as any)?.location ?? "—",
           joinedDate: joined,
-          company: "—",
-          education: "—",
+          company: mentee?.company ?? "—",
+          education: mentee?.education ?? "—",
+          skills: mentee?.skills ?? [],
           active: mentee?.active ?? true,
+
         };
 
         setProfile(mapped);
         setEditedProfile(mapped);
+        const total = mentee?.total_interviews ?? 0;
+        const avgNum = mentee?.overall_score ?? 0;
+        const timeText = fmtMinutes(mentee?.time_invested_minutes);
 
-        const avg = mentee?.overall_score ?? 0;
         setStats([
-          { label: "Total Interviews", value: String(mentee?.total_interviews ?? 0), change: "", icon: CheckCircle2 },
-          { label: "Average Score", value: avg ? `${avg.toFixed(1)}/10` : "—", change: "", icon: TrendingUp },
-          { label: "Time Invested", value: "—", change: "", icon: Clock },
-          { label: "Achievements", value: "—", change: "", icon: Trophy },
+          { label: "Total Interviews", value: String(total), change: "", icon: CheckCircle2 },
+          { label: "Average Score",   value: avgNum > 0 ? `${avgNum.toFixed(1)}/10` : "—", change: "", icon: TrendingUp },
+          { label: "Time Invested",   value: timeText, change: "", icon: Clock },
+          { label: "Achievements",    value: String(achievements.length), change: "", icon: Trophy },
         ]);
 
         setErr(null);
@@ -201,7 +214,7 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
       setProfile(updated);
       setEditedProfile(updated);
       setIsEditing(false);
-    } catch (e) {
+    } catch {
       alert("Failed to save profile");
     } finally {
       setSaving(false);
@@ -212,7 +225,6 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
     setEditedProfile(profile);
     setIsEditing(false);
   };
-
   if (loading) return <div className={`min-h-screen p-8 ${isDark ? "text-white" : ""}`}>Loading…</div>;
   if (err) return <div className="min-h-screen p-8 text-red-500">Failed: {err}</div>;
 
@@ -359,11 +371,11 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
             {isEditing ? (
               <Input
                 value={editedProfile.email}
-                onChange={(e) => setEditedProfile({ ...editedProfile, email: e.target.value })}
-                className={`flex-1 ${
+                readOnly
+                className={`flex-1 cursor-not-allowed ${
                   isDark
-                    ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.3)] text-white"
-                    : "bg-white border-[#ddd6fe] text-[#2e1065]"
+                    ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.3)] text-white opacity-80"
+                    : "bg-[#f5f3ff] border-[#ddd6fe] text-[#6b21a8] opacity-80"
                 }`}
               />
             ) : (
@@ -448,115 +460,59 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
         {/* Left Column - Skills & Experience */}
         <div className="lg:col-span-2 space-y-6">
           {/* Skills */}
-          <div
-            className={`${
-              isDark
-                ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]"
-                : "bg-white shadow-lg"
-            } border ${isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"} rounded-xl p-6 backdrop-blur-sm`}
-          >
-            <h3 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-6 flex items-center gap-2 font-semibold`}>
-              <Target className={isDark ? "text-teal-300" : "text-purple-600"} size={20} />
-              Skills & Expertise
-            </h3>
-            <div className="space-y-4">
-              {skills.map((skill, index) => (
-                <div key={index}>
-                  <div className="flex justify-between mb-2">
-                    <span className={`${isDark ? "text-[#d1d5dc]" : "text-[#2e1065]"} font-medium`}>{skill.name}</span>
-                    <span className={`${isDark ? "text-teal-300" : "text-purple-600"} font-bold`}>{skill.level}%</span>
-                  </div>
-                  <div
-                    className={`h-2 ${isDark ? "bg-[rgba(255,255,255,0.05)]" : "bg-purple-100"} rounded-full overflow-hidden`}
-                  >
-                    <div
-                      className={`h-full bg-gradient-to-r ${
-                        isDark ? "from-teal-300 to-emerald-400" : "from-purple-600 to-pink-600"
-                      } rounded-full transition-all duration-500`}
-                      style={{ width: `${skill.level}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+            <div
+              className={`${
+                isDark
+                  ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]"
+                  : "bg-white shadow-lg"
+              } border ${isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"} rounded-xl p-6 backdrop-blur-sm`}
+            >
+              <h3 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-6 flex items-center gap-2 font-semibold`}>
+                <Target className={isDark ? "text-teal-300" : "text-purple-600"} size={20} />
+                Skills & Expertise
+              </h3>
 
-          {/* Experience & Education */}
-          <div
-            className={`${
-              isDark
-                ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]"
-                : "bg-white shadow-lg"
-            } border ${isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"} rounded-xl p-6 backdrop-blur-sm`}
-          >
-            <h3 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-6 flex items-center gap-2 font-semibold`}>
-              <Briefcase className={isDark ? "text-teal-300" : "text-purple-600"} size={20} />
-              Professional Background
-            </h3>
-            <div className="space-y-4">
-              <div
-                className={`flex items-start gap-4 pb-4 border-b ${
-                  isDark ? "border-[rgba(94,234,212,0.1)]" : "border-[#ddd6fe]"
-                }`}
-              >
-                <div
-                  className={`w-12 h-12 rounded-lg bg-gradient-to-br ${
-                    isDark ? "from-teal-300 to-emerald-400" : "from-purple-400 to-pink-500"
-                  } flex items-center justify-center text-white shrink-0`}
-                >
-                  <Briefcase size={20} />
-                </div>
-                <div className="flex-1">
-                  {isEditing ? (
-                    <Input
-                      value={editedProfile.company}
-                      onChange={(e) => setEditedProfile({ ...editedProfile, company: e.target.value })}
-                      className={`mb-2 ${
-                        isDark
-                          ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.3)] text-white"
-                          : "bg-white border-[#ddd6fe] text-[#2e1065]"
-                      }`}
-                    />
-                  ) : (
-                    <>
-                      <h4 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-1 font-semibold`}>{profile.title}</h4>
-                      <p className={`${isDark ? "text-teal-300" : "text-purple-600"} mb-2 font-medium`}>{profile.company}</p>
-                      <p className={`${isDark ? "text-[#99a1af]" : "text-[#6b21a8]"} text-xs`}>2022 - Present</p>
-                    </>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <div
-                  className={`w-12 h-12 rounded-lg bg-gradient-to-br ${
-                    isDark ? "from-violet-400 to-purple-500" : "from-pink-400 to-rose-500"
-                  } flex items-center justify-center text-white shrink-0`}
-                >
-                  <GraduationCap size={20} />
-                </div>
-                <div className="flex-1">
-                  {isEditing ? (
-                    <Input
-                      value={editedProfile.education}
-                      onChange={(e) => setEditedProfile({ ...editedProfile, education: e.target.value })}
-                      className={`${
-                        isDark
-                          ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.3)] text-white"
-                          : "bg-white border-[#ddd6fe] text-[#2e1065]"
-                      }`}
-                    />
-                  ) : (
-                    <>
-                      <h4 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-1 font-semibold`}>
-                        {profile.education}
-                      </h4>
-                      <p className={`${isDark ? "text-[#99a1af]" : "text-[#6b21a8]"} text-xs`}>2018 - 2022</p>
-                    </>
-                  )}
-                </div>
+              <div className="space-y-4">
+                {Array.isArray(profile.skills) && profile.skills.length > 0 ? (
+                  profile.skills.map(
+                    (skill: { name: string; level: number; samples?: number; updated_at?: string }, index: number) => {
+                      const lvl = Math.max(0, Math.min(100, Number(skill.level) || 0));
+                      return (
+                        <div key={`${skill.name}-${index}`}>
+                          <div className="flex justify-between mb-2">
+                            <span className={`${isDark ? "text-[#d1d5dc]" : "text-[#2e1065]"} font-medium`}>{skill.name}</span>
+                            <span className={`${isDark ? "text-teal-300" : "text-purple-600"} font-bold`}>{lvl}%</span>
+                          </div>
+                          <div className={`h-2 ${isDark ? "bg-[rgba(255,255,255,0.05)]" : "bg-purple-100"} rounded-full overflow-hidden`}>
+                            <div
+                              className={`h-full bg-gradient-to-r ${isDark ? "from-teal-300 to-emerald-400" : "from-purple-600 to-pink-600"} rounded-full transition-all duration-500`}
+                              style={{ width: `${lvl}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    }
+                  )
+                ) : (
+                  <div className="text-center py-6 opacity-80">
+                    <div className="flex justify-center mb-3">
+                      <Target className={isDark ? "text-teal-300" : "text-purple-600"} size={28} />
+                    </div>
+                    <p className={isDark ? "text-[#c3d4d8]" : "text-[#4c1d95]"}>No skills recorded yet.</p>
+                    <p className={isDark ? "text-[#9bb0b5]" : "text-[#6b21a8]"}>
+                      Complete your first AI interview to start building your skills profile!
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
+            
+          {userId && (
+            <MenteeBackgroundSection
+              userId={userId}
+              theme={isDark ? "dark" : "light"}
+            />
+          )}
 
           {/* Recent Activity */}
           <div

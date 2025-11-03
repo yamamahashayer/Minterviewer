@@ -11,10 +11,10 @@ const clean = (u)=>{ if(!u) return u; const { password_hash, ...rest } = u; retu
 
 async function safeFindOneAndUpdate(Model, filter, update, options){
   try {
-    if (!update || (update.$set && Object.keys(update.$set).length===0)) return await Model.findOne(filter).lean();
+    if (!update || (update.$set && Object.keys(update.$set).length===0)) 
+      return await Model.findOne(filter).lean();
     return await Model.findOneAndUpdate(filter, update, { new:true, runValidators:true, ...options }).lean();
   } catch (e) {
-  
     console.warn(`[safeUpdate ${Model.modelName}]`, e?.message);
     return await Model.findOne(filter).lean();
   }
@@ -42,32 +42,30 @@ export async function GET(req, ctx){
 }
 
 // ========== PUT ==========
-// يستقبل body: { profile: { name?, email?, phone?, location?, bio?, expertise? } }
 export async function PUT(req, ctx){
   try{
     const { userId } = await resolveParams(ctx) ?? {};
     if (!isObjectId(userId)) return NextResponse.json({ message:"Invalid userId" }, { status:400 });
 
-    let body; try { body = await req.json(); } 
+    let body; 
+    try { body = await req.json(); } 
     catch { return NextResponse.json({ message:"Invalid JSON body" }, { status:400 }); }
 
-    const p = body?.profile ?? {};
-
+    const p = (body && typeof body === "object") ? (body.profile ?? body) : {};
     const has = (k)=> Object.prototype.hasOwnProperty.call(p, k);
 
-
+    // -------- USER Updates --------
     const userSet = {};
     if (has("name"))      userSet.full_name = (p.name ?? "").trim();
-    if (has("email"))     userSet.email = (p.email ?? "").trim();
     if (has("phone"))     userSet.phoneNumber = (p.phone ?? "").trim();
-    if (has("location"))  userSet.country = (p.location ?? "").trim();
+    if (has("location"))  userSet.Country = (p.location ?? "").trim();
     if (has("expertise")) userSet.area_of_expertise = (p.expertise ?? "").trim();
+    if (has("bio"))       userSet.short_bio = (p.bio ?? "").trim(); // ✅ هنا صح
 
+    // -------- MENTEE Updates --------
     const menteeSet = {};
-    if (has("bio"))       menteeSet.bio = (p.bio ?? "").trim();
     if (has("phone"))     menteeSet.phone = (p.phone ?? "").trim();
     if (has("location"))  menteeSet.location = (p.location ?? "").trim();
-    // لو بدك تحفظي الاسم أيضًا داخل mentee لو عنده حقل name، هان بتقدري:
     if (has("name"))      menteeSet.name = (p.name ?? "").trim();
     if (has("expertise")) menteeSet.expertise = (p.expertise ?? "").trim();
 
@@ -77,9 +75,6 @@ export async function PUT(req, ctx){
 
     await connectDB();
     const _id = new mongoose.Types.ObjectId(userId);
-
-    let userDoc = await User.findById(_id).select("-password_hash").lean();
-    if (!userDoc) return NextResponse.json({ message:"User not found" }, { status:404 });
 
     const [ userUpd, menteeUpd ] = await Promise.all([
       safeFindOneAndUpdate(User,   { _id }, { $set: userSet }),
