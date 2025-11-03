@@ -47,7 +47,6 @@ function useCaretRestore<T extends HTMLInputElement | HTMLTextAreaElement>(value
     const el = ref.current as (T & { setSelectionRange?: (s: number, e: number) => void }) | null;
     if (!el) return;
     const { start, end } = selRef.current;
-    // أرجعي المؤشّر فقط إذا كان العنصر حاليًا هو الـactiveElement
     if (start !== null && end !== null && typeof el.setSelectionRange === "function" && document.activeElement === el) {
       try { el.setSelectionRange(start, end); } catch {}
     }
