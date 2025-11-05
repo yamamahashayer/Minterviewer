@@ -6,7 +6,6 @@ import Background from "@/models/Background";
 
 const isObjectId = (id: string) => /^[a-fA-F0-9]{24}$/.test(String(id ?? ""));
 
-// يفك params لو كانت Promise (سلوك Next App Router)
 async function resolveParams(ctx: any): Promise<{ userId?: string } | undefined> {
   const p = ctx?.params;
   return (p && typeof p.then === "function") ? await p : p;
@@ -25,7 +24,6 @@ export async function GET(
 
     await connectDB();
 
-    // نحصل على mentee._id من user._id
     const mentee = await Mentee.findOne({ user: new mongoose.Types.ObjectId(userId) }).lean();
     if (!mentee) return NextResponse.json({ ok: false, message: "Mentee not found" }, { status: 404 });
 

@@ -149,7 +149,6 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
 
         const { user, mentee }: { user: ApiUser; mentee: ApiMentee | null } = await r.json();
 
-        // NEW: احفظ معرّف الـMentee لاستخدامه لاحقًا
         setMenteeId(mentee?._id ?? null);
 
         const joined =
@@ -454,6 +453,7 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
           </div>
         </div>
       </div>
+
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
