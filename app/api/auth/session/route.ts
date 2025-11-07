@@ -24,7 +24,6 @@ export async function GET(req: Request) {
       return NextResponse.json({ ok: false, message: "Invalid token payload" }, { status: 401 });
     }
 
-    // 👇 اجلب المستخدم من القاعدة لتجهيز الحقول الإضافية
     const u = await User.findById(userId)
       .select("full_name email phoneNumber Country linkedin_url profile_photo role")
       .lean<{

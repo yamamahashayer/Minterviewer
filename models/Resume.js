@@ -3,11 +3,14 @@ import mongoose, { Schema, model, models } from "mongoose";
 const ResumeSchema = new Schema(
   {
     mentee: { type: Schema.Types.ObjectId, ref: "Mentee", index: true },
-    user:   { type: Schema.Types.ObjectId, ref: "User", index: true }, // اختياري
-    role:   { type: String, default: "Software Engineer" },
-    source: { type: String, enum: ["affinda", "fallback"], default: "affinda" },
-    parsed: { type: Schema.Types.Mixed },  
-    html:   { type: String, required: true }, 
+    user:   { type: Schema.Types.ObjectId, ref: "User", index: true }, 
+    source: {
+      type: String,
+      enum: ["affinda", "builder"],
+      default: "builder"
+    }
+,    parsed: { type: Schema.Types.Mixed },
+    html:   { type: String, default: null, required: false },
   },
   { timestamps: true }
 );

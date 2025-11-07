@@ -196,28 +196,35 @@ export default function PreviewStep({
 
 
   // ====== API actions ======
-  async function saveToDB(): Promise<string | null> {
-    if (!userId) return null; 
+async function saveToDB(): Promise<string | null> {
+    if (!userId) {
+      alert("Sign in required");
+      return null;
+    }
     setLoading("save");
     try {
       const html = buildResumeHtml(data);
-      const res = await fetch(`/api/mentees/${userId}/cv`, {
+
+      const res = await fetch(`/api/mentees/${userId}/cv/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           html,
-          role: "Software Engineer",
-          source: "fallback",
           parsed: {},
           menteeId: menteeId || undefined,
         }),
       });
+
       const json = await res.json();
-      if (!res.ok || !json?.ok) return null;
+      if (!res.ok || !json?.ok) {
+        alert(json?.error || "Save failed");
+        return null;
+      }
       const id = json?.resume?._id as string | undefined;
       if (id) setLastResumeId(id || null);
       return id || null;
     } catch {
+      alert("Save failed");
       return null;
     } finally {
       setLoading(null);
@@ -233,7 +240,7 @@ export default function PreviewStep({
       const qs = new URLSearchParams();
       qs.set("format", format === "pdf" ? "pdf" : "word");
       qs.set("resumeId", resumeId);
-      window.open(`/api/mentees/${userId}/cv?${qs.toString()}`, "_blank");
+      window.open(`/api/mentees/${userId}/cv/create?${qs.toString()}`, "_blank");
     } finally {
       setLoading(null);
     }
