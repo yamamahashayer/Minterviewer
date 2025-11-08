@@ -149,6 +149,7 @@ export default function CVReviewPage({
           <UploadMode
             isDark={isDark}
             onBack={() => setMode("choice")}
+            
           />
         );
       }

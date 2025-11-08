@@ -3,32 +3,28 @@ import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
 import Background from "@/models/Background";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const isObjectId = (id: string) => /^[a-fA-F0-9]{24}$/.test(String(id ?? ""));
+const getParams = async (ctx: any) => {
+  const p = ctx?.params; return p && typeof p.then === "function" ? await p : p;
+};
 
-async function resolveParams(ctx: any): Promise<{ id?: string } | undefined> {
-  const p = ctx?.params;
-  return (p && typeof p.then === "function") ? await p : p;
-}
-
-/** PUT /api/background/:id  */
-export async function PUT(
-  req: Request,
-  ctx: { params: { id: string } } | { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: Request, ctx: any) {
   try {
-    const { id } = (await resolveParams(ctx)) ?? {};
+    const { id } = (await getParams(ctx)) ?? {};
     if (!id || !isObjectId(id)) {
       return NextResponse.json({ ok: false, message: "Invalid id" }, { status: 400 });
     }
-
     let body: any;
     try { body = await req.json(); }
     catch { return NextResponse.json({ ok: false, message: "Invalid JSON" }, { status: 400 }); }
 
     await connectDB();
-
     const patch: any = {};
-    if (body.entry_type) patch.entry_type = body.entry_type; // "work" | "education"
+    if (body.entry_type !== undefined) patch.entry_type = body.entry_type;
     if (body.company_name !== undefined) patch.company_name = body.company_name;
     if (body.position !== undefined) patch.position = body.position;
     if (body.school !== undefined) patch.school = body.school;
@@ -51,22 +47,15 @@ export async function PUT(
   }
 }
 
-/** DELETE /api/background/:id  */
-export async function DELETE(
-  _req: Request,
-  ctx: { params: { id: string } } | { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_req: Request, ctx: any) {
   try {
-    const { id } = (await resolveParams(ctx)) ?? {};
+    const { id } = (await getParams(ctx)) ?? {};
     if (!id || !isObjectId(id)) {
       return NextResponse.json({ ok: false, message: "Invalid id" }, { status: 400 });
     }
-
     await connectDB();
-
     const del = await Background.findByIdAndDelete(new mongoose.Types.ObjectId(id)).lean();
     if (!del) return NextResponse.json({ ok: false, message: "Not found" }, { status: 404 });
-
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (err) {
     console.error("DELETE background error:", err);

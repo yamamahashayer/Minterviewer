@@ -91,10 +91,10 @@ function PreserveCaretTextarea(
 /** ========================================= */
 
 export default function MenteeBackgroundSection({
-  userId,
+  menteeId,
   theme = "light",
 }: {
-  userId: string;
+  menteeId: string | null;
   theme?: "dark" | "light";
 }) {
   const isDark = theme === "dark";
@@ -123,10 +123,13 @@ export default function MenteeBackgroundSection({
   const [editPayload, setEditPayload] = React.useState<BgItem | null>(null);
   const [pendingId, setPendingId] = React.useState<string | null>(null);
 
+  const api = (path: string) => `/api/mentees/${encodeURIComponent(menteeId || "")}${path}`;
+
   async function fetchList() {
+    if (!menteeId) return;
     setLoading(true);
     try {
-      const r = await fetch(`/api/mentees/${userId}/background`, { cache: "no-store" });
+      const r = await fetch(api("/background"), { cache: "no-store" });
       const j = await r.json();
       setItems(Array.isArray(j?.items) ? j.items : []);
     } catch {
@@ -137,8 +140,8 @@ export default function MenteeBackgroundSection({
   }
 
   React.useEffect(() => {
-    if (userId) fetchList();
-  }, [userId]);
+    if (menteeId) fetchList();
+  }, [menteeId]);
 
   function RowLabel({ children }: { children: React.ReactNode }) {
     return (
@@ -172,6 +175,7 @@ export default function MenteeBackgroundSection({
 
   // إضافة
   async function addItem() {
+    if (!menteeId) return;
     const body: any =
       addPayload.entry_type === "education"
         ? {
@@ -192,7 +196,7 @@ export default function MenteeBackgroundSection({
           };
 
     try {
-      const r = await fetch(`/api/mentees/${userId}/background`, {
+      const r = await fetch(api("/background"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -218,7 +222,7 @@ export default function MenteeBackgroundSection({
 
   // تعديل
   async function saveEdit(id: string) {
-    if (!editPayload) return;
+    if (!menteeId || !editPayload) return;
     setPendingId(id);
     try {
       const body: Record<string, any> = {};
@@ -227,7 +231,7 @@ export default function MenteeBackgroundSection({
         if (v !== "" && v !== undefined) body[k] = v;
       });
 
-      const r = await fetch(`/api/mentees/${userId}/background/${id}`, {
+      const r = await fetch(api(`/background/${id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -245,10 +249,11 @@ export default function MenteeBackgroundSection({
 
   // حذف
   async function removeItem(id: string) {
+    if (!menteeId) return;
     if (!confirm("Delete this background item?")) return;
     setPendingId(id);
     try {
-      const r = await fetch(`/api/mentees/${userId}/background/${id}`, { method: "DELETE" });
+      const r = await fetch(api(`/background/${id}`), { method: "DELETE" });
       if (!r.ok) throw new Error("Delete failed");
       await fetchList();
     } catch {
@@ -441,7 +446,7 @@ export default function MenteeBackgroundSection({
         <div className="space-y-4">
           {items.map((it) =>
             editId === it._id ? (
-              // EDIT ROW (key ثابت يمنع remount)
+              // EDIT ROW
               <div
                 key={`edit-${it._id}`}
                 className={`rounded-xl p-4 border ${
@@ -632,7 +637,6 @@ export default function MenteeBackgroundSection({
                       variant="ghost"
                       onClick={() => {
                         setEditId(it._id);
-                        // seed كامل لقيم قابلة للتحرير فقط
                         setEditPayload({
                           _id: it._id,
                           entry_type: it.entry_type,
