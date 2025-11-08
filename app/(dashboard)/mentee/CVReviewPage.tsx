@@ -22,6 +22,7 @@ import type {
   StepKey,
   StepMeta,
 } from "../../components/MenteeCV/create/types";
+import UploadMode from "@/app/components/MenteeCV/upload/UploadMode";
 
 export default function CVReviewPage({
   theme = "dark",
@@ -119,32 +120,41 @@ export default function CVReviewPage({
     );
   }
 
-  if (mode === "create") {
-    return (
-      <CreateMode
-        isDark={isDark}
-        allSteps={allSteps}
-        visibleSteps={visibleSteps}
-        activeIdx={activeIdx}
-        setActiveIdx={(updater) => setActiveIdx((i) => updater(i))}
-        cvType={cvType}
-        setCvType={setCvType}
-        cvData={cvData}
-        setCvData={setCvData}
-        targetRole={targetRole}
-        setTargetRole={setTargetRole}
-        jobDescription={jobDescription}
-        setJobDescription={setJobDescription}
-        onBack={() => {
-          setMode("choice");
-          setCvType("general");
-          setActiveIdx(0);
-        }}
-      />
-    );
-  }
+        if (mode === "create") {
+          return (
+            <CreateMode
+              isDark={isDark}
+              allSteps={allSteps}
+              visibleSteps={visibleSteps}
+              activeIdx={activeIdx}
+              setActiveIdx={(updater) => setActiveIdx((i) => updater(i))}
+              cvType={cvType}
+              setCvType={setCvType}
+              cvData={cvData}
+              setCvData={setCvData}
+              targetRole={targetRole}
+              setTargetRole={setTargetRole}
+              jobDescription={jobDescription}
+              setJobDescription={setJobDescription}
+              onBack={() => {
+                setMode("choice");
+                setCvType("general");
+                setActiveIdx(0);
+              }}
+            />
+          );
+        }
+        if (mode === "upload") {
+        return (
+          <UploadMode
+            isDark={isDark}
+            onBack={() => setMode("choice")}
+            
+          />
+        );
+      }
 
-  // upload placeholder
+
   return (
     <div
       className={`min-h-screen p-8 ${

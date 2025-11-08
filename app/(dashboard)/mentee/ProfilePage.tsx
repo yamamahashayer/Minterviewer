@@ -15,7 +15,6 @@ import MenteeBackgroundSection from "./MenteeBackgroundSection";
 
 type Theme = "dark" | "light";
 
-// ===== Types =====
 type ApiUser = {
   _id: string;
   full_name?: string;
@@ -24,7 +23,7 @@ type ApiUser = {
   created_at?: string;
   short_bio?: string;
   phoneNumber?: string;
-  Country?: string; // لاحظ C كبيرة
+  Country?: string;
 };
 
 type ApiMentee = {
@@ -51,7 +50,6 @@ type Activity = {
   timestamp: string;
 };
 
-// ===== Helpers =====
 const EDITABLE_KEYS = ["name", "bio", "phone", "location"] as const;
 type EditableKey = typeof EDITABLE_KEYS[number];
 
@@ -66,18 +64,16 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
 const fmtMinutes = (m?: number) =>
   typeof m !== "number" || m <= 0 ? "—" : `${Math.floor(m / 60)}h ${m % 60}m`;
 
-// ===== Component =====
 export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
   const isDark = theme === "dark";
   const router = useRouter();
   const params = useParams() as { userId?: string };
 
   const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState<string | null>(null);
+  const [err,   setErr]      = useState<string | null>(null);
 
-  // userId (من السيشن أو من URL)
-  const [userId, setUserId] = useState<string | null>(null);
-  // NEW: نمسك معرّف الـmentee لاستخدامه في الأنشطة
+  // من الجلسة/URL
+  const [userId,   setUserId]   = useState<string | null>(null);
   const [menteeId, setMenteeId] = useState<string | null>(null);
 
   const [profile, setProfile] = useState({
@@ -105,7 +101,6 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
     { label: "Achievements", value: "—", change: "", icon: Trophy },
   ]);
 
-  // UI-only Achievements
   const achievements = [
     { id: 1, title: "Interview Master", description: "Completed 50+ AI interviews", icon: Trophy, color: "text-amber-400" },
     { id: 2, title: "Top Performer", description: "Ranked in top 10% this month", icon: TrendingUp, color: "text-teal-400" },
@@ -113,11 +108,10 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
     { id: 4, title: "Quick Learner", description: "Improved score by 40%", icon: TrendingUp, color: "text-violet-400" },
   ];
 
-  // NEW: Recent Activities (Read-only)
   const [activities, setActivities] = useState<Activity[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState<boolean>(true);
 
-  // Resolve userId
+  // 1) resolve userId
   useEffect(() => {
     const fromUrl = params?.userId;
     if (fromUrl) { setUserId(fromUrl); return; }
@@ -133,23 +127,43 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
     }
   }, [params?.userId, router]);
 
-  // Load profile (ويحدد menteeId)
+
+  // 2) resolve menteeId from userId (once)
   useEffect(() => {
     if (!userId) return;
+    (async () => {
+      try {
+        const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
+        const r = await fetch(`/api/mentees/by-user/${userId}`, {
+          cache: "no-store",
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        });
+        if (!r.ok) throw new Error(await r.text());
+        const j = await r.json();
+        const mid = j?.mentee?._id || j?._id;
+        if (mid) setMenteeId(mid);
+        else throw new Error("Mentee not found for this user");
+      } catch (e: any) {
+        setErr(e?.message || "Failed to resolve menteeId");
+      }
+    })();
+  }, [userId, menteeId]);
+
+  // 3) load profile using menteeId
+  useEffect(() => {
+    if (!menteeId) return;
     (async () => {
       try {
         setLoading(true);
         const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
 
-        const r = await fetch(`/api/mentees/${userId}/profile`, {
+        const r = await fetch(`/api/mentees/${menteeId}/profile`, {
           cache: "no-store",
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         });
         if (!r.ok) throw new Error(await r.text());
 
         const { user, mentee }: { user: ApiUser; mentee: ApiMentee | null } = await r.json();
-
-        setMenteeId(mentee?._id ?? null);
 
         const joined =
           mentee?.joined_date
@@ -191,20 +205,20 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
         setLoading(false);
       }
     })();
-  }, [userId]);
+  }, [menteeId]);
 
-  // Track form changes
+  // form change tracker
   useEffect(() => {
     setHasChanges(Object.keys(diff(editedProfile, profile)).length > 0);
   }, [editedProfile, profile]);
 
-  // NEW: Load recent activities (by menteeId)
+  // 4) load activities by menteeId
   useEffect(() => {
     if (!menteeId) return;
     (async () => {
       try {
         setActivitiesLoading(true);
-        const r = await fetch(`/api/mentees/${userId}/activities?limit=8`, { cache: "no-store" });
+        const r = await fetch(`/api/mentees/${menteeId}/activities?limit=8`, { cache: "no-store" });
         const j = await r.json();
         setActivities(Array.isArray(j?.items) ? j.items : []);
       } catch {
@@ -215,9 +229,9 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
     })();
   }, [menteeId]);
 
-  // === actions ===
+  // save using menteeId
   const handleSave = async () => {
-    if (!userId) return;
+    if (!menteeId) return;
     const changed = diff(editedProfile, profile);
     if (Object.keys(changed).length === 0) { setIsEditing(false); return; }
 
@@ -225,7 +239,7 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
       setSaving(true);
       const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
 
-      const res = await fetch(`/api/mentees/${userId}/profile`, {
+      const res = await fetch(`/api/mentees/${menteeId}/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -534,12 +548,8 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
           </div>
 
           {/* MenteeBackgroundSection */}
-          {userId && (
-            <MenteeBackgroundSection
-              userId={userId}
-              theme={isDark ? "dark" : "light"}
-            />
-          )}
+          <MenteeBackgroundSection menteeId={menteeId} />
+
 
           {/* Recent Activity (READ-ONLY, from API) */}
           <div
