@@ -3,23 +3,33 @@ import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
 import Resume from "@/models/Resume";
 import Mentee from "@/models/Mentee";
+import CvAnalysisModel from "@/models/CvAnalysis";
 import jwt from "jsonwebtoken";
+
+// 🧠 أدوات الذكاء الاصطناعي (Gemini)
+import { analyzeWithGemini } from "@/lib/cvAnalysis/gemini";
+import { buildCvPrompt } from "@/lib/cvAnalysis/prompt";
+import { CvSchema } from "@/lib/cvAnalysis/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const isObjectId = (id?: string) => !!id && mongoose.Types.ObjectId.isValid(String(id));
+const isObjectId = (id?: string) =>
+  !!id && mongoose.Types.ObjectId.isValid(String(id));
 
 export async function POST(req: NextRequest, ctx: any) {
   try {
     await connectDB();
 
-    const params = await ctx?.params;
-    const menteeId = params?.menteeId as string | undefined;
+    // 🟣 جلب الـ menteeId (Next.js 14 → ctx.params هو Promise)
+    const { menteeid } = await ctx.params;
+    const menteeId = menteeid as string | undefined;
+
     if (!menteeId || !isObjectId(menteeId)) {
       return NextResponse.json({ ok: false, error: "Invalid menteeId" }, { status: 400 });
     }
 
+    // 🛡️ التحقق من التوكن
     const auth = req.headers.get("authorization") || "";
     const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
     if (!token)
@@ -34,48 +44,63 @@ export async function POST(req: NextRequest, ctx: any) {
     }
 
     const userId = String(payload.id || payload._id);
-    if (!isObjectId(userId)) {
+    if (!isObjectId(userId))
       return NextResponse.json({ ok: false, error: "Invalid userId in token" }, { status: 400 });
-    }
 
-    // ✅ تحقق من أن هذا المنتي تابع فعلاً لهذا اليوزر
+    // ✅ تأكيد أن الـ mentee يخص هذا المستخدم
     const mentee = await Mentee.findOne({ _id: menteeId, user: userId }).select("_id");
-    if (!mentee) {
-      return NextResponse.json(
-        { ok: false, error: "Mentee not linked to this user" },
-        { status: 403 }
-      );
-    }
+    if (!mentee)
+      return NextResponse.json({ ok: false, error: "Mentee not linked to this user" }, { status: 403 });
 
     // 🧾 قراءة body
-    const { resumeId } = await req.json();
-    if (!resumeId || !isObjectId(resumeId)) {
+    const { resumeId, affindaJson } = await req.json();
+    if (!resumeId || !isObjectId(resumeId))
       return NextResponse.json({ ok: false, error: "Invalid resumeId" }, { status: 400 });
-    }
 
-    // 🧠 جلب السيرة الذاتية
     const resume = await Resume.findById(resumeId);
-    if (!resume) {
+    if (!resume)
       return NextResponse.json({ ok: false, error: "Resume not found" }, { status: 404 });
+
+    // ⚙️ fallback ذكي — في حال affindaJson فاضي
+    let parsedData = affindaJson || resume.parsed || {};
+    if (!parsedData || Object.keys(parsedData).length === 0) {
+      console.warn("⚠️ affindaJson is empty, using minimal fallback data for analysis.");
+      parsedData = {
+        name: "Anonymous",
+        summary: "No parsed data available.",
+        skills: [],
+      };
     }
 
-    // ✨ تحليل بسيط (placeholder للـ AI)
-    const fakeAnalysis = {
-      score: 85,
-      atsScore: 78,
-      strengths: ["Well-structured", "Relevant experience"],
-      weaknesses: ["Missing summary section"],
-      improvements: ["Add measurable achievements", "Include more keywords"],
-      redFlags: [],
-      recommendedJobTitles: ["Frontend Developer", "UI Engineer"],
-      keywordCoverage: { matched: ["React", "JavaScript"], missing: ["TypeScript", "Unit Testing"] },
-    };
+    // 🧠 بناء البرومبت وإرسال الطلب إلى Gemini
+    const prompt = buildCvPrompt(parsedData);
+    const geminiResult = await analyzeWithGemini(prompt);
 
-    console.log("🤖 ANALYZE route hit — mentee:", menteeId, "resume:", resumeId);
+    console.log("🤖 Gemini raw result:", geminiResult);
 
-    return NextResponse.json({ ok: true, analysis: fakeAnalysis });
+    // ✅ التحقق من صحة النتيجة عبر Zod schema
+    const analysis = CvSchema.parse(geminiResult);
+
+    // 💾 حفظ النتيجة في قاعدة البيانات
+    const saved = await CvAnalysisModel.create({
+      resume: resume._id,
+      mentee: mentee._id,
+      ...analysis,
+    });
+
+    console.log("📦 Saved CV analysis:", saved._id);
+
+    // 🟢 إرجاع النتيجة
+    return NextResponse.json({
+      ok: true,
+      analysis,
+      savedId: saved._id,
+    });
   } catch (err: any) {
     console.error("💥 ANALYZE error:", err.message || err);
-    return NextResponse.json({ ok: false, error: err.message || "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: err.message || "Server error" },
+      { status: 500 }
+    );
   }
 }
