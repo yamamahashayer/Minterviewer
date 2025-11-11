@@ -1,93 +1,65 @@
-import dbConnect from "@/lib/mongodb";
-import User from "@/models/User";
+import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { NextResponse } from "next/server";
+import connectDB from "@/lib/mongodb";
+import User from "@/models/User";
+import Mentee from "@/models/Mentee";
 
-const SECRET_KEY = process.env.JWT_SECRET!;
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-export async function POST(req: Request) {
-    try {
-        const { email, password } = await req.json();
+export async function POST(req: NextRequest) {
+  try {
+    await connectDB();
 
-        if (!email || !password) {
-            return NextResponse.json(
-                { message: "Email and password are required" },
-                { status: 400 }
-            );
-        }
-
-        await dbConnect();
-
-        const user = await User.findOne({ email });
-        if (!user) {
-            return NextResponse.json(
-                { message: "Invalid email or password" },
-                { status: 401 }
-            );
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password_hash);
-        if (!isMatch) {
-            return NextResponse.json(
-                { message: "Invalid email or password" },
-                { status: 401 }
-            );
-        }
-
-        const token = jwt.sign(
-            {
-                id: user._id,
-                email: user.email,
-                role: user.role,
-                full_name: user.full_name,
-            },
-            SECRET_KEY,
-            { expiresIn: "7d" }
-        );
-
-        let redirectUrl = "/";
-        switch (user.role) {
-            case "mentor":
-                redirectUrl = "/mentor/dashboard";
-                break;
-            case "mentee":
-                redirectUrl = "/mentee";
-
-                break;
-            case "company":
-                redirectUrl = "/company/dashboard";
-                break;
-            case "admin":
-                redirectUrl = "/admin/dashboard";
-                break;
-            default:
-                redirectUrl = "/";
-        }
-
-        // 7️⃣ Return token + user info + redirect path
-        return NextResponse.json(
-            {
-                message: "Login successful",
-                token,
-                redirectUrl,
-                user: {
-                    id: user._id,
-                    email: user.email,
-                    full_name: user.full_name,
-                    role: user.role,
-                },
-            },
-            { status: 200 }
-        );
-    } catch (error: unknown) {
-        console.error(
-            "[SIGNIN_ERROR]",
-            error instanceof Error ? error.message : String(error)
-        );
-        return NextResponse.json(
-            { message: "Internal Server Error" },
-            { status: 500 }
-        );
+    const { email, password } = await req.json();
+    if (!email || !password) {
+      return NextResponse.json({ message: "Missing email or password" }, { status: 400 });
     }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
+    }
+
+    const valid = await bcrypt.compare(password, user.password_hash);
+    if (!valid) {
+      return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
+    }
+
+    // ✅ إنشاء JWT
+    const secret = process.env.JWT_SECRET!;
+    const token = jwt.sign(
+      {
+        id: user._id.toString(),
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role,
+      },
+      secret,
+      { expiresIn: "7d" }
+    );
+
+    // ✅ جلب menteeId (إن وجد)
+    const mentee = await Mentee.findOne({ user: user._id }).select("_id");
+    const menteeId = mentee?._id?.toString() || null;
+
+    // ✅ إرجاع الرد مع التوكن
+    return NextResponse.json({
+      ok: true,
+      message: "Login successful",
+      token, // ← مهم جدًا
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        full_name: user.full_name,
+        role: user.role,
+        menteeId,
+      },
+      redirectUrl: "/mentee?tab=overview",
+    });
+  } catch (err: any) {
+    console.error("💥 Signin error:", err);
+    return NextResponse.json({ message: err.message || "Server error" }, { status: 500 });
+  }
 }
