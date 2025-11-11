@@ -4,12 +4,21 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   FileText,
-  TrendingUp,
   Target,
+  TrendingUp,
   CheckCircle2,
   Sparkles,
+  Layers,
+  BookOpen,
+  Brain,
+  Award,
+  Download,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
+import html2pdf from "html2pdf.js";
+import HistorySection from "./History/Analyzed";
+import Analyzed from "./History/Analyzed";
 
 export default function CVReportView({
   data,
@@ -26,6 +35,9 @@ export default function CVReportView({
   const [fetched, setFetched] = useState<any | null>(data || null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<
+    "details" | "improve" | "keywords" | "history"
+  >("details");
 
   const resumeIdFromUrl = searchParams.get("resumeId") || resumeId;
 
@@ -55,187 +67,257 @@ export default function CVReportView({
     })();
   }, [menteeId, resumeIdFromUrl, fetched]);
 
-  // 🔹 اختيار النتيجة الصحيحة (من props أو DB)
   const result = fetched?.analysis || fetched || data;
 
-  // 🔹 حالة التحميل
   if (loading) {
     return (
       <div className="text-center py-16 text-gray-400 animate-pulse">
-        <p>Loading your AI report...</p>
+        <p>Analyzing your resume with Gemini AI...</p>
       </div>
     );
   }
 
-  // 🔹 حالة الخطأ
   if (error) {
     return (
-      <div className="text-center py-12 text-rose-400">
+      <div className="text-center py-12 text-rose-500">
         <p>⚠️ {error}</p>
       </div>
     );
   }
 
-  // 🔹 حالة عدم وجود بيانات
   if (!result) {
     return (
       <div className="text-center py-12 text-gray-400">
-        <p>No analysis data available.</p>
+        <p>No analysis data available yet.</p>
       </div>
     );
   }
 
-  // ✅ عرض التقرير
-  return (
-    <div className="space-y-10">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-        <div>
-          <h1
-            className={`text-3xl font-bold ${
-              isDark
-                ? "bg-gradient-to-r from-teal-300 to-emerald-400 bg-clip-text text-transparent"
-                : "text-[#2e1065]"
-            }`}
-          >
-            CV Review & Optimization
-          </h1>
-          <p className="text-sm text-gray-400 mt-1">
-            Personalized AI insights for your resume
-          </p>
-          {menteeId && (
-            <p className="text-xs text-gray-500 mt-1">
-              Mentee: {menteeId} • Resume: {resumeIdFromUrl}
-            </p>
-          )}
-        </div>
+  const categories = result.categories || {};
 
-        <div className="flex gap-3 mt-4 md:mt-0">
-          <Button
-            variant="outline"
-            className="border-white/20 hover:bg-white/10"
-          >
-            Download Optimized
-          </Button>
-          <Button
-            onClick={() => window.location.reload()}
-            className="bg-teal-400 text-[#0a0f1e] hover:bg-teal-300"
-          >
-            Upload New CV
-          </Button>
-        </div>
-      </div>
-
-      {/* Scores */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <ScoreCard
-          icon={<FileText size={20} />}
-          label="Overall Score"
-          value={result?.score || 0}
-          color="teal"
-        />
-        <ScoreCard
-          icon={<Target size={20} />}
-          label="ATS Score"
-          value={result?.atsScore || 0}
-          color="emerald"
-        />
-        <ScoreCard
-          icon={<TrendingUp size={20} />}
-          label="Keyword Match"
-          value={(result?.keywordCoverage?.matched?.length || 0) * 10}
-          color="purple"
-        />
-        <ScoreCard
-          icon={<CheckCircle2 size={20} />}
-          label="Impact"
-          value={Math.min(100, (result?.strengths?.length || 1) * 10)}
-          color="orange"
-        />
-      </div>
-
-      {/* Sections */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Section title="Strengths" items={result?.strengths || []} color="emerald" />
-        <Section title="Weaknesses" items={result?.weaknesses || []} color="rose" />
-        <Section
-          title="Recommended Improvements"
-          items={result?.improvements || []}
-          color="purple"
-        />
-        <Section
-          title="Missing Keywords"
-          items={result?.keywordCoverage?.missing || []}
-          color="amber"
-        />
-      </div>
-
-      {/* 🔹 Recommended Job Titles */}
-      {result?.recommendedJobTitles?.length > 0 && (
-        <div
-          className={`rounded-xl border border-white/10 p-6 ${
-            isDark ? "bg-white/5" : "bg-purple-50"
-          }`}
-        >
-          <h3 className="text-lg font-semibold mb-3">Recommended Job Titles</h3>
-          <div className="flex flex-wrap gap-2">
-            {result.recommendedJobTitles.map((title: string, i: number) => (
-              <span
-                key={i}
-                className="px-3 py-1 text-sm rounded-full bg-teal-500/10 border border-teal-400/20 text-teal-300"
-              >
-                {title}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="text-center mt-10">
-        <Sparkles className="inline-block text-teal-400 mb-2" />
-        <p className="text-sm text-gray-400">
-          Analysis powered by <span className="text-teal-300">Gemini AI</span>
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/* 🔹 مكون بطاقة النتيجة */
-function ScoreCard({
-  icon,
-  label,
-  value,
-  color = "teal",
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  color?: string;
-}) {
-  const colorMap: Record<string, string> = {
-    teal: "from-teal-400 to-emerald-400",
-    emerald: "from-emerald-400 to-lime-400",
-    purple: "from-purple-400 to-pink-400",
-    orange: "from-orange-400 to-amber-400",
-    rose: "from-rose-400 to-pink-400",
-    amber: "from-amber-400 to-yellow-300",
+  const handleDownload = () => {
+    const element = document.getElementById("cv-report-content");
+    if (!element) return;
+    html2pdf().set({
+      margin: 0.5,
+      filename: "CV_Analysis_Report.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+    }).from(element).save();
   };
 
   return (
     <div
-      className={`p-5 rounded-xl border border-white/10 bg-white/5 flex flex-col gap-2`}
+      id="cv-report-content"
+      className={`min-h-screen px-8 py-10 transition-colors duration-300 ${
+        isDark
+          ? "bg-[#0b1020] text-white"
+          : "bg-gradient-to-br from-[#fdfbff] via-[#f5f0ff] to-[#faf5ff] text-[#2e1065]"
+      }`}
     >
-      <div className="text-sm font-medium flex items-center gap-2 text-gray-300">
+      {/* Header */}
+      <div
+        className={`rounded-2xl border p-6 mb-10 ${
+          isDark
+            ? "bg-white/5 border-white/10"
+            : "bg-white border-[#e9d5ff] shadow-sm"
+        }`}
+      >
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1
+              className={`text-3xl font-extrabold ${
+                isDark
+                  ? "bg-gradient-to-r from-teal-300 to-emerald-400 bg-clip-text text-transparent"
+                  : "bg-gradient-to-r from-[#9333ea] to-[#ec4899] bg-clip-text text-transparent"
+              }`}
+            >
+              CV Review & Optimization
+            </h1>
+            <p
+              className={`text-sm mt-1 ${
+                isDark ? "text-gray-400" : "text-[#7e22ce]/80"
+              }`}
+            >
+              AI-powered feedback to perfect your resume.
+            </p>
+            {menteeId && (
+              <p className="text-xs text-gray-500 mt-1">
+                Mentee: {menteeId} • Resume: {resumeIdFromUrl}
+              </p>
+            )}
+          </div>
+
+          <div className="flex gap-3 mt-2 md:mt-0">
+            <Button
+              onClick={handleDownload}
+              variant="outline"
+              className={`transition-all ${
+                isDark
+                  ? "border-white/20 hover:bg-white/10"
+                  : "border-[#e9d5ff] text-[#6b21a8] hover:bg-[#f3e8ff]"
+              }`}
+            >
+              <Download size={16} className="mr-2" /> Download Optimized
+            </Button>
+            <Button
+              onClick={() => (window.location.href = "/mentee?tab=cv-review")}
+              className={
+                isDark
+                  ? "bg-teal-400 text-[#0a0f1e] hover:bg-teal-300"
+                  : "bg-gradient-to-r from-[#a855f7] to-[#ec4899] text-white hover:opacity-90"
+              }
+            >
+              <RefreshCw size={16} className="mr-2" /> Upload New CV
+            </Button>
+          </div>
+        </div>
+
+        {/* Scores */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
+          <ScoreBox
+            icon={<FileText size={18} />}
+            label="Overall Score"
+            value={result?.score || 0}
+            color="emerald"
+            isDark={isDark}
+          />
+          <ScoreBox
+            icon={<Target size={18} />}
+            label="ATS Score"
+            value={result?.atsScore || 0}
+            color="teal"
+            isDark={isDark}
+          />
+          <ScoreBox
+            icon={<TrendingUp size={18} />}
+            label="Keyword Match"
+            value={result?.keywordCoverage?.matched?.length * 10 || 0}
+            color="purple"
+            isDark={isDark}
+          />
+          <ScoreBox
+            icon={<CheckCircle2 size={18} />}
+            label="Impact"
+            value={Math.min(100, (result?.strengths?.length || 1) * 10)}
+            color="amber"
+            isDark={isDark}
+          />
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div
+        className={`flex gap-6 text-sm mb-8 ${
+          isDark ? "text-gray-300" : "text-[#5b21b6]"
+        }`}
+      >
+        {[
+          { key: "details", label: "Detailed Feedback" },
+          { key: "improve", label: "Improvements" },
+          { key: "history", label: "History" },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key as any)}
+            className={`pb-1 transition-all ${
+              activeTab === tab.key
+                ? "font-semibold border-b-2 border-teal-400 text-teal-400"
+                : "hover:text-teal-300"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === "details" && (
+        <div className="grid md:grid-cols-2 gap-6">
+          <CategoryCard
+            title={categories.formatting?.title || "Formatting & Structure"}
+            icon={<Layers />}
+            score={categories.formatting?.score || 0}
+            insights={categories.formatting?.insights || []}
+            color="teal"
+            isDark={isDark}
+          />
+          <CategoryCard
+            title={categories.content?.title || "Content Quality"}
+            icon={<BookOpen />}
+            score={categories.content?.score || 0}
+            insights={categories.content?.insights || []}
+            color="emerald"
+            isDark={isDark}
+          />
+          <CategoryCard
+            title={categories.keywords?.title || "Keywords & ATS"}
+            icon={<Brain />}
+            score={categories.keywords?.score || 0}
+            insights={categories.keywords?.insights || []}
+            color="purple"
+            isDark={isDark}
+          />
+          <CategoryCard
+            title={categories.experience?.title || "Experience & Impact"}
+            icon={<Award />}
+            score={categories.experience?.score || 0}
+            insights={categories.experience?.insights || []}
+            color="amber"
+            isDark={isDark}
+          />
+        </div>
+      )}
+
+      {activeTab === "improve" && (
+        <ImprovementSection
+          improvements={result?.improvements || []}
+          isDark={isDark}
+        />
+      )}
+
+
+
+      {activeTab === "history" && <Analyzed menteeId={menteeId} isDark={isDark} />}
+    </div>
+  );
+}
+
+/* ✅ Score Box */
+function ScoreBox({ icon, label, value, color, isDark }: any) {
+  const colorMap = {
+    teal: "from-teal-400 to-emerald-400",
+    emerald: "from-emerald-400 to-lime-400",
+    purple: "from-purple-400 to-pink-400",
+    amber: "from-amber-400 to-yellow-400",
+  };
+
+  return (
+    <div
+      className={`p-4 rounded-xl border flex flex-col gap-2 ${
+        isDark
+          ? "border-white/10 bg-white/5"
+          : "border-[#e9d5ff] bg-white hover:bg-[#faf5ff]"
+      }`}
+    >
+      <div
+        className={`text-sm flex items-center gap-2 ${
+          isDark ? "text-gray-300" : "text-[#4c1d95]"
+        }`}
+      >
         {icon} {label}
       </div>
       <div
-        className={`text-3xl font-bold bg-gradient-to-r ${colorMap[color]} bg-clip-text text-transparent`}
+        className={`text-2xl font-bold bg-gradient-to-r ${colorMap[color]} bg-clip-text text-transparent`}
       >
-        {value}
+        {value}/100
       </div>
-      <div className="h-2 bg-white/10 rounded-full overflow-hidden mt-1">
+      <div
+        className={`h-2 rounded-full overflow-hidden ${
+          isDark ? "bg-white/10" : "bg-[#f3e8ff]"
+        }`}
+      >
         <div
           className={`h-full bg-gradient-to-r ${colorMap[color]}`}
           style={{ width: `${Math.min(value, 100)}%` }}
@@ -245,41 +327,89 @@ function ScoreCard({
   );
 }
 
-/* 🔹 مكون عرض القوائم */
-function Section({
-  title,
-  items,
-  color = "teal",
-}: {
-  title: string;
-  items: string[];
-  color?: string;
-}) {
-  const colorMap: Record<string, string> = {
-    teal: "border-teal-400/30 bg-teal-500/5",
-    emerald: "border-emerald-400/30 bg-emerald-500/5",
-    purple: "border-purple-400/30 bg-purple-500/5",
-    rose: "border-rose-400/30 bg-rose-500/5",
-    amber: "border-amber-400/30 bg-amber-500/5",
-    orange: "border-orange-400/30 bg-orange-500/5",
+/* ✅ Category Card */
+function CategoryCard({ title, icon, score, insights, color, isDark }: any) {
+  const colorGradients = {
+    teal: "from-teal-400 to-emerald-400",
+    emerald: "from-emerald-400 to-lime-400",
+    purple: "from-purple-400 to-pink-400",
+    amber: "from-amber-400 to-yellow-400",
   };
 
   return (
     <div
-      className={`rounded-xl p-5 border ${colorMap[color]} transition-all duration-200`}
+      className={`p-6 rounded-2xl border shadow-sm transition-all ${
+        isDark
+          ? "bg-white/5 border-white/10 hover:border-teal-400/30"
+          : "bg-white border-[#e9d5ff] hover:border-[#d8b4fe] shadow-md"
+      }`}
     >
-      <h3 className="text-lg font-semibold mb-3">{title}</h3>
-      <ul className="space-y-2 text-sm text-gray-300">
-        {items.length > 0 ? (
-          items.map((i, idx) => (
-            <li key={idx} className="leading-relaxed">
-              • {i}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div
+            className={`p-2 rounded-lg bg-gradient-to-r ${colorGradients[color]} text-transparent bg-clip-text`}
+          >
+            {icon}
+          </div>
+          <h3 className="text-lg font-semibold">{title}</h3>
+        </div>
+        <div
+          className={`text-sm font-semibold bg-gradient-to-r ${colorGradients[color]} bg-clip-text text-transparent`}
+        >
+          {score.toFixed(1)}/10
+        </div>
+      </div>
+
+      <ul
+        className={`space-y-2 text-sm ${
+          isDark ? "text-gray-300" : "text-[#3b0764]/80"
+        }`}
+      >
+        {insights.length > 0 ? (
+          insights.map((point: string, i: number) => (
+            <li key={i} className="flex items-start gap-2">
+              <span className="text-lg">•</span>
+              <span>{point}</span>
             </li>
           ))
         ) : (
-          <li className="text-gray-500 italic">No data available</li>
+          <li className="italic opacity-70">No insights available</li>
         )}
       </ul>
     </div>
   );
 }
+
+/* ✅ Improvements Section */
+function ImprovementSection({ improvements, isDark }: any) {
+  return (
+    <div
+      className={`p-6 rounded-xl border ${
+        isDark
+          ? "bg-white/5 border-white/10"
+          : "bg-white border-[#e9d5ff] shadow-sm"
+      }`}
+    >
+      <h3 className="text-lg font-semibold mb-4">AI Recommendations</h3>
+      <ul
+        className={`space-y-2 text-sm ${
+          isDark ? "text-gray-300" : "text-[#3b0764]/80"
+        }`}
+      >
+        {improvements.length > 0 ? (
+          improvements.map((tip: string, i: number) => (
+            <li key={i} className="flex items-start gap-2">
+              <span className="text-teal-400 font-bold">•</span>
+              <span>{tip}</span>
+            </li>
+          ))
+        ) : (
+          <li className="italic opacity-70">
+            No improvement suggestions available.
+          </li>
+        )}
+      </ul>
+    </div>
+  );
+}
+

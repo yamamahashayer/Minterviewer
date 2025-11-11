@@ -48,7 +48,7 @@ export default function MenteeLayout({ children }: { children: React.ReactNode }
   const toggleTheme = () => setTheme(t => (t === "dark" ? "light" : "dark"));
 
   return (
-    <div className={`${theme === "dark" ? "bg-gradient-to-b from-[#0a0f1e] to-black" : "bg-[#f5f3ff]"} min-h-screen`}>
+      <div className={`${theme === "dark" ? "bg-gradient-to-b from-[#0b0f19] via-[#0a0f1e] to-black" : "bg-[#f5f3ff]"} min-h-screen`}>
       {/* Mobile overlay */}
       {isSidebarOpen && <div className="fixed inset-0 bg-black/50 z-30 lg:hidden" onClick={() => setIsSidebarOpen(false)} />}
 
