@@ -18,6 +18,7 @@ import GoalsPage from "@/app/(dashboard)/mentee/GoalsPage";
 import ReportsPage from "@/app/(dashboard)/mentee/ReportsPage";
 import SettingsPage from "@/app/(dashboard)/mentee/SettingsPage";
 import HelpSupportPage from "@/app/(dashboard)/mentee/HelpSupportPage";
+import CVReportPage from "./CVReportPage";
 
 type Theme = "dark" | "light";
 

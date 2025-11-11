@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Upload, RefreshCw, ArrowLeft, Sparkles } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
-import CVReportCard from "../../MenteeCV/CVReportCard";
 
 type Props = {
   isDark?: boolean;
@@ -34,7 +33,6 @@ export default function UploadCV({ isDark = true, onBack, onSuccess, onError }: 
   const [aiLoading, setAiLoading] = useState(false);
   const [analysis, setAnalysis] = useState<any | null>(null);
 
-  // 🧠 تحميل session واستخراج menteeId فقط
   useEffect(() => {
     const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
     if (!token) return;
@@ -87,78 +85,108 @@ export default function UploadCV({ isDark = true, onBack, onSuccess, onError }: 
     setFile(f);
   }
 
-  async function sendToAffinda() {
-    if (!file) return;
-    if (!menteeId) {
-      const m = "Mentee not detected — please login again.";
-      setMsgKind("err"); setMsg(m); onError?.(m);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setMsg("");
-      setResumeId("");
-      setAnalysis(null);
-
-      const fd = new FormData();
-      fd.append("file", file);
-
-      console.log("🚀 Uploading to /api/mentees/" + menteeId + "/cv/upload");
-
-      const res = await fetch(`/api/mentees/${menteeId}/cv/upload`, {
-        method: "POST",
-        body: fd,
-      });
-
-      const contentType = res.headers.get("content-type") || "";
-      const data = contentType.includes("application/json") ? await res.json() : {};
-
-      if (!res.ok) {
-        const errText = data?.error || res.statusText;
-        throw new Error(errText || "Upload failed");
-      }
-
-      const newResumeId: string = data?.resumeId || data?.resume?._id || data?.id || "";
-      setMsgKind("ok");
-      setMsg("Uploaded successfully ✅");
-      setFile(null);
-      setResumeId(newResumeId);
-      onSuccess?.(newResumeId);
-    } catch (e: any) {
-      const m = e?.message || "Something went wrong";
-      setMsgKind("err"); setMsg(m); onError?.(m);
-    } finally {
-      setLoading(false);
-    }
+async function sendToAffinda() {
+  if (!file) return;
+  if (!menteeId) {
+    const m = "Mentee not detected — please login again.";
+    setMsgKind("err"); setMsg(m); onError?.(m);
+    return;
   }
 
-  async function runAiAnalysis() {
-    if (!menteeId || !resumeId) return;
-    try {
-      setAiLoading(true);
-      setAnalysis(null);
-      setMsg(""); setMsgKind("ok");
+  try {
+    setLoading(true);
+    setMsg("");
+    setResumeId("");
+    setAnalysis(null);
 
-      const res = await fetch(`/api/mentees/${menteeId}/cv/analyze`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resumeId }),
-      });
+    const fd = new FormData();
+    fd.append("file", file);
 
-      const json = await res.json();
-      if (!res.ok || !json?.ok) throw new Error(json?.error || "AI analysis failed");
+    console.log("🚀 Uploading to /api/mentees/" + menteeId + "/cv/upload");
 
-      setAnalysis(json.analysis || json);
-      setMsgKind("ok");
-      setMsg("AI analysis completed ✨");
-    } catch (e: any) {
-      setMsgKind("err");
-      setMsg(e?.message || "AI analysis error");
-    } finally {
-      setAiLoading(false);
+    const res = await fetch(`/api/mentees/${menteeId}/cv/upload`, {
+      method: "POST",
+      body: fd,
+    });
+
+    const contentType = res.headers.get("content-type") || "";
+    const data = contentType.includes("application/json") ? await res.json() : {};
+
+    if (!res.ok) {
+      const errText = data?.error || res.statusText;
+      throw new Error(errText || "Upload failed");
     }
+
+    const newResumeId: string = data?.resumeId || data?.resume?._id || data?.id || "";
+    setMsgKind("ok");
+    setMsg("Uploaded successfully ✅");
+    setFile(null);
+    setResumeId(newResumeId);
+
+    await runAiAnalysisAfterUpload(newResumeId);
+
+  } catch (e: any) {
+    const m = e?.message || "Something went wrong";
+    setMsgKind("err"); setMsg(m); onError?.(m);
+  } finally {
+    setLoading(false);
   }
+}
+
+async function runAiAnalysisAfterUpload(uploadedResumeId: string) {
+  try {
+    setAiLoading(true);
+    setAnalysis(null);
+    setMsg("");
+    setMsgKind("ok");
+
+    let token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
+    if (!token) {
+      const s = await fetch("/api/auth/session", { cache: "no-store" });
+      const js = await s.json();
+      token = js?.token || null;
+    }
+    if (!token) throw new Error("⚠️ Missing login token — please sign in again.");
+
+    console.log("📥 Fetching parsed data from Affinda...");
+    console.log("🧩 menteeId:", menteeId);
+    console.log("🧩 resumeId:", uploadedResumeId);
+
+    const affindaRes = await fetch(
+      `/api/mentees/${menteeId}/cv/parsed?resumeId=${uploadedResumeId}`,
+      { cache: "no-store" }
+    );
+    const affindaJson = affindaRes.ok ? await affindaRes.json() : {};
+
+    console.log("🚀 Sending analyze request to Gemini...");
+    const res = await fetch(`/api/mentees/${menteeId}/cv/analyze`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ resumeId: uploadedResumeId, affindaJson }),
+    });
+
+    const json = await res.json();
+    if (!res.ok || !json) throw new Error(json?.error || "AI analysis failed");
+    console.log("✅ AI Analysis done:", json);
+
+    onSuccess?.({
+      menteeId,
+      resumeId: uploadedResumeId,
+      analysis: json,
+    });
+
+  } catch (e: any) {
+    console.error("❌ AI error:", e);
+    setMsgKind("err");
+    setMsg(e?.message || "AI analysis error");
+  } finally {
+    setAiLoading(false);
+  }
+}
+
 
   return (
     <div
@@ -287,21 +315,7 @@ export default function UploadCV({ isDark = true, onBack, onSuccess, onError }: 
             Send to Affinda
           </Button>
 
-          {resumeId && (
-            <Button
-              type="button"
-              onClick={runAiAnalysis}
-              disabled={aiLoading}
-              className={
-                isDark ? "bg-white/10 hover:bg-white/15 border border-white/20"
-                       : "bg-white border border-[#ddd6fe] text-[#2e1065] hover:bg-purple-50"
-              }
-              title="Analyze with AI"
-            >
-              {aiLoading ? <RefreshCw size={16} className="mr-2 animate-spin" /> : <Sparkles size={16} className="mr-2" />}
-              Analyze with AI
-            </Button>
-          )}
+        
         </div>
 
         <p className={`mt-4 text-sm ${isDark ? "text-[#6a7282]" : "text-[#7c3aed]"}`}>
@@ -328,12 +342,6 @@ export default function UploadCV({ isDark = true, onBack, onSuccess, onError }: 
           onChange={(e) => handleChosen(e.target.files?.[0] || undefined)}
         />
       </div>
-
-      {analysis && (
-        <div className="max-w-4xl mx-auto mt-8">
-          <CVReportCard data={analysis} />
-        </div>
-      )}
     </div>
   );
 }

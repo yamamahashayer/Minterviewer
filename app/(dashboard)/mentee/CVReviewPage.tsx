@@ -15,6 +15,8 @@ import {
 import { Button } from "../../components/ui/button";
 import ChoiceScreen from "../../components/MenteeCV/ChoiceScreen";
 import CreateMode from "../../components/MenteeCV/create/CreateMode";
+import UploadMode from "@/app/components/MenteeCV/upload/UploadMode";
+import CVReportView from "@/app/components/MenteeCV/report/CVReportView";
 
 import type {
   CVData,
@@ -22,7 +24,6 @@ import type {
   StepKey,
   StepMeta,
 } from "../../components/MenteeCV/create/types";
-import UploadMode from "@/app/components/MenteeCV/upload/UploadMode";
 
 export default function CVReviewPage({
   theme = "dark",
@@ -31,7 +32,17 @@ export default function CVReviewPage({
 }) {
   const isDark = theme === "dark";
 
-  const [mode, setMode] = useState<"choice" | "upload" | "create">("choice");
+  // 🟢 الحالات الأساسية
+  const [mode, setMode] = useState<"choice" | "upload" | "create" | "report">("choice");
+
+  // 🟢 البيانات المجمعة من التحليل (بغض النظر عن المصدر)
+  const [analysisData, setAnalysisData] = useState<{
+    menteeId?: string;
+    resumeId?: string;
+    analysis?: any;
+  } | null>(null);
+
+  // 🧠 بيانات الإنشاء اليدوي
   const [cvType, setCvType] = useState<CvType>("general");
   const [cvData, setCvData] = useState<CVData>({
     personal: {
@@ -72,6 +83,7 @@ export default function CVReviewPage({
   const [targetRole, setTargetRole] = useState<string>("");
   const [jobDescription, setJobDescription] = useState<string>("");
 
+  // 📋 إعداد خطوات الإنشاء
   const allSteps: StepMeta[] = [
     { key: "type", title: "CV Type", icon: Target },
     { key: "target", title: "Targeting", icon: Target },
@@ -93,7 +105,7 @@ export default function CVReviewPage({
       "experience",
       "education",
       "skills",
-      "projects", // ✅
+      "projects",
       "summary",
       "preview",
     ];
@@ -106,7 +118,7 @@ export default function CVReviewPage({
     }
   }, [visibleSteps, activeIdx]);
 
-  // ========== واجهات ==========
+  // 🟢 شاشة البداية
   if (mode === "choice") {
     return (
       <ChoiceScreen
@@ -120,41 +132,92 @@ export default function CVReviewPage({
     );
   }
 
-        if (mode === "create") {
-          return (
-            <CreateMode
-              isDark={isDark}
-              allSteps={allSteps}
-              visibleSteps={visibleSteps}
-              activeIdx={activeIdx}
-              setActiveIdx={(updater) => setActiveIdx((i) => updater(i))}
-              cvType={cvType}
-              setCvType={setCvType}
-              cvData={cvData}
-              setCvData={setCvData}
-              targetRole={targetRole}
-              setTargetRole={setTargetRole}
-              jobDescription={jobDescription}
-              setJobDescription={setJobDescription}
-              onBack={() => {
-                setMode("choice");
-                setCvType("general");
-                setActiveIdx(0);
-              }}
-            />
-          );
-        }
-        if (mode === "upload") {
-        return (
-          <UploadMode
-            isDark={isDark}
-            onBack={() => setMode("choice")}
-            
-          />
-        );
-      }
+  // 🟢 وضع الإنشاء اليدوي
+  if (mode === "create") {
+    return (
+      <CreateMode
+        isDark={isDark}
+        allSteps={allSteps}
+        visibleSteps={visibleSteps}
+        activeIdx={activeIdx}
+        setActiveIdx={(updater) => setActiveIdx((i) => updater(i))}
+        cvType={cvType}
+        setCvType={setCvType}
+        cvData={cvData}
+        setCvData={setCvData}
+        targetRole={targetRole}
+        setTargetRole={setTargetRole}
+        jobDescription={jobDescription}
+        setJobDescription={setJobDescription}
+        onBack={() => {
+          setMode("choice");
+          setCvType("general");
+          setActiveIdx(0);
+        }}
+        // ✅ استلام تحليل من الإنشاء اليدوي
+        onSubmit={(data) => {
+          setAnalysisData({
+            menteeId: data?.menteeId,
+            resumeId: data?.resumeId,
+            analysis: data?.analysis || data,
+          });
+          setMode("report");
+        }}
+      />
+    );
+  }
 
+  // 🟢 وضع رفع CV
+  if (mode === "upload") {
+    return (
+      <UploadMode
+        isDark={isDark}
+        onBack={() => setMode("choice")}
+        // ✅ استلام تحليل من رفع Affinda
+        onSuccess={(data) => {
+          setAnalysisData({
+            menteeId: data?.menteeId,
+            resumeId: data?.resumeId,
+            analysis: data?.analysis || data,
+          });
+          setMode("report");
+        }}
+      />
+    );
+  }
 
+  // 🟢 وضع التقرير النهائي
+  if (mode === "report") {
+    return (
+      <div
+        className={`min-h-screen p-8 transition-all ${
+          isDark ? "bg-[#0a0f1e] text-white" : "bg-[#f5f3ff] text-[#2e1065]"
+        }`}
+      >
+        <CVReportView
+          data={analysisData?.analysis}
+          menteeId={analysisData?.menteeId}
+          resumeId={analysisData?.resumeId}
+          isDark={isDark}
+        />
+
+        <div className="flex justify-end mt-8">
+          <Button
+            onClick={() => setMode("choice")}
+            className={
+              isDark
+                ? "bg-white/10 hover:bg-white/15 border border-white/20"
+                : "bg-white border border-[#ddd6fe] text-[#2e1065] hover:bg-purple-50"
+            }
+          >
+            ← Back to Main
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // ⚙️ fallback افتراضي
   return (
     <div
       className={`min-h-screen p-8 ${
