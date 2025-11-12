@@ -13,17 +13,17 @@ import {
 } from "lucide-react";
 
 import { Button } from "../../components/ui/button";
-import ChoiceScreen from "../../components/MenteeCV/ChoiceScreen";
-import CreateMode from "../../components/MenteeCV/create/CreateMode";
-import UploadMode from "@/app/components/MenteeCV/upload/UploadMode";
-import CVReportView from "@/app/components/MenteeCV/report/CVReportView";
+import ChoiceScreen from "../../components/MenteePages/MenteeCV/ChoiceScreen";
+import CreateMode from "../../components/MenteePages/MenteeCV/create/CreateMode";
+import UploadMode from "@/app/components/MenteePages/MenteeCV/upload/UploadMode";
+import CVReportView from "@/app/components/MenteePages/MenteeCV/report/CVReportView";
 
 import type {
   CVData,
   CvType,
   StepKey,
   StepMeta,
-} from "../../components/MenteeCV/create/types";
+} from "../../components/MenteePages/MenteeCV/create/types";
 
 export default function CVReviewPage({
   theme = "dark",

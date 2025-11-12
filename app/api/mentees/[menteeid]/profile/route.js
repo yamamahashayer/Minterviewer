@@ -43,13 +43,16 @@ export async function GET(req, ctx) {
     const url = new URL(req.url);
     const debug = url.searchParams.get("debug") === "1";
 
-    // ✅ يدعم menteeId و menteeid لمنع مشاكل الـcase أو كاش ويندوز
     const p = (await resolveParams(ctx)) ?? {};
     const menteeId = String(p.menteeId ?? p.menteeid ?? p.id ?? "").trim();
 
     if (!isObjectId(menteeId)) {
       return NextResponse.json(
-        { message: "Invalid menteeId", received: menteeId, ...(debug && { params: p }) },
+        {
+          message: "Invalid menteeId",
+          received: menteeId,
+          ...(debug && { params: p }),
+        },
         { status: 400 }
       );
     }
@@ -59,7 +62,10 @@ export async function GET(req, ctx) {
 
     const mentee = await Mentee.findById(_menteeId).lean();
     if (!mentee) {
-      return NextResponse.json({ message: "Mentee not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Mentee not found" },
+        { status: 404 }
+      );
     }
 
     const user = mentee.user
@@ -79,13 +85,16 @@ export async function PUT(req, ctx) {
     const url = new URL(req.url);
     const debug = url.searchParams.get("debug") === "1";
 
-    // ✅ نفس استخراج البارام
     const p0 = (await resolveParams(ctx)) ?? {};
     const menteeId = String(p0.menteeId ?? p0.menteeid ?? p0.id ?? "").trim();
 
     if (!isObjectId(menteeId)) {
       return NextResponse.json(
-        { message: "Invalid menteeId", received: menteeId, ...(debug && { params: p0 }) },
+        {
+          message: "Invalid menteeId",
+          received: menteeId,
+          ...(debug && { params: p0 }),
+        },
         { status: 400 }
       );
     }
@@ -94,48 +103,62 @@ export async function PUT(req, ctx) {
     try {
       body = await req.json();
     } catch {
-      return NextResponse.json({ message: "Invalid JSON body" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Invalid JSON body" },
+        { status: 400 }
+      );
     }
 
-    const payload = body && typeof body === "object" ? body.profile ?? body : {};
+    const payload =
+      body && typeof body === "object" ? body.profile ?? body : {};
     const has = (k) => Object.prototype.hasOwnProperty.call(payload, k);
 
     /* -------- USER updates -------- */
     const userSet = {};
     if (has("name")) userSet.full_name = String(payload.name ?? "").trim();
     if (has("phone")) userSet.phoneNumber = String(payload.phone ?? "").trim();
-    if (has("location")) userSet.Country = String(payload.location ?? "").trim();
-    if (has("expertise")) userSet.area_of_expertise = String(payload.expertise ?? "").trim();
+    if (has("location"))
+      userSet.Country = String(payload.location ?? "").trim();
+    if (has("expertise"))
+      userSet.area_of_expertise = String(payload.expertise ?? "").trim();
     if (has("bio")) userSet.short_bio = String(payload.bio ?? "").trim();
 
     /* -------- MENTEE updates -------- */
     const menteeSet = {};
     if (has("phone")) menteeSet.phone = String(payload.phone ?? "").trim();
-    if (has("location")) menteeSet.location = String(payload.location ?? "").trim();
+    if (has("location"))
+      menteeSet.location = String(payload.location ?? "").trim();
     if (has("name")) menteeSet.name = String(payload.name ?? "").trim();
-    if (has("expertise")) menteeSet.expertise = String(payload.expertise ?? "").trim();
+    if (has("expertise"))
+      menteeSet.expertise = String(payload.expertise ?? "").trim();
 
-    if (Object.keys(userSet).length === 0 && Object.keys(menteeSet).length === 0) {
-      return NextResponse.json({ message: "Nothing to update" }, { status: 400 });
+    if (
+      Object.keys(userSet).length === 0 &&
+      Object.keys(menteeSet).length === 0
+    ) {
+      return NextResponse.json(
+        { message: "Nothing to update" },
+        { status: 400 }
+      );
     }
 
     await connectDB();
     const _menteeId = new mongoose.Types.ObjectId(menteeId);
 
-    // احضر mentee لتحديد المستخدم المرتبط
     const menteeDoc = await Mentee.findById(_menteeId).lean();
     if (!menteeDoc) {
-      return NextResponse.json({ message: "Mentee not found" }, { status: 404 });
+      return NextResponse.json(
+        { message: "Mentee not found" },
+        { status: 404 }
+      );
     }
 
-    // تحديث الـ Mentee
     const menteeUpd = await safeFindOneAndUpdate(
       Mentee,
       { _id: _menteeId },
       { $set: menteeSet }
     );
 
-    // تحديث الـ User إن وجد
     let userUpd = null;
     if (menteeDoc.user && Object.keys(userSet).length > 0) {
       userUpd = await safeFindOneAndUpdate(
@@ -158,7 +181,10 @@ export async function PUT(req, ctx) {
     );
   } catch (err) {
     if (err?.code === 11000 && err?.keyPattern?.email) {
-      return NextResponse.json({ message: "Email already in use" }, { status: 409 });
+      return NextResponse.json(
+        { message: "Email already in use" },
+        { status: 409 }
+      );
     }
     console.error("PUT mentee profile error:", err);
     return NextResponse.json({ message: "Server error" }, { status: 500 });

@@ -2,8 +2,8 @@
 
 import SectionCard from "../shared/SectionCard";
 import StepHeader from "../shared/StepHeader";
-import { Textarea } from "../../../../components/ui/textarea";
-import { Label } from "../../../../components/ui/label";
+import { Textarea } from "../../../../ui/textarea";
+import { Label } from "../../../../ui/label";
 import { Code, Sparkles } from "lucide-react";
 
 type Skills = { technical: string; soft?: string; languages?: string };
