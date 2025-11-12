@@ -6,8 +6,6 @@ import { Input } from "@/app/components/ui/input";
 import { Button } from "@/app/components/ui/button";
 import { Save } from "lucide-react";
 
-// 👇 ملاحظة: لو عندك session مخزن فيها menteeId
-// ممكن تجيبيه من sessionStorage
 export default function AccountSettings({ isDark }: { isDark: boolean }) {
   const [menteeId, setMenteeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -20,43 +18,47 @@ export default function AccountSettings({ isDark }: { isDark: boolean }) {
     bio: "",
   });
 
-  // 🧠 تحميل الـ menteeId من sessionStorage
-  useEffect(() => {
-    const id = sessionStorage.getItem("menteeId");
-    if (id) setMenteeId(id);
-  }, []);
+useEffect(() => {
+  const id = sessionStorage.getItem("menteeId");
+  if (id) {
+    setMenteeId(id);
+  } else {
+    console.warn("⚠️ menteeId not found in sessionStorage yet");
+  }
+}, []);
 
-  // 🧩 جلب البيانات من الباك
-  useEffect(() => {
-    if (!menteeId) return;
-    (async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(`/api/mentees/${menteeId}/settings`, { cache: "no-store" });
-        const json = await res.json();
-        if (json.ok && json.user) {
-          setFormData({
-            name: json.user.name || "",
-            email: json.user.email || "",
-            phone: json.user.phone || "",
-            location: json.user.location || "",
-            bio: json.user.bio || "",
-          });
-        }
-      } catch (err) {
-        console.error("❌ Error loading settings:", err);
-      } finally {
-        setLoading(false);
+
+
+useEffect(() => {
+  if (!menteeId) return;
+  console.log("📡 Fetching settings for:", menteeId);
+  (async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/mentees/${menteeId}/settings`, { cache: "no-store" });
+      const json = await res.json();
+      console.log("✅ Response:", json);
+      if (json.ok && json.user) {
+        setFormData({
+          name: json.user.name || "",
+          email: json.user.email || "",
+          phone: json.user.phone || "",
+          location: json.user.location || "",
+          bio: json.user.bio || "",
+        });
       }
-    })();
-  }, [menteeId]);
+    } catch (err) {
+      console.error("❌ Error loading settings:", err);
+    } finally {
+      setLoading(false);
+    }
+  })();
+}, [menteeId]);
 
-  // 🧾 تحديث الحالة عند الكتابة في الحقول
   const handleChange = (key: string, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
-  // 💾 حفظ التغييرات
   const handleSave = async () => {
     if (!menteeId) return alert("Mentee ID not found!");
     try {

@@ -72,9 +72,6 @@ export async function GET(req: Request, ctx: any) {
           bio:
             user.short_bio ??
             user.bio ??
-            user.description ??
-            user.about ??
-            user.about_me ??
             "",
         },
         preferences: mentee.preferences ?? {

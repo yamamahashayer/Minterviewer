@@ -264,26 +264,26 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
     setIsEditing(false);
   };
 
-if (loading)
-  return (
-    <div
-      className={`flex items-center justify-center min-h-screen ${
-        isDark ? "bg-[#0a0f1e] text-white" : "bg-[#f5f3ff] text-[#2e1065]"
-      }`}
-    >
-      <div className="flex flex-col items-center">
-        {/* Spinner */}
+    if (loading)
+      return (
         <div
-          className={`w-12 h-12 border-4 border-t-transparent rounded-full animate-spin ${
-            isDark ? "border-teal-400" : "border-purple-500"
+          className={`flex items-center justify-center min-h-screen ${
+            isDark ? "bg-[#0a0f1e] text-white" : "bg-[#f5f3ff] text-[#2e1065]"
           }`}
-        />
-        {/* Text */}
-        <p className="mt-4 text-lg font-medium tracking-wide">Loading your profile...</p>
-      </div>
-    </div>
-  );
-  if (err) return <div className="min-h-screen p-8 text-red-500">Failed: {err}</div>;
+        >
+          <div className="flex flex-col items-center">
+            {/* Spinner */}
+            <div
+              className={`w-12 h-12 border-4 border-t-transparent rounded-full animate-spin ${
+                isDark ? "border-teal-400" : "border-purple-500"
+              }`}
+            />
+            {/* Text */}
+            <p className="mt-4 text-lg font-medium tracking-wide">Loading your profile...</p>
+          </div>
+        </div>
+      );
+      if (err) return <div className="min-h-screen p-8 text-red-500">Failed: {err}</div>;
 
   return (
     <div className={`min-h-screen p-8 ${isDark ? "bg-gradient-to-b from-[#0a0f1e] to-[#000000]" : "bg-[#f5f3ff]"}`}>
