@@ -1,18 +1,40 @@
-// models/Notification.js
-import mongoose from 'mongoose';
-import { NotificationType } from './enums.js';
+import mongoose from "mongoose";
 
-const notificationSchema = new mongoose.Schema(
+const NotificationSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    title: { type: String, required: true },
-    message: { type: String, required: true },
-    type: { type: String, enum: Object.values(NotificationType), default: 'SYSTEM' },
-    is_read: { type: Boolean, default: false },
-    related_entity_id: { type: mongoose.Schema.Types.ObjectId },
-    related_entity_type: String,
+    mentee: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Mentee",
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    message: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    type: {
+      type: String,
+      enum: ["achievement", "message", "reminder", "performance", "goal", "system"],
+      default: "system",
+    },
+    read: {
+      type: Boolean,
+      default: false,
+    },
+    firebaseId: {
+      type: String,
+      default: null,
+    },
   },
-  { timestamps: { createdAt: 'created_at', updatedAt: true } }
+  { timestamps: true }
 );
 
-export default mongoose.model('Notification', notificationSchema);
+const Notification =
+  mongoose.models.Notification || mongoose.model("Notification", NotificationSchema);
+
+export default Notification; 
