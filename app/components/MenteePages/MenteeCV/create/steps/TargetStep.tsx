@@ -6,7 +6,7 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Label } from "@/app/components/ui/label";
-import type { CvType } from "@/app/components/MenteeCV/create/types";
+import type { CvType } from "@/app/components/MenteePages/MenteeCV/create/types";
 
 type JDMode = "paste" | "upload" | "url";
 

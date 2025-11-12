@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import type { CVData, CvType } from "@/app/components/MenteeCV/create/types";
+import type { CVData, CvType } from "@/app/components/MenteePages/MenteeCV/create/types";
 import { FileDown, FileText, Save } from "lucide-react";
 
 export default function PreviewStep({

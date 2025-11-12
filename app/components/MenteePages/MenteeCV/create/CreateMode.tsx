@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { Button } from "../../../components/ui/button";
+import { Button } from "../../../ui/button";
 import StepHeader from "./StepHeader";
-import TypeStep from "../create/steps/TypeStep";
-import TargetStep from "../create/steps/TargetStep";
+import TypeStep from "./steps/TypeStep";
+import TargetStep from "./steps/TargetStep";
 import PersonalStep from "./steps/PersonalStep";
 import ExperienceStep from "./steps/experience";
 import EducationStep from "./steps/education";
@@ -14,7 +14,7 @@ import SummaryStep from "./steps/SummaryStep";
 import PreviewStep from "./steps/PreviewStep";
 import ProjectsStep from "./steps/ProjectsStep";
 import { AnimatePresence, motion } from "framer-motion";
-import type { CVData, CvType, StepKey, StepMeta } from "../create/types";
+import type { CVData, CvType, StepKey, StepMeta } from "./types";
 
 type Updater<T> = T | ((prev: T) => T);
 const apply = <T,>(prev: T, next: Updater<T>): T =>

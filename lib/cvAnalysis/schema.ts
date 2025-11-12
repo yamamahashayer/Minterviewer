@@ -1,27 +1,37 @@
-// src/lib/cvAnalysis/schema.ts
+// lib/cvAnalysis/schema.ts
 import { z } from "zod";
 
-// ✅ تعريف Zod Schema للتحقق من شكل تحليل الـ CV
+export const CvCategorySchema = z.object({
+  title: z.string(),
+  score: z.number(),
+  insights: z.array(z.string()),
+});
+
 export const CvSchema = z.object({
-  score: z.number().min(0).max(100),
-  atsScore: z.number().min(0).max(100),
+  score: z.number(),
+  atsScore: z.number(),
   strengths: z.array(z.string()),
   weaknesses: z.array(z.string()),
   improvements: z.array(z.string()),
-  redFlags: z.array(z.string()),
+  redFlags: z.array(z.string()).optional(),
   recommendedJobTitles: z.array(z.string()),
   keywordCoverage: z.object({
     matched: z.array(z.string()),
     missing: z.array(z.string()),
   }),
+  categories: z.object({
+    formatting: CvCategorySchema.optional(),
+    content: CvCategorySchema.optional(),
+    keywords: CvCategorySchema.optional(),
+    experience: CvCategorySchema.optional(),
+  }).optional(),
 });
 
-// ✅ النوع المستنتج من Zod
 export type CvAnalysis = z.infer<typeof CvSchema>;
+export type CvCategory = z.infer<typeof CvCategorySchema>;
 
-// ✅ (اختياري) مواصفات الدور الوظيفي
-export type RoleSpec = {
+export interface RoleSpec {
   title: string;
   mustHaveKeywords: string[];
   niceToHaveKeywords?: string[];
-};
+}

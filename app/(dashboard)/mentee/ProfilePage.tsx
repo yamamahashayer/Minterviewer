@@ -128,26 +128,24 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
   }, [params?.userId, router]);
 
 
-  // 2) resolve menteeId from userId (once)
+  // 2) resolve menteeId مباشرة من السيشن بدل API
   useEffect(() => {
-    if (!userId) return;
-    (async () => {
-      try {
-        const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
-        const r = await fetch(`/api/mentees/by-user/${userId}`, {
-          cache: "no-store",
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        if (!r.ok) throw new Error(await r.text());
-        const j = await r.json();
-        const mid = j?.mentee?._id || j?._id;
-        if (mid) setMenteeId(mid);
-        else throw new Error("Mentee not found for this user");
-      } catch (e: any) {
-        setErr(e?.message || "Failed to resolve menteeId");
+    if (menteeId) return; 
+    try {
+      const rawUser = typeof window !== "undefined" ? sessionStorage.getItem("user") : null;
+      if (!rawUser) {
+        router.replace("/login");
+        return;
       }
-    })();
-  }, [userId, menteeId]);
+      const u = JSON.parse(rawUser);
+      const mid = u?.menteeId || u?.mentee?._id;
+      if (mid) setMenteeId(mid);
+      else console.warn("⚠️ menteeId not found in session user object:", u);
+    } catch (err) {
+      console.error("❌ Failed to get menteeId from session:", err);
+    }
+  }, [router, menteeId]);
+
 
   // 3) load profile using menteeId
   useEffect(() => {
@@ -266,7 +264,25 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
     setIsEditing(false);
   };
 
-  if (loading) return <div className={`min-h-screen p-8 ${isDark ? "text-white" : ""}`}>Loading…</div>;
+if (loading)
+  return (
+    <div
+      className={`flex items-center justify-center min-h-screen ${
+        isDark ? "bg-[#0a0f1e] text-white" : "bg-[#f5f3ff] text-[#2e1065]"
+      }`}
+    >
+      <div className="flex flex-col items-center">
+        {/* Spinner */}
+        <div
+          className={`w-12 h-12 border-4 border-t-transparent rounded-full animate-spin ${
+            isDark ? "border-teal-400" : "border-purple-500"
+          }`}
+        />
+        {/* Text */}
+        <p className="mt-4 text-lg font-medium tracking-wide">Loading your profile...</p>
+      </div>
+    </div>
+  );
   if (err) return <div className="min-h-screen p-8 text-red-500">Failed: {err}</div>;
 
   return (

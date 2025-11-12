@@ -1,7 +1,7 @@
 "use client";
 
 import { Target, CheckCircle, Sparkles } from "lucide-react";
-import type { CvType } from "@/app/components/MenteeCV/create/types";
+import type { CvType } from "@/app/components/MenteePages/MenteeCV/create/types";
 
 export default function TypeStep({
   cvType,
