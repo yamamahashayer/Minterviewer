@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { ThemeProvider } from "@/Context/ThemeContext";
 import { Toaster } from "react-hot-toast";
-import Nav from "./Navbar/Navbar";
-import Footer from "./Footer/Footer";
+import Nav from "./publicPages/Navbar/Navbar";
+import Footer from "./publicPages/Footer/Footer";
 import Loader from "./Loader";
 import { usePathname } from "next/navigation";
 

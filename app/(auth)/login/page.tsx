@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 
-import { NeuralNetworkBackground } from "@/app/components/backgrounds/NeuralNetworkBackground";
+import { NeuralNetworkBackground } from "@/app/components/publicPages/backgrounds/NeuralNetworkBackground";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
