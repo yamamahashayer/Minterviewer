@@ -1,6 +1,6 @@
 'use client';
 
-import "../../components/index.css";
+import "../../../components/index.css";
 import { FaGoogle, FaMicrosoft } from "react-icons/fa6";
 import { SiIntel, SiMeta } from "react-icons/si";
 import { motion } from "framer-motion";

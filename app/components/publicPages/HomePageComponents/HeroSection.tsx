@@ -3,7 +3,7 @@
 
 import Typewriter from "typewriter-effect";
 import Image from "next/image";
-import image from "../../../public/Home.png";
+import image from "../../../../public/Home.png";
 import { useRouter } from "next/navigation";
 import { useTheme } from "../../../../Context/ThemeContext";
 

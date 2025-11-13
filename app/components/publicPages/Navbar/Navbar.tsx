@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import "./Navbar.css";
 import ListItem from "./list";
-import logo from "../../../public/Covering.png";
+import logo from "../../../../public/Covering.png";
 import { BsMoonFill, BsSunFill } from "react-icons/bs";
 import { IoIosArrowForward } from "react-icons/io";
 import { IoClose, IoMenu } from "react-icons/io5";
