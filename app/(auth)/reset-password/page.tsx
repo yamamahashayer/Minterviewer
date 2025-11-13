@@ -2,7 +2,7 @@
 import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
-import { NeuralNetworkBackground } from '@/app/components/backgrounds/NeuralNetworkBackground';
+import { NeuralNetworkBackground } from '@/app/components/publicPages/backgrounds/NeuralNetworkBackground';
 
 export default function ResetPasswordPage() {
   const params = useSearchParams();

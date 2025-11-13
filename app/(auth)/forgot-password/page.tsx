@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Mail, ArrowLeft, CheckCircle } from 'lucide-react';
 import { useState } from 'react';
-import { NeuralNetworkBackground } from '@/app/components/backgrounds/NeuralNetworkBackground';
+import { NeuralNetworkBackground } from '@/app/components/publicPages/backgrounds/NeuralNetworkBackground';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
