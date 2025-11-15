@@ -1,205 +1,237 @@
 "use client";
 
-import { useState } from "react";
-import { Badge } from "@/app/components/ui/badge";
-import { MessageSquare } from "lucide-react";
-
-// Components
+import { useEffect, useState, useRef } from "react";
 import MessagesList from "./MessagesList";
 import MessageDetail from "./MessageDetail";
 import ReplyBox from "./ReplyBox";
-import MessagesHeader from "@/app/components/Messages/MessagesHeader";
 
-// Types
-interface Message {
-  id: number;
-  from: string;
-  fromType: "ai" | "system";
-  subject: string;
-  preview: string;
-  content: string;
-  timestamp: string;
-  read: boolean;
-  starred: boolean;
-  category: "feedback" | "achievement" | "reminder" | "tip";
-  priority: "high" | "normal" | "low";
-}
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+} from "firebase/firestore";
 
-export default function MessagesPage({ theme = "dark" }: { theme?: "dark" | "light" }) {
+import { db } from "@/lib/firebase";
+import { MessageSquare } from "lucide-react";
+import type { IConversation, IMessage } from "./helpers";
+
+export default function MessagesPage({ theme = "light" }) {
   const isDark = theme === "dark";
 
-  const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [replyText, setReplyText] = useState("");
+  const [conversations, setConversations] = useState<IConversation[]>([]);
+  const [selectedConvo, setSelectedConvo] = useState<IConversation | null>(null);
+  const [messages, setMessages] = useState<IMessage[]>([]);
+  const [replyText, setReplyText] = useState<string>("");
+  const [isTyping, setIsTyping] = useState<boolean>(false);
 
-  // =======================
-  // STATIC SAMPLE MESSAGES
-  // =======================
-  const messages: Message[] = [
-    {
-      id: 1,
-      from: "AI Coach Sarah",
-      fromType: "ai",
-      subject: "Great Progress on Technical Interview!",
-      preview: "You've shown excellent improvement in your technical interview skills...",
-      content:
-        "Hi Yamamah,\n\nCongratulations on your recent technical interview performance! You scored 9.2/10.\n\nKey Strengths:\n• Excellent problem-solving\n• Clear communication\n• Strong understanding of data structures\n\nAreas for Growth:\n• Optimize time complexity further\n• Practice edge case identification\n\nKeep going 🚀",
-      timestamp: "2 hours ago",
-      read: false,
-      starred: true,
-      category: "feedback",
-      priority: "high",
-    },
-    {
-      id: 2,
-      from: "Minterviewer System",
-      fromType: "system",
-      subject: "New Achievement Unlocked: Top Performer",
-      preview: "Congratulations! You've unlocked a new achievement...",
-      content:
-        "Congratulations Yamamah!\n\nYou've unlocked the 'Top Performer' achievement for ranking in the top 10% of users.\nReward: +300 points 🎉",
-      timestamp: "5 hours ago",
-      read: false,
-      starred: false,
-      category: "achievement",
-      priority: "normal",
-    },
-    {
-      id: 3,
-      from: "AI Coach Mike",
-      fromType: "ai",
-      subject: "System Design Session Feedback",
-      preview: "Your system design session showed strong architectural thinking...",
-      content:
-        "Hello Yamamah,\n\nThank you for completing the e-commerce platform system design session.\nScore: 8.8/10\n\nHighlights:\n• Scalability\n• Database choices\n• Component design\n\nSuggestions:\n• Caching deeper\n• Add load balancing details\n\nKeep practicing!",
-      timestamp: "1 day ago",
-      read: true,
-      starred: false,
-      category: "feedback",
-      priority: "normal",
-    },
-    {
-      id: 4,
-      from: "Minterviewer System",
-      fromType: "system",
-      subject: "Reminder: Scheduled Interview Today",
-      preview: "You have a technical interview scheduled for today...",
-      content:
-        "Hi Yamamah,\n\nReminder for your practice interview at 10:00AM.\n\nFocus: DSA\nDuration: 60 mins\nJoin early and prepare well 🙌",
-      timestamp: "1 day ago",
-      read: true,
-      starred: false,
-      category: "reminder",
-      priority: "high",
-    },
-    {
-      id: 5,
-      from: "AI Coach Emma",
-      fromType: "ai",
-      subject: "Behavioral Interview Tips",
-      preview: "Here are some tips to improve your STAR method responses...",
-      content:
-        "Hi Yamamah,\n\nBased on your last session, here are personalized tips:\n\n• Improve Result section\n• Prepare 5 stories\n• Show growth mindset\n\nRecommended topics:\nLeadership, conflict resolution, innovation.\n\nLet's practice soon!",
-      timestamp: "2 days ago",
-      read: true,
-      starred: true,
-      category: "tip",
-      priority: "normal",
-    },
-        {
-      id: 6,
-      from: "AI Coach Sarah",
-      fromType: "ai",
-      subject: "Great Progress on Technical Interview!",
-      preview: "You've shown excellent improvement in your technical interview skills...",
-      content:
-        "Hi Yamamah,\n\nCongratulations on your recent technical interview performance! You scored 9.2/10.\n\nKey Strengths:\n• Excellent problem-solving\n• Clear communication\n• Strong understanding of data structures\n\nAreas for Growth:\n• Optimize time complexity further\n• Practice edge case identification\n\nKeep going 🚀",
-      timestamp: "2 hours ago",
-      read: false,
-      starred: true,
-      category: "feedback",
-      priority: "high",
-    },
-  ];
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  // =======================
-  // FILTERS
-  // =======================
-  const filteredMessages = messages.filter(
-    (msg) =>
-      msg.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      msg.from.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      msg.preview.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const unsubscribeRef = useRef<(() => void) | null>(null);
 
-  const unreadCount = messages.filter((m) => !m.read).length;
-  const starredMessages = messages.filter((m) => m.starred);
+  const chatRef = useRef<HTMLDivElement | null>(null);
+  const shouldAutoScrollRef = useRef(true);
 
+  // LOAD USER
+  useEffect(() => {
+    const raw = sessionStorage.getItem("user");
+    if (raw) {
+      const u = JSON.parse(raw);
+      setCurrentUserId(u._id || u.id);
+    }
+  }, []);
+
+  // SCROLL HANDLER
+  const handleScroll = () => {
+    const box = chatRef.current;
+    if (!box) return;
+
+    const distance =
+      box.scrollHeight - box.scrollTop - box.clientHeight;
+
+    shouldAutoScrollRef.current = distance < 120;
+  };
+
+  // AUTO SCROLL
+  useEffect(() => {
+    const box = chatRef.current;
+    if (!box) return;
+
+    const distance =
+      box.scrollHeight - box.scrollTop - box.clientHeight;
+
+    const isNearBottom = distance < 150;
+
+    if (shouldAutoScrollRef.current || isNearBottom) {
+      box.scrollTop = box.scrollHeight;
+    }
+  }, [messages]);
+
+  // LOAD CONVERSATIONS
+  async function loadConversations() {
+    if (!currentUserId) return;
+
+    const res = await fetch(`/api/chat/user/${currentUserId}`);
+    const json = await res.json();
+    if (json.ok) setConversations(json.conversations);
+  }
+
+  useEffect(() => {
+    if (currentUserId) loadConversations();
+  }, [currentUserId]);
+
+  // OPEN CONVO
+  async function openConversation(convo: IConversation) {
+    setSelectedConvo(convo);
+
+    const res = await fetch(`/api/chat/conversation/${convo._id}`);
+    const json = await res.json();
+
+    if (json.ok) {
+      const initial = json.messages.map((msg: any) => ({
+        ...msg,
+        fromSelf: msg.fromUser === currentUserId,
+      }));
+
+      const sorted = initial.sort(
+        (a: IMessage, b: IMessage) =>
+          new Date(a.createdAt).getTime() -
+          new Date(b.createdAt).getTime()
+      );
+
+      setMessages(sorted);
+      shouldAutoScrollRef.current = true;
+    }
+
+    listenRealTime(convo._id);
+    listenTyping(convo);
+    markAsRead(convo._id);
+  }
+
+  // MARK READ
+  async function markAsRead(convoId: string) {
+    await fetch(`/api/chat/mark-read`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        conversationId: convoId,
+        userId: currentUserId,
+      }),
+    });
+  }
+
+  // REALTIME FIRESTORE
+  function listenRealTime(convoId: string) {
+    if (unsubscribeRef.current) unsubscribeRef.current();
+
+    const q = query(
+      collection(db, "messages", convoId, "items"),
+      orderBy("createdAt", "asc")
+    );
+
+    unsubscribeRef.current = onSnapshot(q, (snapshot) => {
+      const realtime = snapshot.docs.map((d) => {
+        const m = d.data();
+        return {
+          _id: m.mongoId || d.id,
+          text: m.text,
+          createdAt: m.createdAt?.toMillis?.() ?? Date.now(),
+          fromUser: m.fromUser,
+          toUser: m.toUser,
+          fromSelf: m.fromUser === currentUserId,
+          read: m.read === true,
+        };
+      });
+
+      setMessages(realtime);
+    });
+  }
+
+  // LISTEN TYPING
+  function listenTyping(convo: IConversation) {
+    const other = convo.participants.find(
+      (p) => String(p._id) !== String(currentUserId)
+    );
+
+    if (!other) return;
+
+    const typingDoc = doc(
+      db,
+      "messages",
+      convo._id,
+      "meta",
+      String(other._id)
+    );
+
+    return onSnapshot(typingDoc, (snap) => {
+      setIsTyping(snap.data()?.typing || false);
+    });
+  }
+
+  // SEND MESSAGE
+  async function sendMessage() {
+    if (!replyText.trim() || !selectedConvo || !currentUserId) return;
+
+    const other = selectedConvo.participants.find(
+      (p) => p._id !== currentUserId
+    );
+    if (!other) return;
+
+    await fetch(`/api/chat/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        conversationId: selectedConvo._id,
+        fromUser: currentUserId,
+        toUser: other._id,
+        text: replyText,
+      }),
+    });
+
+    setReplyText("");
+    shouldAutoScrollRef.current = true;
+  }
+
+  
   return (
-    <div
-      className={`min-h-screen p-8 ${
-        isDark
-          ? "bg-gradient-to-b from-[#0a0f1e] to-[#000000]"
-          : "bg-[#f5f3ff]"
-      }`}
-    >
-      {/* HEADER */}
-     <MessagesHeader unreadCount={unreadCount} isDark={isDark} />
+    <div className="grid grid-cols-3 gap-6 p-4">
+      <MessagesList
+        conversations={conversations}
+        selectedConvo={selectedConvo}
+        onSelect={openConversation}
+        isDark={isDark}
+        currentUserId={currentUserId}
+      />
 
+      <div className="col-span-2">
+        {selectedConvo ? (
+          <>
+            <MessageDetail
+              messages={messages}
+              conversation={selectedConvo}
+              isDark={isDark}
+              currentUserId={currentUserId}
+              isTyping={isTyping}
+              chatRef={chatRef}
+              handleScroll={handleScroll}
+            />
 
-      {/* GRID */}
-      <div className="grid grid-cols-3 gap-6">
-        
-        {/* LEFT: Messages List */}
-        <MessagesList
-          messages={messages}
-          filteredMessages={filteredMessages}
-          starredMessages={starredMessages}
-          unreadCount={unreadCount}
-          selectedMessage={selectedMessage}
-          setSelectedMessage={setSelectedMessage}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          isDark={isDark}
-        />
-
-        {/* RIGHT: Message Detail + Reply */}
-        <div className="col-span-2">
-          {selectedMessage ? (
-            <>
-              <MessageDetail message={selectedMessage} isDark={isDark} />
-
-              <ReplyBox
-                replyText={replyText}
-                setReplyText={setReplyText}
-                isDark={isDark}
-              />
-            </>
-          ) : (
-            <div className="h-[700px] flex items-center justify-center">
-              <div className="text-center">
-                <MessageSquare
-                  className={isDark ? "text-[#6a7282]" : "text-purple-300"}
-                  size={64}
-                />
-                <h3
-                  className={`${
-                    isDark ? "text-white" : "text-[#2e1065]"
-                  } mb-2 font-semibold`}
-                >
-                  No message selected
-                </h3>
-                <p
-                  className={
-                    isDark ? "text-[#99a1af]" : "text-[#6b21a8]"
-                  }
-                >
-                  Select a message from the list to view its content
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
+            <ReplyBox
+              replyText={replyText}
+              setReplyText={setReplyText}
+              sendMessage={sendMessage}
+              isDark={isDark}
+              selectedConvo={selectedConvo}
+              currentUserId={currentUserId}
+            />
+          </>
+        ) : (
+          <div className="h-full flex flex-col items-center justify-center text-purple-600">
+            <MessageSquare size={36} />
+            <p>No conversation selected</p>
+          </div>
+        )}
       </div>
     </div>
   );

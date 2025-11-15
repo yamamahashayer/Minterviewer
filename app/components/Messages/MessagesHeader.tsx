@@ -2,13 +2,12 @@
 
 import { Badge } from "@/app/components/ui/badge";
 
-export default function MessagesHeader({
-  unreadCount,
-  isDark
-}: {
+interface HeaderProps {
   unreadCount: number;
   isDark: boolean;
-}) {
+}
+
+export default function MessagesHeader({ unreadCount, isDark }: HeaderProps) {
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
@@ -35,14 +34,6 @@ export default function MessagesHeader({
           {unreadCount} Unread
         </Badge>
       </div>
-
-      <div
-        className={`h-1 w-[200px] rounded-full mt-4 ${
-          isDark
-            ? "bg-gradient-to-r from-[#5eead4] to-transparent shadow-[0px_0px_10px_0px_rgba(94,234,212,0.5)]"
-            : "bg-gradient-to-r from-[#7c3aed] via-[#a855f7] to-transparent shadow-[0px_0px_15px_0px_rgba(124,58,237,0.4)]"
-        }`}
-      />
     </div>
   );
 }

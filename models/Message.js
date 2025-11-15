@@ -1,62 +1,34 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, model, models } from "mongoose";
 
-const MessageSchema = new mongoose.Schema(
+const MessageSchema = new Schema(
   {
-    senderType: {
-      type: String,
-      enum: ["ai", "system", "mentor", "mentee"],
+    conversation: {
+      type: Schema.Types.ObjectId,
+      ref: "Conversation",
       required: true,
     },
 
-    senderName: {
-      type: String,
-      default: "",
-    },
-
-    receiver: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Mentee",
+    fromUser: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
 
-    subject: {
-      type: String,
+    toUser: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
 
-    preview: {
-      type: String,
-    },
+    text: { type: String, required: true },
+    read: { type: Boolean, default: false },
 
-    content: {
-      type: String,
-      required: true,
-    },
-
-    category: {
-      type: String,
-      enum: ["feedback", "achievement", "reminder", "tip"],
-      default: "feedback",
-    },
-
-    priority: {
-      type: String,
-      enum: ["high", "normal", "low"],
-      default: "normal",
-    },
-
-    read: {
-      type: Boolean,
-      default: false,
-    },
-
-    starred: {
-      type: Boolean,
-      default: false,
+    createdAt: {
+      type: Date,
+      default: Date.now,
     },
   },
   { timestamps: true }
 );
 
-export default mongoose.models.Message ||
-  mongoose.model("Message", MessageSchema);
+export default models.Message || model("Message", MessageSchema);

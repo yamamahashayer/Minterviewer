@@ -1,33 +1,59 @@
 "use client";
 
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
-import { Star, Bot } from "lucide-react";
-import { getCategoryColor, getCategoryIcon } from "./helpers";
+import type { IConversation } from "./helpers";
 
-type MessageItemProps = {
-  message: any;
-  selectedMessage: any;
-  isDark: boolean;
+interface MessageItemProps {
+  convo: IConversation;
+  selected: boolean;
   onClick: () => void;
-};
+  isDark: boolean;
+  currentUserId: string | null;
+}
 
 export default function MessageItem({
-  message,
-  selectedMessage,
+  convo,
+  selected,
+  onClick,
   isDark,
-  onClick
+  currentUserId,
 }: MessageItemProps) {
+  const otherUser = convo.participants.find((p) => p._id !== currentUserId);
 
-  const CategoryIcon = getCategoryIcon(message.category);
+  const last = convo.lastMessage;
+
+  const preview = last
+    ? last.text.length > 35
+      ? last.text.slice(0, 35) + "..."
+      : last.text
+    : "No messages yet";
+
+  const isUnread =
+    last && last.toUser === currentUserId && !last.read;
+
+  const timestamp = last
+    ? new Date(last.createdAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
 
   return (
     <button
       onClick={onClick}
       className={`w-full text-left p-4 border-b transition-all
-        ${isDark ? "border-[rgba(94,234,212,0.1)] hover:bg-[rgba(94,234,212,0.05)]"
-                 : "border-[#ddd6fe] hover:bg-purple-50"}
-        ${selectedMessage?.id === message.id ? (isDark ? "bg-[rgba(94,234,212,0.1)]" : "bg-purple-100") : ""}
-        ${!message.read ? (isDark ? "bg-[rgba(94,234,212,0.03)]" : "bg-purple-50/50") : ""}
+        ${
+          isDark
+            ? "border-[rgba(94,234,212,0.1)] hover:bg-[rgba(94,234,212,0.05)]"
+            : "border-[#ddd6fe] hover:bg-purple-50"
+        }
+        ${
+          selected
+            ? isDark
+              ? "bg-[rgba(94,234,212,0.1)]"
+              : "bg-purple-100"
+            : ""
+        }
       `}
     >
       <div className="flex items-start gap-3">
@@ -39,78 +65,50 @@ export default function MessageItem({
                 : "bg-gradient-to-br from-purple-500 to-pink-500 text-white"
             }
           >
-            {message.fromType === "ai" ? <Bot size={18} /> : "S"}
+            {otherUser?.full_name?.charAt(0)?.toUpperCase() || "U"}
           </AvatarFallback>
         </Avatar>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <h4
-              className={`text-sm truncate font-medium ${
-                !message.read
-                  ? isDark
-                    ? "text-white"
-                    : "text-[#2e1065]"
-                  : isDark
-                    ? "text-[#d1d5dc]"
-                    : "text-[#6b21a8]"
+              className={`text-sm font-medium truncate ${
+                isDark ? "text-white" : "text-[#2e1065]"
               }`}
             >
-              {message.from}
+              {otherUser?.full_name || "User"}
             </h4>
 
-            {message.starred && (
-              <Star
-                className={
-                  isDark
-                    ? "text-amber-400 fill-amber-400"
-                    : "text-orange-500 fill-orange-500"
-                }
-                size={14}
-              />
-            )}
+            <span
+              className={`text-xs ${
+                isDark ? "text-[#6a7282]" : "text-purple-600"
+              }`}
+            >
+              {timestamp}
+            </span>
           </div>
 
           <p
             className={`text-sm truncate ${
-              !message.read
+              isUnread
                 ? isDark
-                  ? "text-white"
-                  : "text-[#2e1065]"
+                  ? "text-teal-200"
+                  : "text-purple-900 font-semibold"
                 : isDark
-                  ? "text-[#99a1af]"
-                  : "text-[#6b21a8]"
+                ? "text-[#d1d5dc]"
+                : "text-[#6b21a8]"
             }`}
           >
-            {message.subject}
+            {preview}
           </p>
 
-          <p
-            className={`text-xs truncate ${
-              isDark ? "text-[#6a7282]" : "text-[#7c3aed]"
-            }`}
-          >
-            {message.preview}
-          </p>
-
-          <div className="flex items-center gap-2 mt-2">
-            <CategoryIcon className={`${getCategoryColor(message.category, isDark)}`} size={12} />
-            <span
-              className={`${
-                isDark ? "text-[#6a7282]" : "text-[#7c3aed]"
-              } text-xs`}
-            >
-              {message.timestamp}
-            </span>
-
-            {!message.read && (
-              <div
-                className={`w-2 h-2 rounded-full ${
-                  isDark ? "bg-teal-400" : "bg-purple-600"
-                } ml-auto`}
-              />
-            )}
-          </div>
+          {isUnread && (
+            <div
+              className={`w-2 h-2 rounded-full mt-2 ${
+                isDark ? "bg-teal-400" : "bg-purple-600"
+              }`}
+            />
+          )}
         </div>
       </div>
     </button>
