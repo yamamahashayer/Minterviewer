@@ -2,30 +2,35 @@ import mongoose from "mongoose";
 
 const NotificationSchema = new mongoose.Schema(
   {
-    mentee: {
+    user: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Mentee",
-      required: true,
+      ref: "User",
+      required: true,   // 🔥 بدل mentee
     },
+
     title: {
       type: String,
       required: true,
       trim: true,
     },
+
     message: {
       type: String,
       required: true,
       trim: true,
     },
+
     type: {
       type: String,
       enum: ["achievement", "message", "reminder", "performance", "goal", "system"],
       default: "system",
     },
+
     read: {
       type: Boolean,
       default: false,
     },
+
     firebaseId: {
       type: String,
       default: null,
@@ -34,7 +39,6 @@ const NotificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Notification =
-  mongoose.models.Notification || mongoose.model("Notification", NotificationSchema);
-
-export default Notification; 
+// reuse model if exists
+export default mongoose.models.Notification ||
+  mongoose.model("Notification", NotificationSchema);

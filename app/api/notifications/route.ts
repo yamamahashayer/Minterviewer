@@ -12,19 +12,23 @@ import {
 } from "firebase/firestore";
 
 // =======================================================
-// 📥 GET - استرجاع جميع الإشعارات الخاصة بالـ mentee من MongoDB
+// 📥 GET - استرجاع إشعارات user معيّن
 // =======================================================
-export async function GET(
-  req: NextRequest,
-  context: { params: Promise<{ menteeid: string }> }
-) {
-  const { menteeid } = await context.params;
+export async function GET(req: NextRequest) {
   await connectDB();
 
   try {
-    console.log("📬 Fetching notifications for mentee:", menteeid);
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
 
-    const notifications = await Notification.find({ mentee: menteeid })
+    if (!userId) {
+      return NextResponse.json(
+        { ok: false, error: "Missing userId in query" },
+        { status: 400 }
+      );
+    }
+
+    const notifications = await Notification.find({ user: userId })
       .sort({ createdAt: -1 })
       .lean();
 
@@ -34,7 +38,6 @@ export async function GET(
       notifications,
     });
   } catch (error: any) {
-    console.error("❌ Error fetching notifications:", error);
     return NextResponse.json(
       { ok: false, error: error.message },
       { status: 500 }
@@ -43,41 +46,40 @@ export async function GET(
 }
 
 // =======================================================
-// 📨 POST - إنشاء إشعار جديد في Mongo + Firestore
+// 📨 POST - إنشاء إشعار جديد
 // =======================================================
-export async function POST(
-  req: NextRequest,
-  context: { params: Promise<{ menteeid: string }> }
-) {
-  const { menteeid } = await context.params;
+export async function POST(req: NextRequest) {
   await connectDB();
 
   try {
     const body = await req.json();
-    const { title, message, type } = body;
+    const { userId, title, message, type, redirectTo } = body; // 👈 تمت إضافة redirectTo
 
-    if (!title || !message) {
+    if (!userId || !title || !message) {
       return NextResponse.json(
         { ok: false, error: "Missing required fields" },
         { status: 400 }
       );
     }
 
+    // 🔥 Firestore (Realtime)
     const docRef = await addDoc(collection(db, "notifications"), {
-      userId: menteeid,
+      userId,
       title,
       message,
       type: type || "system",
+      redirectTo: redirectTo || null,       // 👈 مهم جداً
       read: false,
       createdAt: serverTimestamp(),
     });
 
-    // 🔹 حفظ في MongoDB (تاريخ دائم)
+    // 🔹 MongoDB (Persistent)
     const mongoNotification = await Notification.create({
-      mentee: menteeid,
+      user: userId,
       title,
       message,
       type: type || "system",
+      redirectTo: redirectTo || null,       // 👈 مهم جداً
       read: false,
       firebaseId: docRef.id,
     });
@@ -98,7 +100,7 @@ export async function POST(
 }
 
 // =======================================================
-// ✏️ PUT - تحديث حالة الإشعار (مقروء / غير مقروء)
+// ✏️ PUT - تحديث حالة read
 // =======================================================
 export async function PUT(req: NextRequest) {
   await connectDB();
@@ -114,16 +116,11 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // تحديث في Firestore
-    const docRef = doc(db, "notifications", id);
-    await updateDoc(docRef, { read });
-
-    // تحديث في MongoDB
+    await updateDoc(doc(db, "notifications", id), { read });
     await Notification.findOneAndUpdate({ firebaseId: id }, { read });
 
     return NextResponse.json({ ok: true, message: "Notification updated" });
   } catch (error: any) {
-    console.error("❌ Error updating notification:", error);
     return NextResponse.json(
       { ok: false, error: error.message },
       { status: 500 }
@@ -132,7 +129,7 @@ export async function PUT(req: NextRequest) {
 }
 
 // =======================================================
-// 🗑️ DELETE - حذف إشعار من Mongo + Firestore
+// 🗑️ DELETE - حذف الإشعار
 // =======================================================
 export async function DELETE(req: NextRequest) {
   await connectDB();
@@ -148,16 +145,11 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // حذف من Firestore
-    const docRef = doc(db, "notifications", id);
-    await deleteDoc(docRef);
-
-    // حذف من Mongo
+    await deleteDoc(doc(db, "notifications", id));
     await Notification.findOneAndDelete({ firebaseId: id });
 
     return NextResponse.json({ ok: true, message: "Notification deleted" });
   } catch (error: any) {
-    console.error("❌ Error deleting notification:", error);
     return NextResponse.json(
       { ok: false, error: error.message },
       { status: 500 }
