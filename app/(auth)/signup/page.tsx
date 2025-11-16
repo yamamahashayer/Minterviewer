@@ -8,7 +8,7 @@ import {
   User, Mail, Lock
 } from 'lucide-react';
 
-import { NeuralNetworkBackground } from '@/app/components/backgrounds/NeuralNetworkBackground';
+import { NeuralNetworkBackground } from '@/app/components/publicPages/backgrounds/NeuralNetworkBackground';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
 import { Label } from '@/app/components/ui/label';

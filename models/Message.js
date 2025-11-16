@@ -1,16 +1,34 @@
-// models/Message.js
-import mongoose from 'mongoose';
+import mongoose, { Schema, model, models } from "mongoose";
 
-const messageSchema = new mongoose.Schema(
+const MessageSchema = new Schema(
   {
-    sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    receiver: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-    content: { type: String, default: '' },
-    message_type: { type: String, default: 'text' },
-    is_read: { type: Boolean, default: false },
-    Sended_at: { type: Date, default: Date.now },
+    conversation: {
+      type: Schema.Types.ObjectId,
+      ref: "Conversation",
+      required: true,
+    },
+
+    fromUser: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    toUser: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+
+    text: { type: String, required: true },
+    read: { type: Boolean, default: false },
+
+    createdAt: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true }
 );
 
-export default mongoose.model('Message', messageSchema);
+export default models.Message || model("Message", MessageSchema);

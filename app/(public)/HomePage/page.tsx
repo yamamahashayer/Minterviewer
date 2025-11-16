@@ -1,15 +1,15 @@
 "use client";
 
 import React from "react";
-import HeroSection from "../../components/HomePageComponents/HeroSection";
-import CompanyLogosSection from "../../components/HomePageComponents/CompanyLogosSection";
-import LiveSessionsLanding from "../../components/HomePageComponents/prossection";
-import WhatNumberssaySection from "../../components/HomePageComponents/WhatNumberssaySection";
-import PlatformWalkthrough from "../../components/HomePageComponents/WalkThrough";
-import Testemotional from "../../components/HomePageComponents/Testemotional";
+import HeroSection from "../../components/publicPages/HomePageComponents/HeroSection";
+import CompanyLogosSection from "../../components/publicPages/HomePageComponents/CompanyLogosSection";
+import LiveSessionsLanding from "../../components/publicPages/HomePageComponents/prossection";
+import WhatNumberssaySection from "../../components/publicPages/HomePageComponents/WhatNumberssaySection";
+import PlatformWalkthrough from "../../components/publicPages/HomePageComponents/WalkThrough";
+import Testemotional from "../../components/publicPages/HomePageComponents/Testemotional";
 import { useTheme } from "Context/ThemeContext";
-import FAQSection from "../../components/HomePageComponents/FAQSection"; 
-import TestimonialsSection from "../../components/HomePageComponents/Testemotional";
+import FAQSection from "../../components/publicPages/HomePageComponents/FAQSection"; 
+import TestimonialsSection from "../../components/publicPages/HomePageComponents/Testemotional";
 
 
 const HomePage: React.FC = () => {

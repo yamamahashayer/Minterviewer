@@ -1,9 +1,9 @@
 'use client';
 import React from "react";
-import HeroSection from "../../components/JoinUsComponents/HeroSection";
-import OpenPositionsSection from "../../components/JoinUsComponents/OpenPositionsSection";
-import BenefitsSection from "../../components/JoinUsComponents/BenefitsSection";
-import CTASection from "../../components/JoinUsComponents/CTASection";
+import HeroSection from "../../components/publicPages/JoinUsComponents/HeroSection";
+import OpenPositionsSection from "../../components/publicPages/JoinUsComponents/OpenPositionsSection";
+import BenefitsSection from "../../components/publicPages/JoinUsComponents/BenefitsSection";
+import CTASection from "../../components/publicPages/JoinUsComponents/CTASection";
 import type { Position } from "../../../types/types";
 import { useTheme } from "../../../Context/ThemeContext";
 
