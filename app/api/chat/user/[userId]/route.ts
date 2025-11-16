@@ -25,13 +25,13 @@ export async function GET(
       .populate("participants", "full_name email")
       .populate("lastMessage")
       .sort({ updatedAt: -1 })
-      .lean(); // 👈 يجعل _id = unknown بالنسبة لـ TS
+      .lean(); 
 
     // ==============================
     // ADD unreadCount + lastActivity
     // ==============================
     for (const convo of conversations) {
-      const convoId = String(convo._id); // 👈 FIXED: avoids TS errors
+      const convoId = String(convo._id); 
 
       // Count unread messages for THIS user
       const unread = await Message.countDocuments({

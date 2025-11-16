@@ -83,11 +83,9 @@ export default function SignUp() {
     short_bio: ''
   });
 
-  // لراحة الباك: في حال role = mentor نرسل هذه الحقول (اختيارية)
   const [mentorFields, setMentorFields] = useState({
     yearsOfExperience: '',   // Number
     field: '',               // string
-    // مبدئيًا أزلنا availabilities من الواجهة لتقليل التعقيد هنا
   });
 
   useEffect(() => {
@@ -122,7 +120,6 @@ export default function SignUp() {
 
   const passwordsMatch = !!form.password && !!form.confirmPassword && form.password === form.confirmPassword;
 
-  // فحص لكل خطوة
   const validateStep = (step: number) => {
     const e: Record<string, string> = {};
     if (step === 1) {
@@ -138,7 +135,6 @@ export default function SignUp() {
     return Object.keys(e).length === 0;
   };
 
-  // لتفعيل/تعطيل زر Next بناءً على صحة المدخلات
   const canGoNext = useMemo(() => {
     if (currentStep === 1) return !!role;
     if (currentStep === 2)
@@ -197,20 +193,17 @@ export default function SignUp() {
     return data;
   };
 
-  // الهاندلر الموحد: يمنع أي إرسال قبل الخطوة الأخيرة
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    // لو لسه ما وصلنا للخطوة الأخيرة → فقط انتقلي للخطوة التالية (مع الفحص)
     if (currentStep < 3) {
       if (validateStep(currentStep)) {
         setCurrentStep(s => s + 1);
         setErrors({});
       }
-      return; // لا يوجد أي network call هنا
+      return; 
     }
 
-    // الخطوة الأخيرة: فحوصات أساسية قبل الإرسال
     if (!validateStep(2) || !role) {
       setCurrentStep(2);
       return;

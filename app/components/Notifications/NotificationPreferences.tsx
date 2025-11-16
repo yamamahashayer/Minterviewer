@@ -1,12 +1,24 @@
 "use client";
-import SettingsPage from "@/app/(dashboard)/mentee/SettingsPage";
+
 import { Button } from "@/app/components/ui/button";
 import { Settings } from "lucide-react";
-import router from "next/router";
 
-
-export default function NotificationPreferences({ theme = "dark" }: { theme?: "dark" | "light" }) {
+export default function NotificationPreferences({ theme = "dark" }) {
   const isDark = theme === "dark";
+
+  const openSettings = () => {
+    const userData = sessionStorage.getItem("user");
+    const user = userData ? JSON.parse(userData) : null;
+
+    let path = "/settings";
+
+    if (user?.role === "mentee") path = "/mentee/settings";
+    if (user?.role === "mentor") path = "/mentor/settings";
+    if (user?.role === "admin") path = "/admin/settings";
+
+    window.location.href = path;
+  };
+
   return (
     <div
       className={`mt-8 p-6 rounded-xl border ${
@@ -23,11 +35,15 @@ export default function NotificationPreferences({ theme = "dark" }: { theme?: "d
         <Settings size={18} className={isDark ? "text-teal-400" : "text-purple-600"} />
         Notification Preferences
       </h3>
-      <p className={isDark ? "text-gray-400 text-sm mb-4" : "text-purple-700 text-sm mb-4"}>
+
+      <p
+        className={isDark ? "text-gray-400 text-sm mb-4" : "text-purple-700 text-sm mb-4"}
+      >
         Manage how you receive notifications and customize your preferences.
       </p>
-            <Button
-        onClick={() => window.location.href = "/mentee?tab=Settings"}
+
+      <Button
+        onClick={openSettings}
         className={
           isDark
             ? "bg-teal-500/20 border border-teal-400/40 hover:bg-teal-500/30 text-teal-200"
