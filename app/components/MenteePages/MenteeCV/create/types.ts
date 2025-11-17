@@ -55,7 +55,7 @@ export type Personal = {
   phone: string;
   location: string;
   linkedin?: string;
-  portfolio?: string;
+  github?: string; 
   summary: string;
 };
 
