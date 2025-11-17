@@ -54,7 +54,6 @@ export default function MenteePage() {
       case "schedule":            return <SchedulePage theme={theme} />;
       case "messages":            return <MessagesPage theme={theme} />;
       case "notifications":       return <NotificationsPage theme={theme} />;
-      case "goals":               return <GoalsPage theme={theme} />;
       case "reports":             return <ReportsPage theme={theme} />;
       case "settings":            return <SettingsPage theme={theme} />;
       case "help":                return <HelpSupportPage theme={theme} />;

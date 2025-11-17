@@ -27,7 +27,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
     }
 
-    // ✅ إنشاء JWT
     const secret = process.env.JWT_SECRET!;
     const token = jwt.sign(
       {
@@ -40,11 +39,9 @@ export async function POST(req: NextRequest) {
       { expiresIn: "7d" }
     );
 
-    // ✅ جلب menteeId (إن وجد)
     const mentee = await Mentee.findOne({ user: user._id }).select("_id");
     const menteeId = mentee?._id?.toString() || null;
 
-    // ✅ إرجاع الرد مع التوكن
     return NextResponse.json({
       ok: true,
       message: "Login successful",

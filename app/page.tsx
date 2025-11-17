@@ -1,10 +1,10 @@
-import HeroSection from './components/HomePageComponents/HeroSection';
-import CompanyLogosSection from './components/HomePageComponents/CompanyLogosSection';
-import LiveSessionsLanding from './components/HomePageComponents/prossection';
-import WhatNumberssaySection from './components/HomePageComponents/WhatNumberssaySection';
-import PlatformWalkthrough from './components/HomePageComponents/WalkThrough';
-import TestimonialsSection from './components/HomePageComponents/Testemotional';
-import FAQSection from './components/HomePageComponents/FAQSection';
+import HeroSection from './components/publicPages/HomePageComponents/HeroSection';
+import CompanyLogosSection from './components/publicPages/HomePageComponents/CompanyLogosSection';
+import LiveSessionsLanding from './components/publicPages/HomePageComponents/prossection';
+import WhatNumberssaySection from './components/publicPages/HomePageComponents/WhatNumberssaySection';
+import PlatformWalkthrough from './components/publicPages/HomePageComponents/WalkThrough';
+import TestimonialsSection from './components/publicPages/HomePageComponents/Testemotional';
+import FAQSection from './components/publicPages/HomePageComponents/FAQSection';
 
 export default function HomePage() {
   return (

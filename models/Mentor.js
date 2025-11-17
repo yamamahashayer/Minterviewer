@@ -1,9 +1,14 @@
 // models/Mentor.js
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const mentorSchema = new mongoose.Schema(
   {
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', unique: true, required: true },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      unique: true,
+      required: true,
+    },
     totalEarnings: { type: mongoose.Decimal128 },
     totalSessions: { type: Number, default: 0 },
     totalMentees: { type: Number, default: 0 },
@@ -16,4 +21,4 @@ const mentorSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model('Mentor', mentorSchema);
+export default mongoose.models.Mentor || mongoose.model("Mentor", mentorSchema);
