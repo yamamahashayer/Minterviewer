@@ -121,13 +121,14 @@ export default function PersonalStep({
         </div>
 
         <div>
-          <Label className="mb-2 block">Portfolio</Label>
+          <Label className="mb-2 block">GitHub</Label>
           <Input
-            value={value.portfolio || ""}
-            onChange={(e) => onChange("portfolio", e.target.value)}
-            placeholder="yourdomain.com"
+            value={value.github || ""}
+            onChange={(e) => onChange("github", e.target.value)}
+            placeholder="https://github.com/yourusername"
           />
         </div>
+
       </div>
     </SectionCard>
   );
