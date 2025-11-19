@@ -78,9 +78,7 @@ export default function TargetStep({
           <h2 className={`${isDark ? "text-white" : "text-[#2e1065]"} font-semibold`}>
             Targeting Details {cvType === "role" ? "(Role-Based)" : "(Job-Based)"}
           </h2>
-          <p className={`${isDark ? "text-[#99a1af]" : "text-[#6b21a8]"} text-sm`}>
-            وفّري معلومات الاستهداف عشان نخصّص الـ CV.
-          </p>
+          
         </div>
       </div>
 

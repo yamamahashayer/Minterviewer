@@ -2,9 +2,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { buildCvPrompt } from "./prompt";
 import type { CvAnalysis, RoleSpec } from "./schema";
 
-/**
- * 🔑 إنشاء عميل Gemini AI باستخدام المفتاح من ملف البيئة
- */
+
 const getAi = () => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -13,10 +11,7 @@ const getAi = () => {
   return new GoogleGenAI({ apiKey });
 };
 
-/**
- * 🤖 تحليل السيرة الذاتية باستخدام Gemini 2.5 Pro
- * مع إعادة المحاولة التلقائية في حال كان السيرفر مشغولًا (503)
- */
+
 export async function analyzeWithGemini(
   affindaJson: any,
   role?: RoleSpec
@@ -28,7 +23,6 @@ export async function analyzeWithGemini(
 
   let lastError: any = null;
 
-  // 🔁 نحاول حتى 3 مرات إذا السيرفر مشغول
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const response = await ai.models.generateContent({
@@ -146,7 +140,6 @@ export async function analyzeWithGemini(
       const errMsg =
         err?.error?.message || err?.message || "Unknown Gemini API error";
 
-      // 🧠 إذا السيرفر مشغول (503)، نعيد المحاولة بعد 5 ثواني
       if (
         (err?.error?.code === 503 ||
           errMsg.includes("overloaded") ||
@@ -165,9 +158,9 @@ export async function analyzeWithGemini(
     }
   }
 
-  // 🚨 بعد 3 محاولات فاشلة
   console.error("💥 Gemini failed after multiple attempts:", lastError);
   throw new Error(
     "Gemini AI is currently overloaded or unavailable. Please try again later."
   );
 }
+

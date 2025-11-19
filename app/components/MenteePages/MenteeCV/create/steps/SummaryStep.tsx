@@ -1,105 +1,203 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import SectionCard from "../shared/SectionCard";
 import StepHeader from "../shared/StepHeader";
 import { Textarea } from "@/app/components/ui/textarea";
-import { FileText } from "lucide-react";
+import { FileText, Sparkles } from "lucide-react";
 
-const TEMPLATES = [
-  "Motivated Computer Engineering student with strong foundations in software development and problem-solving. Skilled in JavaScript, React, and backend REST APIs. Passionate about building clean, user-focused applications and continuously improving technical abilities.",
+// ==========================
+// 🔥 Props Types
+// ==========================
+interface SummaryStepProps {
+  value: string;
+  onChange: (v: string) => void;
+  isDark: boolean;
+  menteeId?: string | null;
+  cvType: string;
+  cvData: any;
+  targetRole?: string;
+  jobDescription?: string;
+}
 
-  "Results-driven Full-Stack Developer with experience building scalable web applications using React, Node.js, and MongoDB. Strong focus on clean code, performance optimization, and intuitive UI. Able to collaborate effectively across teams and deliver end-to-end features.",
-
-  "AI-focused Engineer skilled in Python, machine learning models, and data pipeline optimization. Hands-on experience with model deployment and prompt engineering. Passionate about applying AI to solve real-world problems and improve decision-making through data.",
-
-  "Front-End Developer with strong UI/UX mindset and experience designing responsive user interfaces using React, Tailwind CSS, and Figma. Focused on delivering clean, accessible, and user-centered digital experiences.",
-
-  "Backend Developer experienced in designing scalable REST APIs, relational databases, and authentication systems. Strong understanding of distributed systems and clean architecture principles.",
-];
-
-const PHRASES = [
-  "results-driven",
-  "detail-oriented",
-  "customer-focused",
-  "cross-functional collaboration",
-  "scalable architectures",
-  "performance optimization",
-  "CI/CD",
-  "Docker & containers",
-  "REST/GraphQL APIs",
-  "clean code",
-];
-
+// ==========================
+// 🔥 Main Component
+// ==========================
 export default function SummaryStep({
   value,
   onChange,
   isDark,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  isDark?: boolean;
-}) {
-  const card =
-    "rounded-xl shadow-2xl overflow-hidden " +
-    (isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe] bg-white shadow-lg");
+  menteeId,
+  cvType,
+  cvData,
+  targetRole,
+  jobDescription,
+}: SummaryStepProps) {
+  const [loading, setLoading] = useState(false);
+  const [loadedOnce, setLoadedOnce] = useState(false);
 
-  const pill =
+  const [aiSug, setAiSug] = useState<{
+    summaryTemplates: string[];
+  }>({
+    summaryTemplates: [],
+  });
+
+  // Fetch AI suggestions
+  useEffect(() => {
+    if (!menteeId || loadedOnce) return;
+    fetchSummary();
+    setLoadedOnce(true);
+  }, [menteeId]);
+
+  async function fetchSummary() {
+    if (!menteeId) return;
+
+    try {
+      setLoading(true);
+
+      const res = await fetch(
+        `/api/mentees/${menteeId}/cv/suggestions/summary`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cvType,
+            cvData,
+            targetRole,
+            jobDescription,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      setAiSug({
+        summaryTemplates: data.summaryTemplates || [],
+      });
+    } catch (err) {
+      console.error("❌ Summary Suggestion Error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const pillClass =
     "px-3 py-2 rounded-lg border text-xs cursor-pointer truncate hover:opacity-90";
   const border = isDark ? "border-white/10" : "border-[#e9d5ff]";
 
-  const append = (txt: string) =>
-    onChange((value ? value.trim() + " " : "") + txt);
+  const card =
+    "rounded-xl shadow-2xl overflow-hidden " +
+    (isDark
+      ? "border-[rgba(94,234,212,0.2)]"
+      : "border-[#ddd6fe] bg-white shadow-lg");
+
+  // ==========================
+  // 🔥 Animated AI Button
+  // ==========================
+  const AnimatedButton = (
+    <button
+      onClick={fetchSummary}
+      disabled={loading}
+      className={`
+        group relative overflow-hidden rounded-xl px-5 py-2.5
+        font-semibold flex items-center gap-2
+        transition-all duration-300
+        ${loading ? "opacity-60 cursor-not-allowed" : ""}
+        ${
+          isDark
+            ? "bg-emerald-600 text-white hover:bg-emerald-500"
+            : "bg-purple-600 text-white hover:bg-purple-700"
+        }
+        shadow-lg shadow-emerald-600/30
+        hover:shadow-emerald-500/50
+      `}
+    >
+      <span
+        className="
+          absolute inset-0 bg-gradient-to-r from-emerald-400 to-emerald-600
+          opacity-0 group-hover:opacity-20
+          blur-2xl transition duration-500
+        "
+      />
+
+      <span className="relative flex items-center gap-2">
+        {loading ? (
+          <>
+            <Sparkles className="w-4 h-4 animate-pulse" />
+            <span>Generating…</span>
+          </>
+        ) : (
+          <>
+            <Sparkles className="w-4 h-4 animate-pulse" />
+            <span>Generate</span>
+          </>
+        )}
+      </span>
+
+      {!loading && (
+        <span
+          className="
+            absolute right-2 top-1/2 -translate-y-1/2
+            text-white/60 opacity-0 group-hover:opacity-100
+            transition duration-500
+            animate-[spin_2.5s_linear_infinite]
+          "
+        >
+          
+        </span>
+      )}
+    </button>
+  );
 
   return (
     <SectionCard className={card}>
+      
+      {/* Header + Button */}
       <StepHeader
         Icon={FileText}
         title="Professional Summary"
         subtitle="2–3 sentences highlighting your strengths"
-        badgeClass={isDark ? "bg-teal-500/20 border-teal-500/30" : "bg-purple-100 border-purple-300"}
+        badgeClass={
+          isDark
+            ? "bg-teal-500/20 border-teal-500/30"
+            : "bg-purple-100 border-purple-300"
+        }
+        rightElement={AnimatedButton}
       />
 
-      {/* Quick templates */}
-      <div className={`mb-4 p-3 rounded-xl border ${border}`}>
-        <div className="text-xs mb-2 opacity-80">Quick templates — click to use, then edit freely:</div>
-        <div className="grid gap-2 md:grid-cols-3">
-          {TEMPLATES.map((t, i) => (
-            <button
-              key={i}
-              className={`${pill} ${border} text-left`}
-              onClick={() => onChange(t)}
-              title="Use template"
-            >
-              {t.slice(0, 120)}{t.length > 120 ? "…" : ""}
-            </button>
-          ))}
+      {/* AI Templates */}
+      {aiSug.summaryTemplates.length > 0 && !loading && (
+        <div className={`mb-4 p-3 rounded-xl border ${border}`}>
+          <div className="text-xs mb-2 opacity-80 flex gap-2 items-center">
+            <Sparkles size={16} /> AI Summary Templates
+          </div>
+
+          <div className="grid gap-2 md:grid-cols-3">
+            {aiSug.summaryTemplates.map((t, i) => (
+              <button
+                key={i}
+                onClick={() => onChange(t)}
+                className={`${pillClass} ${border} text-left`}
+              >
+                {t.slice(0, 140)}
+                {t.length > 140 ? "…" : ""}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Editor */}
-      <div className="mb-2">
-        <Textarea
-          rows={7}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="Write a concise 2–3 sentence summary…"
-        />
-      </div>
+      {/* Textarea */}
+      <Textarea
+        rows={7}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Write a concise 2–3 sentence summary…"
+        className="mb-3"
+      />
 
-      <div className="text-xs opacity-70 mb-4">
-        Try 2–3 concise sentences (~200–400 chars).
-      </div>
-
-      {/* Phrase chips */}
-      <div className={`p-3 rounded-xl border ${border}`}>
-        <div className="text-xs mb-2 opacity-80">Click to append phrases:</div>
-        <div className="flex flex-wrap gap-2">
-          {PHRASES.map((p) => (
-            <button key={p} onClick={() => append(p)} className={`${pill} ${border}`}>
-              + {p}
-            </button>
-          ))}
-        </div>
+      <div className="text-xs opacity-70 mb-2">
+        Aim for 2–3 strong sentences (~200–400 chars).
       </div>
     </SectionCard>
   );

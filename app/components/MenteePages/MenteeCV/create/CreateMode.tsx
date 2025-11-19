@@ -59,7 +59,6 @@ export default function CreateMode(props: {
   const [menteeId, setMenteeId] = useState<string | null>(null);
 
   useEffect(() => {
-    // نحاول نقرأ user من sessionStorage أولاً
     const rawUser = typeof window !== "undefined" ? sessionStorage.getItem("user") : null;
     if (rawUser) {
       try {
@@ -211,14 +210,20 @@ export default function CreateMode(props: {
             )}
 
             {activeKey === "skills" && (
-              <SkillsStep
-                skills={cvData.skills}
-                update={(k, v) =>
-                  setCvData((d) => ({ ...d, skills: { ...d.skills, [k]: v } }))
-                }
-                isDark={isDark}
-              />
-            )}
+            <SkillsStep
+              skills={cvData.skills}
+              update={(k, v) =>
+                setCvData((d) => ({ ...d, skills: { ...d.skills, [k]: v } }))
+              }
+              isDark={isDark}
+              menteeId={menteeId}
+              cvType={cvType}
+              cvData={cvData}
+              targetRole={targetRole}
+              jobDescription={jobDescription}
+            />
+          )}
+
 
             {activeKey === "projects" && (
               <ProjectsStep
@@ -232,9 +237,18 @@ export default function CreateMode(props: {
               <SummaryStep
                 value={cvData.personal.summary}
                 onChange={(v) =>
-                  setCvData((d) => ({ ...d, personal: { ...d.personal, summary: v } }))
+                  setCvData((d) => ({
+                    ...d,
+                    personal: { ...d.personal, summary: v },
+                  }))
                 }
                 isDark={isDark}
+                menteeId={menteeId}
+                activeKey={activeKey}
+                cvType={cvType}
+                cvData={cvData}
+                targetRole={targetRole}
+                jobDescription={jobDescription}
               />
             )}
 
