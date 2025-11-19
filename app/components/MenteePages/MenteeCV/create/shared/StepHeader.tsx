@@ -1,17 +1,44 @@
+"use client";
+
 import { LucideIcon } from "lucide-react";
 
+type StepHeaderProps = {
+  Icon: LucideIcon;
+  title: string;
+  subtitle?: string;
+  badgeClass?: string;
+  rightElement?: React.ReactNode;
+};
+
 export default function StepHeader({
-  Icon, title, subtitle, badgeClass = "",
-}: { Icon: LucideIcon; title: string; subtitle?: string; badgeClass?: string }) {
+  Icon,
+  title,
+  subtitle,
+  badgeClass = "",
+  rightElement,
+}: StepHeaderProps) {
   return (
-    <div className="flex items-center gap-3 mb-6">
-      <div className={`w-12 h-12 rounded-lg border flex items-center justify-center ${badgeClass}`}>
-        <Icon size={24} />
+    <div className="flex items-center justify-between mb-6">
+      
+      {/* Left side */}
+      <div className="flex items-center gap-3">
+        <div className={`p-2 rounded-lg border ${badgeClass}`}>
+          <Icon size={16} />
+        </div>
+
+        <div>
+          <h3 className="text-lg font-semibold">{title}</h3>
+
+          {subtitle && (
+            <p className="text-sm opacity-70 -mt-1">{subtitle}</p>
+          )}
+        </div>
       </div>
-      <div>
-        <h2 className="font-semibold">{title}</h2>
-        {subtitle && <p className="text-sm opacity-80">{subtitle}</p>}
-      </div>
+
+      {/* Right side (AI Button) */}
+      {rightElement && (
+        <div className="ml-4 flex-shrink-0">{rightElement}</div>
+      )}
     </div>
   );
 }

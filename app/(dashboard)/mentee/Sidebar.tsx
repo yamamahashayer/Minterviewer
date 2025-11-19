@@ -64,11 +64,11 @@ export default function Sidebar({
               : "border-[#ddd6fe] bg-white"
           } flex-shrink-0`}
         >
-          <img
-            src="/cover.png" 
-            alt="Minterviewer Cover"
-            className="w-full h-24 object-contain" 
-          />
+          <img 
+          src="/Covering.png"
+          alt="Minterviewer Cover"
+          className="w-full h-24 object-contain"
+        />
         </div>
         
        {/* Search (شكل فقط) */}
