@@ -18,53 +18,45 @@ import NotificationPreferences from "@/app/components/Notifications/Notification
 
 export default function NotificationsPage({ theme = "dark" }) {
   const isDark = theme === "dark";
+
   const [notifications, setNotifications] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const [loading, setLoading] = useState(true);
 
-useEffect(() => {
-  const userData = sessionStorage.getItem("user");
-  if (!userData) {
-    console.warn("⚠️ No user data found in sessionStorage");
-    return;
-  }
+  useEffect(() => {
+    const raw = sessionStorage.getItem("user");
+    if (!raw) return;
 
-  const user = JSON.parse(userData);
+    const user = JSON.parse(raw);
 
-  // 🔥 الحل بدون تعديل اللوج إن
-  const userId = user?._id || user?.id;
+    // 🔥 متوافق مع login الحالي
+    const userId = user?._id || user?.id;
+    if (!userId) return;
 
-  if (!userId) {
-    console.error("❌ No userId found in user session");
-    return;
-  }
+    const q = query(
+      collection(db, "notifications"),
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc")
+    );
 
-  const q = query(
-    collection(db, "notifications"),
-    where("userId", "==", userId),
-    orderBy("createdAt", "desc")
-  );
+    const unsub = onSnapshot(
+      q,
+      (snap) => {
+        const arr = snap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        }));
+        setNotifications(arr);
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Firestore error:", err);
+        setLoading(false);
+      }
+    );
 
-  const unsubscribe = onSnapshot(
-    q,
-    (snapshot) => {
-      const list = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-
-      setNotifications(list);
-      setLoading(false);
-    },
-    (error) => {
-      console.error("❌ Firestore listener error:", error);
-      setLoading(false);
-    }
-  );
-
-  return () => unsubscribe();
-}, []);
-
+    return () => unsub();
+  }, []);
 
   const filtered = notifications.filter((n) => {
     if (activeTab === "all") return true;
@@ -74,14 +66,25 @@ useEffect(() => {
 
   return (
     <div
-      className={`min-h-screen p-8 ${
-        isDark ? "bg-[#0a0f1e] text-white" : "bg-[#f5f3ff] text-[#2e1065]"
-      }`}
+      className="min-h-screen p-8"
+      style={{
+        background: "var(--background)",
+        color: "var(--foreground)",
+      }}
     >
-      <NotificationsHeader notifications={notifications} theme={theme} />
+      {/* HEADER */}
+      <NotificationsHeader
+        notifications={notifications}
+        theme={theme}
+      />
 
-      <NotificationsStats notifications={notifications} theme={theme} />
+      {/* STATS */}
+      <NotificationsStats
+        notifications={notifications}
+        theme={theme}
+      />
 
+      {/* TABS */}
       <NotificationsTabs
         notifications={notifications}
         activeTab={activeTab}
@@ -89,8 +92,12 @@ useEffect(() => {
         theme={theme}
       />
 
+      {/* LIST */}
       {loading ? (
-        <div className="text-center mt-10 text-gray-400">
+        <div
+          className="text-center mt-10"
+          style={{ color: "var(--text-muted)" }}
+        >
           Loading notifications...
         </div>
       ) : (
@@ -101,6 +108,7 @@ useEffect(() => {
         />
       )}
 
+      {/* PREFERENCES */}
       <NotificationPreferences theme={theme} />
     </div>
   );
