@@ -98,7 +98,7 @@ export default function MentorLayout({ children }: { children: React.ReactNode }
         <div
           className={`sticky top-0 z-30 backdrop-blur-xl border-b px-4 sm:px-8 py-4 ${
             theme === "dark"
-              ? "bg-[rgba(10,15,30,0.9)] border-[rgba(94,234,212,0.2)] shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
+              ? "bg-[rgba(5, 9, 19, 0.9)] border-[rgba(94,234,212,0.2)] shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
               : "bg-[rgba(255,255,255,0.9)] border-[#ddd6fe] shadow-[0_4px_20px_rgba(168,85,247,0.15)]"
           }`}
         >
