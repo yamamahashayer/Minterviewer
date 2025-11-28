@@ -2,7 +2,6 @@
 
 import React from "react";
 import { useSearchParams } from "next/navigation";
-import { useTheme } from "@/Context/ThemeContext";
 
 import { ProfileOverview } from "@/app/(dashboard)/mentor/ProfileOverview";
 import { MyProfilePage } from "@/app/(dashboard)/mentor/MyProfilePage";
@@ -23,10 +22,6 @@ import { CVReviewPage } from "@/app/(dashboard)/mentor/CVReviewPage";
 import { HelpSupportPage } from "@/app/(dashboard)/mentor/HelpSupportPage";
 import { NotificationsPage } from "@/app/(dashboard)/mentor/NotificationsPage";
 
-import { MentorSidebar } from "@/app/(dashboard)/mentor/MentorSidebar";
-import { NotificationBell } from "@/app/(dashboard)/mentor/NotificationBell";
-import { Moon, Sun } from "lucide-react";
-
 type PageType =
   | "overview"
   | "profile"
@@ -44,8 +39,6 @@ type PageType =
 export default function MentorPage() {
   const params = useSearchParams();
   const tab = (params.get("tab") || "overview").toLowerCase() as PageType;
-
-  const { isDark, toggle } = useTheme();
 
   const render = () => {
     switch (tab) {
@@ -71,39 +64,32 @@ export default function MentorPage() {
             </div>
           </div>
         );
-      case "profile": return <MyProfilePage />;
-      case "mentees": return <MyMenteesContent />;
-      case "sessions": return <SessionsPage />;
-      case "feedbacks": return <FeedbacksPage />;
-      case "messages": return <MessagesPage />;
-      case "earnings": return <EarningsPage />;
-      case "availability": return <AvailabilityPage />;
-      case "cv-review": return <CVReviewPage />;
-      case "notifications": return <NotificationsPage />;
-      case "help": return <HelpSupportPage />;
-      case "settings": return <SettingsPage />;
-      default: return <ProfileOverview />;
+      case "profile":
+        return <MyProfilePage />;
+      case "mentees":
+        return <MyMenteesContent />;
+      case "sessions":
+        return <SessionsPage />;
+      case "feedbacks":
+        return <FeedbacksPage />;
+      case "messages":
+        return <MessagesPage />;
+      case "earnings":
+        return <EarningsPage />;
+      case "availability":
+        return <AvailabilityPage />;
+      case "cv-review":
+        return <CVReviewPage />;
+      case "notifications":
+        return <NotificationsPage />;
+      case "help":
+        return <HelpSupportPage />;
+      case "settings":
+        return <SettingsPage />;
+      default:
+        return <ProfileOverview />;
     }
   };
 
-  return (
-    <div className="min-h-screen flex bg-background">
-      <MentorSidebar currentPage={tab} />
-
-      <div className="flex-1 overflow-auto">
-        <div className="sticky top-0 z-30 backdrop-blur-xl border-b px-8 py-4 flex justify-end items-center gap-4 bg-background-elevated border-border">
-          <button
-            onClick={toggle}
-            className="p-2 rounded-lg hover:bg-muted transition"
-          >
-            {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
-
-          <NotificationBell />
-        </div>
-
-        {render()}
-      </div>
-    </div>
-  );
+  return <>{render()}</>;
 }

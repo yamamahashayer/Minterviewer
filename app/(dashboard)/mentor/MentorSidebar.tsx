@@ -1,318 +1,222 @@
 "use client";
 
-import { motion, AnimatePresence } from 'framer-motion';
-
+import React from "react";
+import Link from "next/link";
+import { useSearchParams, usePathname } from "next/navigation";
 import {
   LayoutDashboard,
+  User,
   Users,
   Calendar,
-  MessageSquare,
-  Mail,
-  Settings,
-  LogOut,
   Star,
+  MessageSquare,
   DollarSign,
   Clock,
   FileText,
-  HelpCircle,
   Bell,
-  User,
+  HelpCircle,
+  Settings,
+  LogOut,
   Search,
-  Menu,
-  X,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+} from "lucide-react";
 
-type PageType = 'overview' | 'profile' | 'mentees' | 'sessions' | 'feedbacks' | 'messages' | 'earnings' | 'availability' | 'cv-review' | 'notifications' | 'help' | 'settings';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/app/components/ui/tooltip";
 
-interface SidebarItemProps {
-  icon: React.ElementType;
-  label: string;
-  active?: boolean;
-  onClick?: () => void;
-  isCollapsed?: boolean;
-}
+export default function MentorSidebar({
+  theme,
+  isOpen,
+  onCloseMobile,
+}: {
+  theme: "dark" | "light";
+  isOpen: boolean;
+  onCloseMobile: () => void;
+}) {
+  const params = useSearchParams();
+  const pathname = usePathname();
 
-const SidebarItem = ({ icon: Icon, label, active, onClick, isCollapsed }: SidebarItemProps) => {
-  const [showTooltip, setShowTooltip] = useState(false);
-  const itemRef = useRef<HTMLDivElement>(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+  const activeTab = params.get("tab") || "overview";
+  const isDark = theme === "dark";
 
-  useEffect(() => {
-    if (showTooltip && itemRef.current) {
-      const rect = itemRef.current.getBoundingClientRect();
-      setTooltipPosition({
-        top: rect.top,
-        left: rect.left + rect.width / 2
-      });
-    }
-  }, [showTooltip]);
-
-  return (
-    <div className="relative" ref={itemRef}>
-      <motion.div
-        whileHover={{ x: isCollapsed ? 0 : 4 }}
-        onClick={onClick}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
-        className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2.5'} px-3 py-2 rounded-lg cursor-pointer transition-all duration-300 ${
-          active
-            ? 'border border-[var(--accent-purple)]/30'
-            : 'hover:bg-[var(--sidebar-accent)] border border-transparent'
-        }`}
-        style={active ? {
-          background: 'linear-gradient(to right, var(--accent-purple-subtle), var(--accent-pink-subtle))',
-          boxShadow: '0 0 20px var(--glow-purple)'
-        } : {}}
-      >
-        <Icon className={`w-4 h-4 ${active ? 'text-[var(--accent-purple)]' : 'text-[var(--foreground-muted)]'}`} />
-        {!isCollapsed && (
-          <span className={`text-sm ${active ? 'text-[var(--accent-purple)]' : 'text-[var(--foreground-muted)]'}`}>{label}</span>
-        )}
-      </motion.div>
-
-      {/* Tooltip with Arrow - Portal Style */}
-      <AnimatePresence>
-        {isCollapsed && showTooltip && (
-          <div 
-            className="fixed pointer-events-none"
-            style={{ 
-              zIndex: 999999,
-              left: `${tooltipPosition.left}px`,
-              top: `${tooltipPosition.top}px`,
-              transform: 'translate(-50%, -100%)'
-            }}
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 10 }}
-              transition={{ duration: 0.2 }}
-              className="flex flex-col items-center mb-2"
-            >
-              <div 
-                className="px-4 py-2 rounded-lg whitespace-nowrap"
-                style={{
-                  background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
-                  boxShadow: '0 4px 20px rgba(124, 58, 237, 0.4)'
-                }}
-              >
-                <span className="text-sm text-white font-medium">{label}</span>
-              </div>
-              {/* Arrow pointing down */}
-              <div 
-                className="w-0 h-0 -mt-[1px]"
-                style={{
-                  borderLeft: '8px solid transparent',
-                  borderRight: '8px solid transparent',
-                  borderTop: '8px solid #7c3aed',
-                }}
-              />
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-interface MentorSidebarProps {
-  currentPage?: PageType;
-  onPageChange?: (page: PageType) => void;
-}
-
-export const MentorSidebar = ({ currentPage = 'overview', onPageChange }: MentorSidebarProps) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const items = [
+    { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "profile", label: "My Profile", icon: User },
+    { id: "mentees", label: "My Mentees", icon: Users },
+    { id: "sessions", label: "Sessions", icon: Calendar },
+    { id: "availability", label: "Availability", icon: Clock },
+    { id: "cv-review", label: "CV Review", icon: FileText },
+    { id: "feedbacks", label: "Feedbacks", icon: Star },
+    { id: "earnings", label: "Earnings", icon: DollarSign },
+    { id: "messages", label: "Messages", icon: MessageSquare },
+    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "help", label: "Help & Support", icon: HelpCircle },
+    { id: "settings", label: "Settings", icon: Settings },
+  ];
 
   return (
-    <motion.div 
-      animate={{ width: isCollapsed ? '80px' : '256px' }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="h-screen border-r border-[var(--sidebar-border)] p-4 flex flex-col sticky top-0 relative" 
-      style={{
-        background: 'var(--sidebar)'
-      }}
+    <aside
+      className={`h-full transition-all duration-300 flex flex-col ${
+        isOpen ? "w-[280px]" : "w-[80px]"
+      } ${
+        isDark
+          ? "bg-gradient-to-b from-[#0f172b] to-[#0a0f1e] border-r border-[rgba(94,234,212,0.1)]"
+          : "bg-white border-r border-[#ddd6fe] shadow-lg"
+      }`}
+      style={{ overflowY: "auto", overflowX: "visible" }}
     >
-      {/* Toggle Button */}
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-6 p-1.5 rounded-full transition-all duration-300 hover:scale-110"
-        style={{
-          zIndex: 40,
-          background: 'var(--background-elevated)',
-          border: '1px solid var(--border)',
-          boxShadow: '0 2px 8px var(--shadow-sm)'
-        }}
+      {/* Header image */}
+      <div
+        className={`border-b ${
+          isDark
+            ? "border-[rgba(94,234,212,0.1)] bg-[#0b1020]"
+            : "border-[#ddd6fe] bg-white"
+        }`}
       >
-        {isCollapsed ? (
-          <ChevronRight className="w-4 h-4" style={{ color: 'var(--foreground-muted)' }} />
-        ) : (
-          <ChevronLeft className="w-4 h-4" style={{ color: 'var(--foreground-muted)' }} />
-        )}
-      </button>
-
-      {/* Logo */}
-      <div className={`mb-3 ${isCollapsed ? 'flex justify-center' : ''}`}>
-        {isCollapsed ? (
-          <div className="relative size-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 shadow-[0_0_20px_rgba(168,85,247,0.4)] flex items-center justify-center shrink-0">
-            <span className="text-[18px]">🎯</span>
-          </div>
-        ) : (
-          <div className="flex gap-2 items-center">
-            <div className="relative size-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 shadow-[0_0_20px_rgba(168,85,247,0.4)] flex items-center justify-center shrink-0">
-              <span className="text-[18px]">🎯</span>
-            </div>
-            <div className="flex flex-col overflow-hidden">
-              <h2 className="bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-pink)] bg-clip-text text-transparent leading-5 text-sm whitespace-nowrap">
-                Minterviewer
-              </h2>
-              <p className="text-[var(--foreground-muted)] text-[10px] leading-3 whitespace-nowrap">Your AI Career Coach</p>
-            </div>
-          </div>
-        )}
+        <img
+          src="/Covering.png"
+          alt="Minterviewer"
+          className="w-full h-24 object-contain"
+        />
       </div>
+
+      {/* Search box (full sidebar only) */}
+      {isOpen && (
+        <div className="p-4">
+          <div className="relative">
+            <Search
+              className={`absolute left-3 top-1/2 -translate-y-1/2 ${
+                isDark ? "text-[#6a7282]" : "text-[#7c3aed]"
+              }`}
+              size={16}
+            />
+            <input
+              placeholder="Search..."
+              className={`w-full ${
+                isDark
+                  ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.1)] text-white placeholder:text-[#6a7282]"
+                  : "bg-[#f5f3ff] border-[#ddd6fe] text-[#2e1065] placeholder:text-[#7c3aed]"
+              } border rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none`}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto overflow-x-visible pr-1" style={{
-        scrollbarWidth: 'thin',
-        scrollbarColor: 'var(--accent-purple) transparent'
-      }}>
-        {/* Search Box */}
-        {!isCollapsed && (
-          <div className="mb-2 pb-2 border-b" style={{ borderColor: 'var(--sidebar-border)' }}>
-            <div className="relative">
-              <Search 
-                className="absolute left-2.5 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5" 
-                style={{ color: 'var(--foreground-muted)' }}
-              />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search..."
-                className="w-full pl-8 pr-2 py-1.5 rounded-lg text-xs transition-all outline-none"
-                style={{
-                  background: 'var(--sidebar-accent)',
-                  borderColor: 'var(--sidebar-border)',
-                  color: 'var(--sidebar-foreground)',
-                  border: '1px solid var(--sidebar-border)',
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--accent-purple)';
-                  e.currentTarget.style.boxShadow = '0 0 0 2px rgba(124, 58, 237, 0.1)';
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--sidebar-border)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              />
-            </div>
-          </div>
-        )}
+      <TooltipProvider delayDuration={120}>
+        <nav className={`p-4 space-y-1 ${!isOpen ? "px-2" : ""}`}>
+          {items.map((item) => {
+            const Icon = item.icon;
+            const href = `${pathname}?tab=${item.id}`;
+            const active = activeTab === item.id;
 
-        {isCollapsed && (
-          <div className="mb-2 pb-2 border-b flex justify-center" style={{ borderColor: 'var(--sidebar-border)' }}>
-            <Search className="w-4 h-4" style={{ color: 'var(--foreground-muted)' }} />
-          </div>
-        )}
+            // FULL SIDEBAR
+            if (isOpen) {
+              return (
+                <Link
+                  key={item.id}
+                  href={href}
+                  onClick={() => {
+                    if (window.innerWidth < 1024) onCloseMobile();
+                  }}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all
+                    ${
+                      active
+                        ? isDark
+                          ? "bg-[rgba(94,234,212,0.12)] text-teal-300 ring-1 ring-teal-400/40 shadow-[0_0_20px_rgba(94,234,212,0.15)]"
+                          : "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 ring-1 ring-purple-300 shadow-lg"
+                        : isDark
+                        ? "text-[#a8b0bf] hover:bg-white/5 hover:text-white"
+                        : "text-[#7c3aed] hover:bg-[#ede9fe] hover:text-[#5b21b6]"
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon size={18} />
+                    <span className="text-sm">{item.label}</span>
+                  </div>
+                </Link>
+              );
+            }
 
-        <SidebarItem 
-          icon={LayoutDashboard} 
-          label="Overview" 
-          active={currentPage === 'overview'}
-          onClick={() => onPageChange?.('overview')}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem 
-          icon={User} 
-          label="My Profile" 
-          active={currentPage === 'profile'}
-          onClick={() => onPageChange?.('profile')}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem 
-          icon={Users} 
-          label="My Mentees" 
-          active={currentPage === 'mentees'}
-          onClick={() => onPageChange?.('mentees')}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem 
-          icon={Calendar} 
-          label="Sessions" 
-          active={currentPage === 'sessions'}
-          onClick={() => onPageChange?.('sessions')}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem 
-          icon={Clock} 
-          label="Availability" 
-          active={currentPage === 'availability'}
-          onClick={() => onPageChange?.('availability')}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem 
-          icon={FileText} 
-          label="CV Review" 
-          active={currentPage === 'cv-review'}
-          onClick={() => onPageChange?.('cv-review')}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem 
-          icon={Star} 
-          label="Feedbacks" 
-          active={currentPage === 'feedbacks'}
-          onClick={() => onPageChange?.('feedbacks')}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem 
-          icon={DollarSign} 
-          label="Earnings" 
-          active={currentPage === 'earnings'}
-          onClick={() => onPageChange?.('earnings')}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem 
-          icon={Mail} 
-          label="Messages" 
-          active={currentPage === 'messages'}
-          onClick={() => onPageChange?.('messages')}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem 
-          icon={Bell} 
-          label="Notifications" 
-          active={currentPage === 'notifications'}
-          onClick={() => onPageChange?.('notifications')}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem 
-          icon={HelpCircle} 
-          label="Help & Support" 
-          active={currentPage === 'help'}
-          onClick={() => onPageChange?.('help')}
-          isCollapsed={isCollapsed}
-        />
-        <SidebarItem 
-          icon={Settings} 
-          label="Settings" 
-          active={currentPage === 'settings'}
-          onClick={() => onPageChange?.('settings')}
-          isCollapsed={isCollapsed}
-        />
-      </nav>
+            // COLLAPSED SIDEBAR
+            return (
+              <Tooltip key={item.id}>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={href}
+                    className={`relative w-full flex items-center justify-center px-3 py-3 rounded-xl transition-all
+                      ${
+                        active
+                          ? isDark
+                            ? "bg-[rgba(94,234,212,0.12)] text-teal-300 ring-1 ring-teal-400/40"
+                            : "bg-purple-100 text-purple-700 ring-1 ring-purple-300"
+                          : isDark
+                          ? "text-[#a8b0bf] hover:bg-white/5 hover:text-white"
+                          : "text-[#7c3aed] hover:bg-[#ede9fe] hover:text-[#5b21b6]"
+                      }
+                    `}
+                  >
+                    <Icon size={20} />
+                  </Link>
+                </TooltipTrigger>
+
+                <TooltipContent
+                  side="right"
+                  sideOffset={12}
+                  align="center"
+                  className={`rounded-xl px-3 py-2 text-xs font-medium backdrop-blur-xl border shadow-2xl
+                    ${
+                      isDark
+                        ? "bg-[#0b1223]/90 text-teal-100 border-teal-400/20"
+                        : "bg-white/95 text-[#2e1065] border-purple-300"
+                    }
+                  `}
+                >
+                  {item.label}
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
+        </nav>
+      </TooltipProvider>
 
       {/* Logout */}
-      <div className="mt-auto pt-3 border-t border-[var(--sidebar-border)]">
-        <SidebarItem 
-          icon={LogOut} 
-          label="Logout" 
-          isCollapsed={isCollapsed}
-        />
+      <div className={`p-4 pb-6 mt-auto ${!isOpen ? "px-2" : ""}`}>
+        {isOpen ? (
+          <button
+            className="w-full bg-[rgba(220,38,38,0.1)] hover:bg-[rgba(220,38,38,0.2)]
+              text-red-400 rounded-lg p-3 text-sm transition-all flex items-center gap-2"
+          >
+            <LogOut size={16} />
+            Logout
+          </button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                className="w-full flex justify-center bg-[rgba(220,38,38,0.1)]
+                  hover:bg-[rgba(220,38,38,0.2)] text-red-400 rounded-lg p-3"
+              >
+                <LogOut size={20} />
+              </button>
+            </TooltipTrigger>
+
+            <TooltipContent
+              side="right"
+              sideOffset={12}
+              className={`rounded-xl px-3 py-2 text-xs font-medium backdrop-blur-xl shadow-xl
+                ${isDark ? "bg-[#0b1223]/85 text-red-200" : "bg-white/95 text-red-600"}
+              `}
+            >
+              Logout
+            </TooltipContent>
+          </Tooltip>
+        )}
       </div>
-    </motion.div>
+    </aside>
   );
-};
+}
