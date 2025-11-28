@@ -52,16 +52,9 @@ export const useTextToSpeech = () => {
             await audio.play();
         } catch (err) {
             console.error('TTS Error:', err);
-            // **Fallback** to browser Web Speech (free) when server TTS fails or quota exceeded
-            if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-                try {
-                    const utter = new SpeechSynthesisUtterance(text);
-                    utter.onend = () => setIsSpeaking(false);
-                    window.speechSynthesis.speak(utter);
-                } catch { }
-            } else {
-                setIsSpeaking(false);
-            }
+            setIsSpeaking(false);
+            // Log the error details so user can see what's wrong
+            console.error('Failed to use ElevenLabs TTS. Make sure ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID are set.');
         }
     }, []);
 

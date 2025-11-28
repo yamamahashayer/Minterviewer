@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 
 export async function POST(req: NextRequest) {
   try {
     const { role, interviewType, techStack, questionCount } = await req.json();
 
+    console.log("Received generate-questions request:", { role, interviewType, techStack, questionCount });
+
     const apiKey = process.env.GEMINI_API_KEY;
+    console.log("GEMINI_API_KEY present:", !!apiKey);
+
     if (!apiKey) {
+      console.error("Missing GEMINI_API_KEY");
       return NextResponse.json(
         { error: "Missing GEMINI_API_KEY" },
         { status: 500 }
@@ -15,68 +20,70 @@ export async function POST(req: NextRequest) {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    // === YOUR ORIGINAL PROMPT (preserved exactly) ===
-    const sessionId = Math.random().toString(36).slice(2) + Date.now();
-    const prompt = `You are an expert interviewer. Generate ${questionCount} diverse interview questions for a ${role} position.
-Interview type: ${interviewType}
-Tech stack: ${(Array.isArray(techStack) ? techStack : []).join(', ')}
+    const prompt = `
+    You are an expert technical interviewer. Generate ${questionCount || 5} interview questions for a ${role} position.
+    
+    Interview Type: ${interviewType}
+    Tech Stack: ${Array.isArray(techStack) ? techStack.join(", ") : techStack}
+    
+    For each question, specify:
+    1. The question text
+    2. The type (verbal or coding)
+    3. isCoding (boolean) - true if it requires writing code
+    
+    If the interview type is "technical", include a mix of conceptual and coding questions.
+    If "behavioral", focus on soft skills and past experiences.
+    
+    Return **ONLY** valid JSON.
+    `;
 
-For technical interviews, include:
-- 60% coding questions (mark with isCoding: true)
-- 40% conceptual questions
-
-For behavioral interviews, focus on:
-- Leadership and teamwork
-- Problem-solving scenarios
-- Communication skills
-
-Vary phrasing and coverage on each request. Avoid repeating the same wording. Randomize question order.
-Session id: ${sessionId}
-
-Return ONLY a JSON array named questions (no extra text), each item with:
-{
-  "text": "question text",
-  "type": "verbal" | "coding",
-  "isCoding": boolean,
-  "difficulty": "easy" | "medium" | "hard",
-  "category": "string"
-}`;
-
+    console.log("Sending prompt to Gemini...");
     const response = await ai.models.generateContent({
       model: "gemini-2.5-pro",
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }]
-        }
-      ],
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
       config: {
-        responseMimeType: "application/json"
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            questions: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  text: { type: Type.STRING },
+                  type: { type: Type.STRING, enum: ["verbal", "coding"] },
+                  isCoding: { type: Type.BOOLEAN }
+                },
+                required: ["text", "type", "isCoding"]
+              }
+            }
+          },
+          required: ["questions"]
+        }
       }
     });
 
-    const text = response.text?.trim() || "[]";
+    const text = response.text?.trim() || "{}";
+    console.log("Gemini response text:", text);
 
     let parsed;
     try {
       parsed = JSON.parse(text);
     } catch (e) {
-      console.error("JSON parse failed:", text);
-      parsed = { questions: [] };
+      console.error("JSON parse failed:", text, e);
+      return NextResponse.json(
+        { error: "Invalid JSON returned from Gemini" },
+        { status: 500 }
+      );
     }
 
-    const items = Array.isArray(parsed.questions)
-      ? parsed.questions
-      : Array.isArray(parsed)
-      ? parsed
-      : [];
+    return NextResponse.json(parsed);
 
-    return NextResponse.json({ questions: items });
-
-  } catch (err: any) {
-    console.error("Gemini request failed:", err);
+  } catch (error) {
+    console.error("Question Generation Error:", error);
     return NextResponse.json(
-      { error: "Gemini request failed" },
+      { error: "Failed to generate questions" },
       { status: 500 }
     );
   }
