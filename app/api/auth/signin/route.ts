@@ -8,6 +8,19 @@ import Mentee from "@/models/Mentee";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+function getRedirectForRole(role: string) {
+  switch (role) {
+    case "mentee":
+      return "/mentee?tab=overview";
+    case "mentor":
+      return "/mentor?tab=overview";
+    case "admin":
+      return "/admin";
+    default:
+      return "/";
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
@@ -39,13 +52,14 @@ export async function POST(req: NextRequest) {
       { expiresIn: "7d" }
     );
 
+    // Optional: get mentee id
     const mentee = await Mentee.findOne({ user: user._id }).select("_id");
     const menteeId = mentee?._id?.toString() || null;
 
     return NextResponse.json({
       ok: true,
       message: "Login successful",
-      token, // ← مهم جدًا
+      token,
       user: {
         id: user._id.toString(),
         email: user.email,
@@ -53,7 +67,9 @@ export async function POST(req: NextRequest) {
         role: user.role,
         menteeId,
       },
-      redirectUrl: "/mentee?tab=overview",
+
+      // 🔥 Redirect automatically based on user role
+      redirectUrl: getRedirectForRole(user.role),
     });
   } catch (err: any) {
     console.error("💥 Signin error:", err);
