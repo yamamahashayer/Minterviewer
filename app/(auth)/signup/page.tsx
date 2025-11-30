@@ -59,8 +59,9 @@ const EXPERTISE = [
   'Blockchain / Web3','Computer Vision','NLP','Software Architecture','Other',
 ];
 
+
+
 export default function SignUp() {
-  // الخطوات: 1) Role فقط  2) Basic (Name/Email/Password)  3) Optional
   const [currentStep, setCurrentStep] = useState(1);
   const [role, setRole] = useState<Role | null>(null);
 
@@ -84,9 +85,12 @@ export default function SignUp() {
   });
 
   const [mentorFields, setMentorFields] = useState({
-    yearsOfExperience: '',   // Number
-    field: '',               // string
+    yearsOfExperience: '',
+    field: '',
+    focusArea: '',
+    availabilityType: '',
   });
+
 
   useEffect(() => {
     if (!profilePhoto) return setPhotoPreview(null);
@@ -150,37 +154,36 @@ export default function SignUp() {
   const progress = (currentStep / 3) * 100;
 
   const buildPayload = () => {
-    const payload: {
-      full_name: string;
-      email: string;
-      password: string;
-      role: Role;
-      profile_photo?: string;
-      linkedin_url?: string;
-      area_of_expertise?: string;
-      short_bio?: string;
-      phoneNumber?: string; // غير مستخدم بالواجهة الآن
-      Country?: string;
-      yearsOfExperience?: number;
-      field?: string;
-    } = {
-      full_name: form.full_name,
-      email: form.email,
-      password: form.password,
-      role: role as Role,
-      profile_photo: undefined,
-      linkedin_url: form.linkedin_url || undefined,
-      area_of_expertise: form.area_of_expertise || undefined,
-      short_bio: form.short_bio || undefined,
-      Country: form.country || undefined,
-    };
-
-    if (role === 'mentor') {
-      if (mentorFields.yearsOfExperience) payload.yearsOfExperience = Number(mentorFields.yearsOfExperience);
-      if (mentorFields.field) payload.field = mentorFields.field;
-    }
-    return payload;
+  const payload: any = {
+    full_name: form.full_name,
+    email: form.email,
+    password: form.password,
+    role: role as Role,
+    linkedin_url: form.linkedin_url || undefined,
+    area_of_expertise: form.area_of_expertise || undefined,
+    short_bio: form.short_bio || undefined,
+    Country: form.country || undefined,
   };
+
+  // mentor extra fields
+  if (role === "mentor") {
+    payload.yearsOfExperience = mentorFields.yearsOfExperience
+      ? Number(mentorFields.yearsOfExperience)
+      : undefined;
+
+    payload.title = mentorFields.field || undefined;
+
+    // arrays stored initially — can edit later in profile
+    payload.languages = form.area_of_expertise
+      ? [form.area_of_expertise]
+      : [];
+
+    payload.industries = form.country ? [form.country] : [];
+  }
+
+  return payload;
+};
+
 
   const sendJSON = async (payload: unknown): Promise<ApiResponse> => {
     const res = await fetch('/api/auth/signup', {
@@ -193,33 +196,77 @@ export default function SignUp() {
     return data;
   };
 
-  const onSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+    /* ------------------------- SUBMIT HANDLER ------------------------- */
+const onSubmit = async (e: FormEvent) => {
+  e.preventDefault();
 
-    if (currentStep < 3) {
-      if (validateStep(currentStep)) {
-        setCurrentStep(s => s + 1);
-        setErrors({});
-      }
-      return; 
+  if (currentStep < 3) {
+    if (validateStep(currentStep)) {
+      setCurrentStep(s => s + 1);
+      setErrors({});
+    }
+    return;
+  }
+
+  if (!validateStep(2) || !role) {
+    setCurrentStep(2);
+    return;
+  }
+
+  setSubmitting(true);
+
+  try {
+    /* ---- 1) Create USER ---- */
+    const userData = await sendJSON(buildPayload());
+
+    if (!userData?.user?.id) {
+      throw new Error("User created but no user ID returned.");
     }
 
-    if (!validateStep(2) || !role) {
-      setCurrentStep(2);
-      return;
+    const userId = userData.user.id;
+
+    /* ---- 2) If mentor → create Mentor document ---- */
+    if (role === "mentor") {
+      const mentorPayload = {
+        user: userId,
+
+        title: mentorFields.focusArea || "",
+        yearsOfExperience: mentorFields.yearsOfExperience
+          ? Number(mentorFields.yearsOfExperience)
+          : 0,
+
+        languages: form.area_of_expertise ? [form.area_of_expertise] : [],
+        industries: form.country ? [form.country] : [],
+
+        availabilityType: mentorFields.availabilityType || "",
+
+        tags: [],
+        expertise: [],
+        certifications: [],
+        sessionTypes: [],
+        achievements: [],
+        social: {
+          linkedin: form.linkedin_url || "",
+        },
+
+        availability: [],
+      };
+
+      await fetch("/api/mentors", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(mentorPayload),
+      });
     }
 
-    setSubmitting(true);
-    try {
-      const data = await sendJSON(buildPayload());
-      alert(data?.message || 'Registered');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to sign up';
-      alert(msg);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    alert("Account created successfully!");
+  } catch (err: any) {
+    alert(err?.message || "Failed to sign up");
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   const prevStep = () => {
     setCurrentStep(s => Math.max(s - 1, 1));
@@ -422,30 +469,94 @@ export default function SignUp() {
                     {errors.confirmPassword && <p className="text-xs text-red-400">{errors.confirmPassword}</p>}
                   </div>
 
-                  {/* Mentor optional mini fields داخل Basic */}
-                  {role === 'mentor' && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-                      <div className="space-y-1 md:col-span-1">
-                        <Label className="text-gray-200">Years (opt.)</Label>
-                        <Input
-                          type="number" min={0}
-                          value={mentorFields.yearsOfExperience}
-                          onChange={(e) => setMentorFields(s => ({ ...s, yearsOfExperience: e.target.value }))}
-                          placeholder="5"
-                          className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white placeholder:text-gray-500"
-                        />
-                      </div>
-                      <div className="space-y-1 md:col-span-1">
-                        <Label className="text-gray-200">Field (opt.)</Label>
-                        <Input
-                          value={mentorFields.field}
-                          onChange={(e) => setMentorFields(s => ({ ...s, field: e.target.value }))}
-                          placeholder="Software Architecture"
-                          className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white placeholder:text-gray-500"
-                        />
-                      </div>
+
+                    {/* Mentor Fields (ONLY when role === "mentor") */}
+                {role === 'mentor' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
+
+                    {/* Mentor Focus Area */}
+                    <div className="space-y-1 md:col-span-2">
+                      <Label className="text-gray-200">Mentor Focus Area</Label>
+                      <Select
+                        value={mentorFields.focusArea}
+                        onValueChange={(v) =>
+                          setMentorFields((s) => ({ ...s, focusArea: v }))
+                        }
+                      >
+                        <SelectTrigger className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white">
+                          <SelectValue placeholder="Select your focus" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#1a1f35] border-[#00FFB2]/30 text-white max-h-56">
+                          {[
+                            "Interview Preparation",
+                            "System Design",
+                            "Frontend Development",
+                            "Backend Development",
+                            "Career Growth",
+                            "Mock Interviews",
+                          ].map((x) => (
+                            <SelectItem key={x} value={x}>
+                              {x}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                  )}
+
+                    {/* Show these ONLY after selecting Focus Area */}
+                    {mentorFields.focusArea && (
+                      <>
+                        {/* Years of Experience */}
+                        <div className="space-y-1">
+                          <Label className="text-gray-200">Years of Experience</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            value={mentorFields.yearsOfExperience}
+                            onChange={(e) =>
+                              setMentorFields((s) => ({
+                                ...s,
+                                yearsOfExperience: e.target.value,
+                              }))
+                            }
+                            placeholder="2"
+                            className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white placeholder:text-gray-500"
+                          />
+                        </div>
+
+                        {/* Availability Type */}
+                        <div className="space-y-1">
+                          <Label className="text-gray-200">Availability Type</Label>
+                          <Select
+                            value={mentorFields.availabilityType}
+                            onValueChange={(v) =>
+                              setMentorFields((s) => ({ ...s, availabilityType: v }))
+                            }
+                          >
+                            <SelectTrigger className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white">
+                              <SelectValue placeholder="Select availability" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#1a1f35] border-[#00FFB2]/30 text-white max-h-56">
+                              {[
+                                "Full-Time",
+                                "Part-Time",
+                                "Weekends Only",
+                                "Evenings Only",
+                                "Flexible",
+                              ].map((x) => (
+                                <SelectItem key={x} value={x}>
+                                  {x}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </>
+                    )}
+
+                  </div>
+                )}
+
                 </motion.div>
               )}
 
@@ -464,7 +575,7 @@ export default function SignUp() {
                     <p className="text-gray-400 text-sm">This helps personalize your experience</p>
                   </div>
 
-                  {/* Country (يرسل كـ Country بحرف كبير) */}
+                  {/* Country  */}
                   <div className="space-y-1">
                     <Label className="text-gray-200">Country</Label>
                     <Select value={form.country} onValueChange={(v) => setForm(p => ({ ...p, country: v }))}>

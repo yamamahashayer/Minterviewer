@@ -1,24 +1,34 @@
-// models/Mentor.js
 import mongoose from "mongoose";
 
-const mentorSchema = new mongoose.Schema(
+const MentorSchema = new mongoose.Schema(
   {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      unique: true,
-      required: true,
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+
+    title: { type: String, default: "" }, // ممكن تحمل Focus Area
+
+    yearsOfExperience: { type: Number, default: 0 },
+
+    languages: { type: [String], default: [] },
+
+    industries: { type: [String], default: [] },
+
+    focusArea: { type: String, default: "" },              // ⭐ NEW
+    availabilityType: { type: String, default: "" },        // ⭐ NEW
+
+    tags: { type: [String], default: [] },
+    expertise: { type: Array, default: [] },
+    sessionTypes: { type: Array, default: [] },
+    certifications: { type: Array, default: [] },
+    achievements: { type: Array, default: [] },
+
+    social: {
+      github: String,
+      website: String,
     },
-    totalEarnings: { type: mongoose.Decimal128 },
-    totalSessions: { type: Number, default: 0 },
-    totalMentees: { type: Number, default: 0 },
-    feedback: [{ type: String }],
-    rating: { type: Number, default: 0 },
-    yearsOfExperience: Number,
-    field: String,
-    availabilities: [{ type: Date }],
+
+    availability: { type: Array, default: [] },
   },
   { timestamps: true }
 );
 
-export default mongoose.models.Mentor || mongoose.model("Mentor", mentorSchema);
+export default mongoose.models.Mentor || mongoose.model("Mentor", MentorSchema);

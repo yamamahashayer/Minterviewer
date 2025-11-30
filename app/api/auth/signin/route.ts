@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Mentee from "@/models/Mentee";
+import Mentor from "@/models/Mentor"; 
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -52,9 +53,13 @@ export async function POST(req: NextRequest) {
       { expiresIn: "7d" }
     );
 
-    // Optional: get mentee id
+    // ✅ Get menteeId (if mentee)
     const mentee = await Mentee.findOne({ user: user._id }).select("_id");
     const menteeId = mentee?._id?.toString() || null;
+
+    // ✅ Get mentorId (if mentor)
+    const mentor = await Mentor.findOne({ user: user._id }).select("_id");
+    const mentorId = mentor?._id?.toString() || null;
 
     return NextResponse.json({
       ok: true,
@@ -66,11 +71,11 @@ export async function POST(req: NextRequest) {
         full_name: user.full_name,
         role: user.role,
         menteeId,
+        mentorId,  
       },
-
-      // 🔥 Redirect automatically based on user role
       redirectUrl: getRedirectForRole(user.role),
     });
+
   } catch (err: any) {
     console.error("💥 Signin error:", err);
     return NextResponse.json({ message: err.message || "Server error" }, { status: 500 });
