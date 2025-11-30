@@ -4,7 +4,7 @@ import React from "react";
 import { useSearchParams } from "next/navigation";
 
 import { ProfileOverview } from "@/app/(dashboard)/mentor/ProfileOverview";
-import { MyProfilePage } from "@/app/(dashboard)/mentor/MyProfilePage";
+import MyProfilePage from "@/app/(dashboard)/mentor/MyProfilePage";
 import { UpcomingSessions } from "@/app/(dashboard)/mentor/UpcomingSessions";
 import { MenteesProgress } from "@/app/(dashboard)/mentor/MenteesProgress";
 import { FeedbackManager } from "@/app/(dashboard)/mentor/FeedbackManager";
