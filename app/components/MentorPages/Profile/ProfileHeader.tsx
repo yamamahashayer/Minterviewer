@@ -6,163 +6,186 @@ import {
   Calendar,
   DollarSign,
   Clock,
-  MapPin
+  MapPin,
+  Pencil,
+  Check,
+  X
 } from "lucide-react";
 
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/ui/avatar";
 import { Badge } from "@/app/components/ui/badge";
 
-type HeaderProps = {
-  profile: any;
-  stats: any;
-};
-
-export default function MentorPremiumHeader({ profile, stats }: HeaderProps) {
-  const data = profile || {};
+export default function ProfileHeader({
+  profile,
+  stats,
+  isEditing,
+  setIsEditing,
+  onChange,
+  onSave
+}) {
+  const user = profile || {};
 
   return (
     <div
-      className="relative overflow-hidden rounded-3xl p-10 mb-10 shadow-lg"
+      className="relative overflow-hidden rounded-2xl backdrop-blur-xl p-8 mb-8"
       style={{
         background: "var(--card)",
         border: "1px solid var(--border)",
+        boxShadow: "0 4px 20px rgba(147, 51, 234, 0.12)"
       }}
     >
-      {/* ======= Premium Gradient Blur ======= */}
-      <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-purple-400/30 via-pink-400/20 to-transparent blur-3xl opacity-60" />
-      <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-gradient-to-tr from-purple-300/20 to-pink-300/20 blur-2xl opacity-40" />
+      {/* Background Gradient */}
+      <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-purple-500/10 to-pink-500/10 blur-3xl rounded-full" />
 
-      <div className="relative flex flex-col md:flex-row items-start gap-8 z-10">
+      {/* ================= HEADER TOP BAR (Edit Button) ================= */}
+      <div className="relative flex justify-end mb-4">
+        {!isEditing && (
+          <button
+            onClick={() => setIsEditing(true)}
+            className="px-4 py-2 flex items-center gap-2 rounded-lg 
+            bg-purple-600 text-white shadow hover:bg-purple-700 transition"
+          >
+            <Pencil className="w-4 h-4" />
+            Edit Profile
+          </button>
+        )}
 
-        {/* ======================= Avatar ======================= */}
+        {isEditing && (
+          <div className="flex gap-3">
+            <button
+              onClick={onSave}
+              className="px-4 py-2 flex items-center gap-2 rounded-lg 
+              bg-green-600 text-white shadow hover:bg-green-700"
+            >
+              <Check className="w-4 h-4" />
+              Save
+            </button>
+
+            <button
+              onClick={() => setIsEditing(false)}
+              className="px-4 py-2 flex items-center gap-2 rounded-lg 
+              bg-gray-300 text-gray-800 hover:bg-gray-400"
+            >
+              <X className="w-4 h-4" />
+              Cancel
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* ================= MAIN LAYOUT ================= */}
+      <div className="relative flex flex-col md:flex-row gap-6 items-center md:items-start">
+
+        {/* ================= AVATAR ================= */}
         <div className="relative">
-          <Avatar className="w-28 h-28 border-4 border-purple-500/40 shadow-md">
-            <AvatarImage src={data.profile_photo} />
-            <AvatarFallback className="text-3xl font-bold text-purple-700">
-              {data.full_name?.charAt(0) || "M"}
+          <Avatar className="w-28 h-28 border-4 border-purple-500/30">
+            <AvatarImage src={user.profile_photo} />
+            <AvatarFallback className="text-3xl">
+              {user.full_name?.charAt(0) || "M"}
             </AvatarFallback>
           </Avatar>
 
-          {/* Rank */}
+          {/* Rank Icon */}
           <div
-            className="absolute -bottom-3 -right-3 w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 
-            flex items-center justify-center border-4 shadow-md"
+            className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 
+            flex items-center justify-center border-4"
             style={{ borderColor: "var(--card)" }}
           >
             <Award className="text-white w-5 h-5" />
           </div>
         </div>
 
-        {/* ======================= Main Information ======================= */}
+        {/* ================= MAIN INFO ================= */}
         <div className="flex-1 w-full">
+          <div className="flex flex-col md:flex-row md:justify-between w-full">
 
-          {/* Name & Title */}
-          <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
-
-            {/* Left */}
             <div>
-              <h1 className="text-3xl font-semibold text-[var(--foreground)] leading-tight">
-                {data.full_name}
-              </h1>
+              {/* NAME */}
+              {!isEditing && (
+                <h2 className="text-[var(--foreground)] text-2xl font-semibold">
+                  {user.full_name}
+                </h2>
+              )}
 
-              {/* Area of Expertise + Focus Area side-by-side */}
-              <p className="text-[var(--foreground-muted)] mt-1 text-sm flex items-center gap-1">
-                <span>{data.area_of_expertise || "Expert"}</span>
+              {isEditing && (
+                <input
+                  value={user.full_name}
+                  onChange={(e) => onChange("full_name", e.target.value)}
+                  className="text-xl font-semibold bg-white/20 border rounded-xl px-3 py-2"
+                />
+              )}
 
-                {/* dot separator */}
-                {(data.area_of_expertise && data.focusArea) && (
-                  <span className="text-purple-500 mx-1">•</span>
-                )}
-
-                <span>{data.focusArea || "Mentor"}</span>
-              </p>
+               <p className="text-[var(--foreground-muted)] mt-1">
+              {user.area_of_expertise?.length ? user.area_of_expertise.join(", ") : ""}
+              {user.area_of_expertise?.length && user.focusAreas?.length ? " • " : ""}
+              {user.focusAreas?.length ? user.focusAreas.join(", ") : ""}
+            </p>
 
 
-              {/* Badges */}
-              <div className="flex flex-wrap items-center gap-3 mt-3">
-
-                <Badge className="bg-purple-500/20 text-purple-700 border border-purple-300/40">
-                  {data.yearsOfExperience || 0} yrs exp
+              {/* Experience + Country */}
+              <div className="mt-2 flex items-center gap-2">
+                <Badge className="bg-purple-500/20 text-purple-600 border border-purple-400/40">
+                  {user.yearsOfExperience || 0} yrs exp
                 </Badge>
 
-                {data.Country && (
-                  <Badge
-                    variant="outline"
-                    className="border-purple-300/50 text-purple-700 flex items-center gap-1"
-                  >
-                    <MapPin className="w-3 h-3" />
-                    {data.Country}
+                {user.Country && (
+                  <Badge variant="outline" className="border-purple-300/40 text-purple-600 flex items-center gap-1">
+                    <MapPin className="w-3 h-3" /> {user.Country}
                   </Badge>
                 )}
               </div>
             </div>
 
             {/* Rating */}
-            <div className="px-4 py-2 bg-yellow-500/20 rounded-lg border border-yellow-500/40 shadow-sm flex items-center gap-2 h-fit">
-              <Award className="w-4 h-4 text-yellow-500" />
-              <span className="font-semibold text-[var(--foreground)]">
+            <div className="flex items-center gap-2 mt-4 md:mt-0 bg-yellow-500/20 px-3 py-1 rounded-lg border border-yellow-500/30 h-fit">
+              <Award className="w-4 h-4 text-yellow-400" />
+              <span className="text-[var(--foreground)] font-medium">
                 {stats?.rating || 0}
               </span>
             </div>
-
           </div>
 
-          {/* ======================= Quick Stats ======================= */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">
-
-            <StatItem
-              icon={<Calendar className="text-purple-500" />}
+          {/* ================= QUICK STATS ================= */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
+            <SimpleStat
+              icon={<Calendar className="text-purple-400" />}
               title="Sessions"
-              value={stats?.sessionsCount || stats?.sessions || 0}
+              value={stats?.sessions || 0}
             />
 
-            <StatItem
-              icon={<Users className="text-purple-500" />}
+            <SimpleStat
+              icon={<Users className="text-purple-400" />}
               title="Mentees"
-              value={stats?.menteesCount || stats?.mentees || 0}
+              value={stats?.mentees || 0}
             />
 
-            <StatItem
-              icon={<DollarSign className="text-purple-500" />}
+            <SimpleStat
+              icon={<DollarSign className="text-purple-400" />}
               title="Earned"
               value={`$${stats?.earned || 0}`}
             />
 
-            <StatItem
-              icon={<Clock className="text-purple-500" />}
+            <SimpleStat
+              icon={<Clock className="text-purple-400" />}
               title="Response"
               value={stats?.responseTime || "<2 hrs"}
             />
-
           </div>
 
         </div>
-
       </div>
     </div>
   );
 }
 
-/* ============================================= */
-/*                   Stat Item                   */
-/* ============================================= */
-function StatItem({
-  icon,
-  title,
-  value,
-}: {
-  icon: any;
-  title: string;
-  value: any;
-}) {
+/* ======================= SIMPLE STAT ======================= */
+function SimpleStat({ icon, title, value }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="w-7 h-7 flex items-center justify-center">
-        {icon}
-      </span>
+      <span className="w-6 h-6 flex items-center justify-center">{icon}</span>
       <div>
-        <p className="text-xs text-[var(--foreground-muted)]">{title}</p>
-        <p className="text-[var(--foreground)] font-bold text-sm">{value}</p>
+        <p className="text-[var(--foreground-muted)] text-xs">{title}</p>
+        <p className="text-[var(--foreground)] font-semibold">{value}</p>
       </div>
     </div>
   );

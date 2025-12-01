@@ -14,7 +14,7 @@ const MentorSchema = new mongoose.Schema(
     hourlyRate: { type: Number, default: 0 },
 
     // === SPECIALIZATION ===
-    focusArea: { type: String, default: "" },      // مثال: Frontend, Backend…
+    focusAreas: { type: [String], default: [] },
     availabilityType: { type: String, default: "" }, // Full-Time, Part-Time, Flexible…
 
     // === LANGUAGES ===
@@ -41,5 +41,4 @@ const MentorSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Mentor ||
-  mongoose.model("Mentor", MentorSchema);
+export default mongoose.models.Mentor || mongoose.model("Mentor", MentorSchema);

@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema(
     linkedin_url: String,
     github: { type: String, default: "" },
 
-    area_of_expertise: String,
+    area_of_expertise: { type: [String], default: [] },
     short_bio: String,
     phoneNumber: String,
     Country: String,

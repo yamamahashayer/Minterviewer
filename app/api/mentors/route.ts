@@ -34,7 +34,7 @@ export async function POST(req) {
     }
 
     /* ============================================================
-       CREATE MENTOR WITH ONLY THE NEW CLEAN MODEL FIELDS 
+       CREATE MENTOR (NEW SCHEMA FIELDS)
        ============================================================ */
 
     const mentor = await Mentor.create({
@@ -44,8 +44,13 @@ export async function POST(req) {
       yearsOfExperience: Number(body.yearsOfExperience || 0),
       hourlyRate: Number(body.hourlyRate || 0),
 
-      // SPECIALIZATION
-      focusArea: body.focusArea || "",
+      // SPECIALIZATION (NEW)
+      focusAreas: Array.isArray(body.focusAreas)
+        ? body.focusAreas
+        : body.focusArea
+        ? [body.focusArea]
+        : [],
+
       availabilityType: body.availabilityType || "",
 
       // LISTS
@@ -53,6 +58,12 @@ export async function POST(req) {
       sessionTypes: Array.isArray(body.sessionTypes) ? body.sessionTypes : [],
       certifications: Array.isArray(body.certifications) ? body.certifications : [],
       achievements: Array.isArray(body.achievements) ? body.achievements : [],
+
+      // SOCIAL (optional)
+      social: {
+        github: body.github || "",
+        linkedin: body.linkedin_url || "",
+      },
 
       // STATS
       rating: 0,

@@ -4,15 +4,11 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
 import ProfileHeader from "@/app/components/MentorPages/Profile/ProfileHeader";
-import EditDialog from "@/app/components/MentorPages/Profile/EditDialog";
-
-import {
-  AboutSection,
-  ExpertiseSection,
-  SessionsSection,
-  ReviewsSection,
-  AchievementsSection,
-} from "@/app/components/MentorPages/Profile";
+import AboutSection from "@/app/components/MentorPages/Profile/AboutSection";
+import ExpertiseSection from "@/app/components/MentorPages/Profile/ExpertiseSection";
+import SessionsSection from "@/app/components/MentorPages/Profile/SessionsSection";
+import ReviewsSection from "@/app/components/MentorPages/Profile/ReviewsSection";
+import AchievementsSection from "@/app/components/MentorPages/Profile/AchievementsSection";
 
 import {
   Tabs,
@@ -20,16 +16,15 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/app/components/ui/tabs";
-import { Dialog } from "@/app/components/ui/dialog";
 
 export default function MyProfilePage() {
   const [loading, setLoading] = useState(true);
   const [mentorId, setMentorId] = useState<string | null>(null);
-  const [profile, setProfile] = useState<any>(null);
+
+  const [profile, setProfile] = useState<any>(null); // ← البيانات الأصلية
+  const [form, setForm] = useState<any>(null);       // ← النسخة التي نعدلها على الشاشة
   const [stats, setStats] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
-
-  const isDark = false;
 
   /* ---------------- Load mentorId ---------------- */
   useEffect(() => {
@@ -38,12 +33,7 @@ export default function MyProfilePage() {
       if (!raw) return;
 
       const u = JSON.parse(raw);
-
-      const mid =
-        u?.mentorId ||
-        u?.mentor?._id ||
-        u?.mentor ||
-        null;
+      const mid = u?.mentorId || u?.mentor?._id || u?.mentor || null;
 
       if (mid) setMentorId(mid);
     } catch (e) {
@@ -51,7 +41,7 @@ export default function MyProfilePage() {
     }
   }, []);
 
-  /* ---------------- Fetch Profile from API ---------------- */
+  /* ---------------- Fetch Profile ---------------- */
   useEffect(() => {
     if (!mentorId) return;
 
@@ -66,11 +56,9 @@ export default function MyProfilePage() {
         const data = await res.json();
         if (!data.ok) throw new Error("Invalid API response");
 
-        const { profile: p, stats: s } = data;
-
-        setProfile(p);
-        setStats(s);
-
+        setProfile(data.profile);
+        setForm(JSON.parse(JSON.stringify(data.profile))); // ← نسخة مستقلة
+        setStats(data.stats);
       } catch (e) {
         console.error("Profile fetch error:", e);
       } finally {
@@ -79,33 +67,40 @@ export default function MyProfilePage() {
     })();
   }, [mentorId]);
 
-  /* ---------------- Save Updated Data ---------------- */
-  const handleSave = async (updated) => {
+  /* ---------------- UPDATE FIELDS ---------------- */
+  const handleFieldChange = (key: string, value: any) => {
+    setForm((prev: any) => ({
+      ...prev,
+      [key]: value,   // ← نعدل فقط على form
+    }));
+
+    console.log("UPDATED FIELD:", key, value);
+  };
+
+  /* ---------------- SAVE ---------------- */
+  const handleSave = async () => {
     if (!mentorId) return;
 
     try {
       const res = await fetch(`/api/mentors/${mentorId}/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile: updated }),
+        body: JSON.stringify({ profile: form }),
       });
 
       if (!res.ok) throw new Error("Save failed");
 
-      // merge updated values safely
-      setProfile((prev) => ({
-        ...prev,
-        ...updated,
-        social: {
-          ...(prev?.social || {}),
-          ...(updated?.social || {}),
-        },
-      }));
-
+      setProfile(form); // ← نثبت التغييرات الحقيقية
       setIsEditing(false);
     } catch (err) {
       console.error(err);
     }
+  };
+
+  /* ---------------- CANCEL ---------------- */
+  const handleCancel = () => {
+    setForm(JSON.parse(JSON.stringify(profile))); // ← ارجاع القيم الأصلية
+    setIsEditing(false);
   };
 
   /* ---------------- LOADING ---------------- */
@@ -117,28 +112,23 @@ export default function MyProfilePage() {
     );
   }
 
-  /* ---------------- PAGE ---------------- */
   return (
     <div className="p-8 max-w-7xl mx-auto">
 
+      {/* HEADER */}
       <ProfileHeader
-        profile={profile}
+        profile={form}     // ← مهم!!!!!
         stats={stats}
-        isDark={isDark}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
+        onFieldChange={handleFieldChange}
+        onSave={handleSave}
+        onCancel={handleCancel}
       />
-
-      <Dialog open={isEditing} onOpenChange={setIsEditing}>
-        <EditDialog
-          profile={profile}
-          onSave={handleSave}
-          close={() => setIsEditing(false)}
-        />
-      </Dialog>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <Tabs defaultValue="about" className="w-full mt-6">
+
           <TabsList>
             <TabsTrigger value="about">About</TabsTrigger>
             <TabsTrigger value="expertise">Expertise</TabsTrigger>
@@ -148,15 +138,27 @@ export default function MyProfilePage() {
           </TabsList>
 
           <TabsContent value="about">
-            <AboutSection profile={profile} />
+            <AboutSection
+              profile={form}        // ← يعرض النسخة المعدّلة
+              isEditing={isEditing}
+              onFieldChange={handleFieldChange}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
           </TabsContent>
 
           <TabsContent value="expertise">
-            <ExpertiseSection profile={profile} />
+            <ExpertiseSection
+              profile={form}
+              isEditing={isEditing}
+              onFieldChange={handleFieldChange}
+              onSave={handleSave}
+              onCancel={handleCancel}
+            />
           </TabsContent>
 
           <TabsContent value="sessions">
-            <SessionsSection profile={profile} />
+            <SessionsSection profile={form} />
           </TabsContent>
 
           <TabsContent value="reviews">
@@ -164,8 +166,9 @@ export default function MyProfilePage() {
           </TabsContent>
 
           <TabsContent value="achievements">
-            <AchievementsSection profile={profile} />
+            <AchievementsSection profile={form} />
           </TabsContent>
+
         </Tabs>
       </motion.div>
 
