@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, MicOff, MessageSquare } from 'lucide-react';
+import { Mic, MicOff, MessageSquare, Video, VideoOff, Code } from 'lucide-react';
 import { useTextToSpeech } from '../../hooks/useTextToSpeech';
 import { useSpeechToText } from '../../hooks/useSpeechToText';
 
@@ -315,41 +315,78 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
     }
 
     return (
-        <div className="min-h-screen p-6 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
             <div className="max-w-7xl mx-auto">
-                {/* Header */}
-                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 mb-6 border border-white/20">
-                    <div className="flex justify-between items-center">
+                {/* Header with Progress */}
+                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/20">
+                    <div className="flex justify-between items-center mb-4">
                         <div>
-                            <h2 className="text-2xl font-bold text-white mb-1">
+                            <h1 className="text-3xl font-bold text-white mb-1">
                                 Question {currentQuestion + 1} of {questions.length}
-                            </h2>
-                            <p className="text-purple-300">Technical Interview</p>
+                            </h1>
+                            <p className="text-purple-300 text-sm">
+                                {questions[currentQuestion]?.isCoding ? '💻 Coding Challenge' : '💬 Verbal Response'}
+                            </p>
                         </div>
+
+                        {/* Camera Toggle Button - Now Prominent */}
                         <button
                             onClick={() => setVideoEnabled(!videoEnabled)}
-                            className="bg-slate-700 hover:bg-slate-600 text-white p-3 rounded-lg transition-colors"
+                            className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-semibold transition-all ${videoEnabled
+                                ? 'bg-green-500 hover:bg-green-600 text-white'
+                                : 'bg-slate-700 hover:bg-slate-600 text-white'
+                                }`}
                         >
-                            {videoEnabled ? '📹' : '📷'}
+                            {videoEnabled ? (
+                                <>
+                                    <Video className="w-5 h-5" />
+                                    <span>Camera On</span>
+                                </>
+                            ) : (
+                                <>
+                                    <VideoOff className="w-5 h-5" />
+                                    <span>Enable Camera</span>
+                                </>
+                            )}
                         </button>
+                    </div>
+
+                    {/* Progress Bar */}
+                    <div className="flex space-x-2">
+                        {questions.map((_, idx) => (
+                            <div
+                                key={idx}
+                                className={`flex-1 h-3 rounded-full transition-all ${idx === currentQuestion
+                                    ? 'bg-purple-500'
+                                    : idx < currentQuestion
+                                        ? 'bg-green-500'
+                                        : 'bg-slate-600'
+                                    }`}
+                            />
+                        ))}
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Left Panel - Video Feed */}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    {/* Video Feed - Left Side */}
                     {videoEnabled && (
                         <div className="lg:col-span-1">
-                            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
-                                <h3 className="text-white font-semibold mb-3">Your Video</h3>
-                                <div className="relative aspect-video bg-slate-800 rounded-xl overflow-hidden">
+                            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20 sticky top-6">
+                                <h3 className="text-white font-semibold mb-3 flex items-center">
+                                    <Video className="w-4 h-4 mr-2" />
+                                    Your Video
+                                </h3>
+                                <div className="relative aspect-[3/4] bg-slate-800 rounded-xl overflow-hidden">
                                     <video
                                         ref={videoRef}
                                         autoPlay
                                         muted
                                         className="w-full h-full object-cover"
                                     />
+                                    <div className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full animate-pulse">
+                                        LIVE
+                                    </div>
                                 </div>
-                                {/* Hidden canvas for frame capture */}
                                 <canvas
                                     ref={canvasRef}
                                     className="hidden"
@@ -360,43 +397,46 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
                         </div>
                     )}
 
-                    {/* Right Panel - Question & Answer Area */}
-                    <div className={videoEnabled ? 'lg:col-span-2' : 'lg:col-span-3'}>
-                        {/* Question */}
-                        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 mb-4">
+                    {/* Main Content - Question & Answer */}
+                    <div className={videoEnabled ? 'lg:col-span-3' : 'lg:col-span-4'}>
+                        {/* Question Card */}
+                        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 mb-6">
                             <div className="flex items-start space-x-4 mb-6">
-                                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                                    <MessageSquare className="w-6 h-6 text-white" />
+                                <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                                    <MessageSquare className="w-7 h-7 text-white" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-xl text-white leading-relaxed">
+                                    <p className="text-2xl text-white leading-relaxed font-medium">
                                         {questions[currentQuestion]?.text || 'Question loading...'}
                                     </p>
-                                    {questions[currentQuestion]?.isCoding && (
-                                        <div className="mt-2 flex items-center space-x-2 text-sm text-purple-300">
-                                            <span>💻 Coding Question</span>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
+                        </div>
 
-                            {/* Code Editor or Recording Button */}
+                        {/* Answer Area */}
+                        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20">
                             {showCodeEditor ? (
-                                <div className="space-y-4">
-                                    <div className="bg-slate-900 rounded-xl p-4 border border-slate-700">
+                                /* Code Editor */
+                                <div className="space-y-6">
+                                    <div className="flex items-center space-x-2 text-emerald-400 mb-4">
+                                        <Code className="w-5 h-5" />
+                                        <span className="font-semibold">Code Editor</span>
+                                    </div>
+                                    <div className="bg-slate-900 rounded-xl p-6 border border-slate-700">
                                         <textarea
                                             value={code}
                                             onChange={(e) => setCode(e.target.value)}
-                                            className="w-full h-64 bg-transparent text-green-400 font-mono text-sm focus:outline-none resize-none placeholder-slate-500"
+                                            className="w-full h-80 bg-transparent text-emerald-400 font-mono text-base focus:outline-none resize-none placeholder-slate-500"
                                             placeholder="// Write your code here..."
                                         />
                                     </div>
-                                    <div className="flex space-x-3">
+                                    <div className="flex space-x-4">
                                         <button
                                             onClick={submitCode}
-                                            className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center space-x-2"
+                                            className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-4 rounded-xl font-semibold transition-colors flex items-center justify-center space-x-2 text-lg"
                                         >
-                                            <span>✓ Submit Code</span>
+                                            <span>✓</span>
+                                            <span>Submit Code</span>
                                         </button>
                                         <button
                                             onClick={() => {
@@ -404,50 +444,42 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
                                                 setShowCodeEditor(false);
                                                 startRecording();
                                             }}
-                                            className="flex-1 bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-xl font-semibold transition-colors"
+                                            className="flex-1 bg-purple-500 hover:bg-purple-600 text-white py-4 rounded-xl font-semibold transition-colors flex items-center justify-center space-x-2 text-lg"
                                         >
-                                            Record Explanation
+                                            <Mic className="w-5 h-5" />
+                                            <span>Record Instead</span>
                                         </button>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center space-y-4">
+                                /* Voice Recording */
+                                <div className="flex flex-col items-center justify-center py-12 space-y-6">
                                     <button
                                         onClick={isRecording ? stopRecording : startRecording}
-                                        className={`relative group ${isRecording
-                                            ? 'bg-red-500 hover:bg-red-600'
-                                            : 'bg-purple-500 hover:bg-purple-600'
-                                            } text-white rounded-full p-12 transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105`}
+                                        className={`relative group transition-all duration-300 ${isRecording
+                                            ? 'bg-red-500 hover:bg-red-600 scale-110'
+                                            : 'bg-purple-500 hover:bg-purple-600 hover:scale-105'
+                                            } text-white rounded-full p-16 shadow-2xl`}
                                     >
                                         {isRecording ? (
                                             <>
-                                                <MicOff className="w-16 h-16" />
+                                                <MicOff className="w-20 h-20" />
                                                 <div className="absolute inset-0 rounded-full animate-ping bg-red-500/50"></div>
                                             </>
                                         ) : (
-                                            <Mic className="w-16 h-16" />
+                                            <Mic className="w-20 h-20" />
                                         )}
                                     </button>
-                                    <p className="text-white text-lg">
-                                        {isRecording ? 'Recording... Click to finish' : 'Click to start answering'}
-                                    </p>
+                                    <div className="text-center">
+                                        <p className="text-white text-2xl font-semibold mb-2">
+                                            {isRecording ? 'Recording Your Answer...' : 'Ready to Answer?'}
+                                        </p>
+                                        <p className="text-white/70 text-lg">
+                                            {isRecording ? 'Click the button when you\'re done' : 'Click the microphone to start recording'}
+                                        </p>
+                                    </div>
                                 </div>
                             )}
-
-                            {/* Progress */}
-                            <div className="flex space-x-2">
-                                {questions.map((_, idx) => (
-                                    <div
-                                        key={idx}
-                                        className={`flex-1 h-2 rounded-full transition-all ${idx === currentQuestion
-                                            ? 'bg-purple-500'
-                                            : idx < currentQuestion
-                                                ? 'bg-green-500'
-                                                : 'bg-slate-600'
-                                            }`}
-                                    />
-                                ))}
-                            </div>
                         </div>
                     </div>
                 </div>

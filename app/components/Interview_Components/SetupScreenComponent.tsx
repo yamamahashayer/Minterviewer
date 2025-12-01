@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
-import React, { useState, useRef, useEffect } from 'react';
-import { Mic, MicOff, MessageSquare } from 'lucide-react';
-import { useTextToSpeech } from '../../hooks/useTextToSpeech';
+import React, { useState, useRef } from 'react';
+import { Mic, MicOff } from 'lucide-react';
 import { useSpeechToText } from '../../hooks/useSpeechToText';
 
 // Setup Screen Component
@@ -10,6 +9,7 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [avatarSpeaking, setAvatarSpeaking] = useState(false);
+    const [videoKey, setVideoKey] = useState(0); // Used to force video replay
     const [setupData, setSetupData] = useState({
         role: '',
         interviewType: '',
@@ -24,21 +24,17 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
         "Excellent! How many questions would you like? You can choose between 5 to 15 questions."
     ], []);
 
+    // Local video files for each setup step
+    const avatarVideos = React.useMemo(() => [
+        "/videos/Role.mp4",         // ROLE
+        "/videos/Type.mp4",         // TYPE
+        "/videos/stack.mp4",        // STACK
+        "/videos/Questions.mp4"     // QUESTION COUNT
+    ], []);
+
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
-    const lastSpokenStepRef = useRef<number | null>(null);
-    const { speak } = useTextToSpeech();
     const { transcribe } = useSpeechToText();
-
-    useEffect(() => {
-        // Avoid double-speaking in React StrictMode/dev by ensuring we only speak once per step
-        if (lastSpokenStepRef.current === step) return;
-        lastSpokenStepRef.current = step;
-
-        // Speak the current question
-        speak(questions[step]);
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [step]);
 
     const startListening = async () => {
         try {
@@ -95,11 +91,9 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
                 }
             }, 1500);
         } else {
-            // Redirect user
+            // Redirect user - show validation message and replay video
             setAvatarSpeaking(true);
-            if (processedData?.redirectMessage) {
-                speak(processedData.redirectMessage);
-            }
+            setVideoKey(prev => prev + 1); // Force video to replay
             setTimeout(() => {
                 setAvatarSpeaking(false);
                 setTranscript('');
@@ -207,12 +201,21 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
 
     return (
         <div className="flex flex-col items-center justify-center h-screen">
-            {/* Avatar */}
-            <div className="relative">
-                <div className={`w-40 h-40 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center transition-all duration-300 ${avatarSpeaking ? 'scale-110 shadow-2xl shadow-purple-500/50' : 'scale-100'}`}>
-                    <div className="w-36 h-36 rounded-full bg-slate-800 flex items-center justify-center">
-                        <MessageSquare className="w-14 h-14 text-purple-400" />
-                    </div>
+            {/* Avatar Video */}
+            <div className="relative mb-8">
+                <div className={`rounded-2xl overflow-hidden shadow-2xl transition-all duration-300 ${avatarSpeaking ? 'shadow-purple-500/50 scale-105' : 'scale-100'}`}>
+                    <video
+                        key={`${step}-${videoKey}`}
+                        width="560"
+                        height="315"
+                        autoPlay
+                        muted={false}
+                        playsInline
+                        className="rounded-2xl"
+                    >
+                        <source src={avatarVideos[step]} type="video/mp4" />
+                        Your browser does not support the video tag.
+                    </video>
                 </div>
                 {avatarSpeaking && (
                     <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2">
