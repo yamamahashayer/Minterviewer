@@ -1,8 +1,8 @@
 // app/(public)/layout.tsx
 'use client';
 
-import Navbar from '../components/Navbar/Navbar';
-import Footer from '../components/Footer/Footer';
+import Navbar from '../components/publicPages/Navbar/Navbar';
+import Footer from '../components/publicPages/Footer/Footer';
 
 export default function PublicLayout({
   children,

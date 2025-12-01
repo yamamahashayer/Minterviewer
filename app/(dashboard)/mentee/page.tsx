@@ -14,11 +14,9 @@ import AchievementsPage from "@/app/(dashboard)/mentee/AchievementsPage";
 import SchedulePage from "@/app/(dashboard)/mentee/SchedulePage";
 import MessagesPage from "@/app/(dashboard)/mentee/MessagesPage";
 import NotificationsPage from "@/app/(dashboard)/mentee/NotificationsPage";
-import GoalsPage from "@/app/(dashboard)/mentee/GoalsPage";
 import ReportsPage from "@/app/(dashboard)/mentee/ReportsPage";
 import SettingsPage from "@/app/(dashboard)/mentee/SettingsPage";
 import HelpSupportPage from "@/app/(dashboard)/mentee/HelpSupportPage";
-import CVReportPage from "./CVReportPage";
 
 type Theme = "dark" | "light";
 
@@ -54,7 +52,6 @@ export default function MenteePage() {
       case "schedule":            return <SchedulePage theme={theme} />;
       case "messages":            return <MessagesPage theme={theme} />;
       case "notifications":       return <NotificationsPage theme={theme} />;
-      case "goals":               return <GoalsPage theme={theme} />;
       case "reports":             return <ReportsPage theme={theme} />;
       case "settings":            return <SettingsPage theme={theme} />;
       case "help":                return <HelpSupportPage theme={theme} />;
@@ -62,4 +59,4 @@ export default function MenteePage() {
     }
   };
 
-  return <div className="px-4 sm:px-8 py-6">{render()}</div>;}
+  return <div>{render()}</div>;}

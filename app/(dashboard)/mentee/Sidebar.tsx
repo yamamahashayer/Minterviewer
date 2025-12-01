@@ -41,7 +41,6 @@ export default function Sidebar({
     { id: "achievements", label: "Achievements", icon: Award },
     { id: "messages", label: "Messages", icon: MessageSquare, badge: 3 },
     { id: "notifications", label: "Notifications", icon: Bell, badge: notificationsCount },
-    { id: "goals", label: "Goals", icon: Target },
     { id: "reports", label: "Reports", icon: FileText },
     { id: "settings", label: "Settings", icon: Settings },
   ];
@@ -57,36 +56,22 @@ export default function Sidebar({
       }`}
       style={{ overflowY: "auto", overflowX: "visible", position: "relative" }}
     >
-      {/* Header */}
-      <div className={`p-6 border-b ${isDark ? "border-[rgba(94,234,212,0.1)]" : "border-[#ddd6fe]"} flex-shrink-0`}>
-        {isOpen ? (
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-12 h-12 rounded-full ${
-                isDark ? "bg-gradient-to-br from-teal-300 to-emerald-400" : "bg-gradient-to-br from-purple-500 to-pink-500"
-              } flex items-center justify-center shadow-lg`}
-            >
-              <span className="text-xl">🎯</span>
-            </div>
-            <div>
-              <h2 className={isDark ? "text-white" : "text-[#2e1065]"}>Minterviewer</h2>
-              <p className={`text-xs ${isDark ? "text-[#99a1af]" : "text-[#7c3aed]"}`}>Your AI Career Coach</p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <div
-              className={`w-10 h-10 rounded-full ${
-                isDark ? "bg-gradient-to-br from-teal-300 to-emerald-400" : "bg-gradient-to-br from-purple-500 to-pink-500"
-              } flex items-center justify-center shadow-lg`}
-            >
-              <span className="text-lg">🎯</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Search (شكل فقط) */}
+        {/* Header */}
+        <div
+          className={`border-b ${
+            isDark
+              ? "border-[rgba(94,234,212,0.1)] bg-[#0b1020]"
+              : "border-[#ddd6fe] bg-white"
+          } flex-shrink-0`}
+        >
+          <img 
+          src="/Covering.png"
+          alt="Minterviewer Cover"
+          className="w-full h-24 object-contain"
+        />
+        </div>
+        
+       {/* Search (شكل فقط) */}
       {isOpen && (
         <div className="p-4">
           <div className="relative">

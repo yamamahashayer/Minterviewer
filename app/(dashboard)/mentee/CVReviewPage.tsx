@@ -13,17 +13,17 @@ import {
 } from "lucide-react";
 
 import { Button } from "../../components/ui/button";
-import ChoiceScreen from "../../components/MenteeCV/ChoiceScreen";
-import CreateMode from "../../components/MenteeCV/create/CreateMode";
-import UploadMode from "@/app/components/MenteeCV/upload/UploadMode";
-import CVReportView from "@/app/components/MenteeCV/report/CVReportView";
+import ChoiceScreen from "../../components/MenteePages/MenteeCV/ChoiceScreen";
+import CreateMode from "../../components/MenteePages/MenteeCV/create/CreateMode";
+import UploadMode from "@/app/components/MenteePages/MenteeCV/upload/UploadMode";
+import CVReportView from "@/app/components/MenteePages/MenteeCV/report/CVReportView";
 
 import type {
   CVData,
   CvType,
   StepKey,
   StepMeta,
-} from "../../components/MenteeCV/create/types";
+} from "../../components/MenteePages/MenteeCV/create/types";
 
 export default function CVReviewPage({
   theme = "dark",
@@ -32,17 +32,14 @@ export default function CVReviewPage({
 }) {
   const isDark = theme === "dark";
 
-  // 🟢 الحالات الأساسية
   const [mode, setMode] = useState<"choice" | "upload" | "create" | "report">("choice");
 
-  // 🟢 البيانات المجمعة من التحليل (بغض النظر عن المصدر)
   const [analysisData, setAnalysisData] = useState<{
     menteeId?: string;
     resumeId?: string;
     analysis?: any;
   } | null>(null);
 
-  // 🧠 بيانات الإنشاء اليدوي
   const [cvType, setCvType] = useState<CvType>("general");
   const [cvData, setCvData] = useState<CVData>({
     personal: {
@@ -52,7 +49,7 @@ export default function CVReviewPage({
       location: "",
       summary: "",
       linkedin: "",
-      portfolio: "",
+      github: "",
     },
     experience: [
       {
@@ -118,7 +115,6 @@ export default function CVReviewPage({
     }
   }, [visibleSteps, activeIdx]);
 
-  // 🟢 شاشة البداية
   if (mode === "choice") {
     return (
       <ChoiceScreen
@@ -132,7 +128,6 @@ export default function CVReviewPage({
     );
   }
 
-  // 🟢 وضع الإنشاء اليدوي
   if (mode === "create") {
     return (
       <CreateMode
@@ -167,7 +162,6 @@ export default function CVReviewPage({
     );
   }
 
-  // 🟢 وضع رفع CV
   if (mode === "upload") {
     return (
       <UploadMode
@@ -186,7 +180,6 @@ export default function CVReviewPage({
     );
   }
 
-  // 🟢 وضع التقرير النهائي
   if (mode === "report") {
     return (
       <div
@@ -217,7 +210,6 @@ export default function CVReviewPage({
     );
   }
 
-  // ⚙️ fallback افتراضي
   return (
     <div
       className={`min-h-screen p-8 ${
