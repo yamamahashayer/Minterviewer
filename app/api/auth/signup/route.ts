@@ -8,68 +8,71 @@ import { getRedirectForRole } from "@/lib/notifications/roleRedirect";
 
 export async function POST(req: Request) {
   try {
+    await dbConnect();
+
     const {
       full_name,
       email,
       password,
       role,
+
+      // USER FIELDS
       profile_photo,
       linkedin_url,
+      github,
       area_of_expertise,
       short_bio,
       phoneNumber,
       Country,
+
+      // MENTOR FIELDS
       yearsOfExperience,
-      field,
-      availabilities,
+      focusArea,
+      availabilityType,
+      languages,
     } = await req.json();
 
-    if (!full_name || !email || !password || !role) {
+    if (!full_name || !email || !password || !role)
       return NextResponse.json(
         { message: "Missing required fields" },
         { status: 400 }
       );
-    }
 
-    if (role !== "mentor" && role !== "mentee") {
+    if (role !== "mentor" && role !== "mentee")
       return NextResponse.json(
         { message: "Invalid role" },
         { status: 400 }
       );
-    }
 
-    await dbConnect();
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    // Check existing user
+    const exists = await User.findOne({ email });
+    if (exists)
       return NextResponse.json(
         { message: "Email already in use" },
         { status: 400 }
       );
-    }
 
+    // Create User
     const password_hash = await bcrypt.hash(password, 10);
 
-    const userData = {
+    const newUser = await User.create({
       full_name,
       email,
       password_hash,
       role,
       profile_photo,
       linkedin_url,
+      github,
       area_of_expertise,
       short_bio,
       phoneNumber,
       Country,
-    };
+    });
 
-    // CREATE USER
-    const newUser = await User.create(userData);
-
-    // === ORIGIN (WORKS LOCAL + DEPLOY) ===
+    // Origin
     const origin = new URL(req.url).origin;
 
-    // === WELCOME NOTIFICATION ===
+    // Welcome Notification
     await fetch(`${origin}/api/notifications`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -82,20 +85,20 @@ export async function POST(req: Request) {
       }),
     });
 
-    // CREATE ROLE DOCS
+    // Create ROLE record
     let roleDoc = null;
 
     if (role === "mentor") {
       roleDoc = await Mentor.create({
         user: newUser._id,
-        totalEarnings: 0,
-        totalSessions: 0,
-        totalMentees: 0,
-        feedback: [],
-        rating: 0,
         yearsOfExperience: yearsOfExperience || 0,
-        field: field || area_of_expertise,
-        availabilities: availabilities || [],
+        focusArea: focusArea || "",
+        availabilityType: availabilityType || "",
+        languages: languages || [],
+        social: {
+          github: github || "",
+          linkedin: linkedin_url || "",
+        },
       });
     }
 
@@ -110,10 +113,10 @@ export async function POST(req: Request) {
       });
     }
 
-    // === PROFILE COMPLETION SCORE ===
+    // Compute Profile Completion Score
     let score = 0;
 
-    // User fields (70%)
+    // Base USER fields (70%)
     if (full_name) score += 10;
     if (Country) score += 10;
     if (phoneNumber) score += 10;
@@ -122,19 +125,14 @@ export async function POST(req: Request) {
     if (area_of_expertise) score += 10;
     if (short_bio) score += 10;
 
-    // Extra mentee fields (30%)
-    if (role === "mentee") {
-      if (roleDoc?.skills?.length > 0) score += 30;
-    }
-
-    // Extra mentor fields (30%)
+    // Mentor extra (30%)
     if (role === "mentor") {
-      if (roleDoc?.yearsOfExperience) score += 10;
-      if (roleDoc?.field) score += 10;
-      if (roleDoc?.availabilities?.length > 0) score += 10;
+      if (yearsOfExperience) score += 10;
+      if (focusArea) score += 10;
+      if (languages?.length > 0) score += 10;
     }
 
-    // SEND PROFILE INCOMPLETE NOTIFICATION
+    // Send "Profile incomplete" notification
     if (score < 100) {
       await fetch(`${origin}/api/notifications`, {
         method: "POST",
@@ -149,7 +147,6 @@ export async function POST(req: Request) {
       });
     }
 
-    // RETURN RESPONSE
     return NextResponse.json(
       {
         message: `${role === "mentor" ? "Mentor" : "Mentee"} registered successfully!`,
@@ -161,18 +158,14 @@ export async function POST(req: Request) {
       },
       { status: 201 }
     );
+
   } catch (err: any) {
     console.error("[REGISTER_ERROR]", err);
 
-    if (err.code === 11000) {
-      return NextResponse.json(
-        { message: "Email already exists" },
-        { status: 400 }
-      );
-    }
-
     return NextResponse.json(
-      { message: "Internal Server Error" },
+      {
+        message: err?.message || "Internal Server Error",
+      },
       { status: 500 }
     );
   }

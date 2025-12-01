@@ -3,67 +3,55 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 
-// Components
+import ProfileHeader from "@/app/components/MentorPages/Profile/ProfileHeader";
+import EditDialog from "@/app/components/MentorPages/Profile/EditDialog";
+
 import {
-  ProfileHeader,
   AboutSection,
   ExpertiseSection,
   SessionsSection,
   ReviewsSection,
   AchievementsSection,
-  EditDialog
 } from "@/app/components/MentorPages/Profile";
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/app/components/ui/tabs";
-import { Dialog, DialogTrigger } from "@/app/components/ui/dialog";
-import { Edit } from "lucide-react";
-
-// ==================================================================
-// FETCH PROFILE FROM BACKEND
-// ==================================================================
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/app/components/ui/tabs";
+import { Dialog } from "@/app/components/ui/dialog";
 
 export default function MyProfilePage() {
   const [loading, setLoading] = useState(true);
   const [mentorId, setMentorId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  // MAIN PROFILE STATE
-  const [mentorInfo, setMentorInfo] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
-  const [bio, setBio] = useState("");
+  const isDark = false;
 
-  // ------------------------------------------------------------
-  // 1) GET mentorId FROM SESSION
-  // ------------------------------------------------------------
+  /* ---------------- Load mentorId ---------------- */
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem("user");
-      if (!raw) {
-        console.error("❌ no session user");
-        return;
-      }
+      if (!raw) return;
 
       const u = JSON.parse(raw);
 
       const mid =
-        u?.mentorId || u?.mentor?._id;
+        u?.mentorId ||
+        u?.mentor?._id ||
+        u?.mentor ||
+        null;
 
-      if (!mid) {
-        console.error("❌ mentorId missing in sessionStorage");
-        return;
-      }
-
-      setMentorId(mid);
-
-    } catch (err) {
-      console.error("❌ failed reading session", err);
+      if (mid) setMentorId(mid);
+    } catch (e) {
+      console.error(e);
     }
   }, []);
 
-  // ------------------------------------------------------------
-  // 2) FETCH PROFILE USING mentorId
-  // ------------------------------------------------------------
+  /* ---------------- Fetch Profile from API ---------------- */
   useEffect(() => {
     if (!mentorId) return;
 
@@ -71,123 +59,86 @@ export default function MyProfilePage() {
       try {
         setLoading(true);
 
-        const res = await fetch(`/api/mentors/${mentorId}/profile`, { cache: "no-store" });
-
-        if (!res.ok) {
-          throw new Error("Failed to load mentor profile");
-        }
+        const res = await fetch(`/api/mentors/${mentorId}/profile`, {
+          cache: "no-store",
+        });
 
         const data = await res.json();
+        if (!data.ok) throw new Error("Invalid API response");
 
-        // Structure:
-        // data = { mentor: {...}, user: {...}, stats: {...} }
+        const { profile: p, stats: s } = data;
 
-        const { mentor, user, stats } = data;
+        setProfile(p);
+        setStats(s);
 
-        const infoMapped = {
-          name: user?.full_name ?? "Mentor",
-          title: mentor?.title ?? "Mentor",
-          level: mentor?.level ?? "",
-          company: mentor?.company ?? "",
-          location: mentor?.location ?? "",
-          email: user?.email ?? "",
-          phone: user?.phoneNumber ?? mentor?.phone ?? "",
-          joinedDate: mentor?.joinedDate ?? "",
-          avatar: mentor?.avatar ?? "",
-        };
-
-        setMentorInfo(infoMapped);
-        setBio(mentor?.bio ?? "");
-        setStats(stats || {});
-
-        setError(null);
-      } catch (e: any) {
-        setError(e.message);
+      } catch (e) {
+        console.error("Profile fetch error:", e);
       } finally {
         setLoading(false);
       }
     })();
   }, [mentorId]);
 
-  // ==================================================================
-  // RENDER
-  // ==================================================================
+  /* ---------------- Save Updated Data ---------------- */
+  const handleSave = async (updated) => {
+    if (!mentorId) return;
 
+    try {
+      const res = await fetch(`/api/mentors/${mentorId}/profile`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profile: updated }),
+      });
+
+      if (!res.ok) throw new Error("Save failed");
+
+      // merge updated values safely
+      setProfile((prev) => ({
+        ...prev,
+        ...updated,
+        social: {
+          ...(prev?.social || {}),
+          ...(updated?.social || {}),
+        },
+      }));
+
+      setIsEditing(false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  /* ---------------- LOADING ---------------- */
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-xl text-gray-500">
-        Loading profile…
+      <div className="p-20 text-lg text-[var(--foreground-muted)]">
+        Loading profile...
       </div>
     );
   }
 
-  if (error || !mentorInfo) {
-    return (
-      <div className="min-h-screen p-10 text-red-500 text-lg">
-        Failed to load profile: {error}
-      </div>
-    );
-  }
-
-  // Dummy data until backend is ready (same structure you had)
-  const expertise = mentorInfo?.expertise || [
-    { name: "System Design", level: 95 },
-    { name: "Algorithms", level: 90 },
-    { name: "Leadership", level: 85 },
-  ];
-
-  const sessionTypes = mentorInfo?.sessionTypes || [
-    { type: "Technical Interview", price: 120, duration: "60 min", sessions: 30 },
-    { type: "System Design", price: 150, duration: "90 min", sessions: 18 },
-  ];
-
-  const reviews = mentorInfo?.reviews || [
-    {
-      name: "John Doe",
-      rating: 5,
-      comment: "Amazing mentor!",
-      date: "2 days ago",
-      avatar: "",
-    },
-  ];
-
-  const achievements = mentorInfo?.achievements || [
-    { title: "Top Mentor", desc: "Rated 5 stars", color: "yellow" },
-    { title: "100+ Sessions", desc: "Completed over 100 sessions", color: "cyan" },
-  ];
-
-  const languages = mentorInfo?.languages || ["English", "Arabic"];
-  const industries = mentorInfo?.industries || ["Technology", "AI"];
-
-  // ==================================================================
-  // PAGE UI
-  // ==================================================================
-
+  /* ---------------- PAGE ---------------- */
   return (
     <div className="p-8 max-w-7xl mx-auto">
 
-      {/* HEADER */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-[var(--foreground)]">My Profile</h1>
+      <ProfileHeader
+        profile={profile}
+        stats={stats}
+        isDark={isDark}
+        isEditing={isEditing}
+        setIsEditing={setIsEditing}
+      />
 
-          <Dialog>
-            <DialogTrigger className="bg-primary text-white px-4 py-2 rounded-md flex items-center gap-2">
-              <Edit className="w-4 h-4" /> Edit Profile
-            </DialogTrigger>
+      <Dialog open={isEditing} onOpenChange={setIsEditing}>
+        <EditDialog
+          profile={profile}
+          onSave={handleSave}
+          close={() => setIsEditing(false)}
+        />
+      </Dialog>
 
-            <EditDialog mentorInfo={mentorInfo} bio={bio} setBio={setBio} />
-          </Dialog>
-        </div>
-      </motion.div>
-
-      {/* PROFILE HEADER */}
-      <ProfileHeader mentorInfo={mentorInfo} stats={stats} bio={bio} />
-
-      {/* TABS */}
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <Tabs defaultValue="about" className="w-full mt-6">
-
           <TabsList>
             <TabsTrigger value="about">About</TabsTrigger>
             <TabsTrigger value="expertise">Expertise</TabsTrigger>
@@ -197,26 +148,27 @@ export default function MyProfilePage() {
           </TabsList>
 
           <TabsContent value="about">
-            <AboutSection mentorInfo={mentorInfo} languages={languages} industries={industries} />
+            <AboutSection profile={profile} />
           </TabsContent>
 
           <TabsContent value="expertise">
-            <ExpertiseSection expertise={expertise} />
+            <ExpertiseSection profile={profile} />
           </TabsContent>
 
           <TabsContent value="sessions">
-            <SessionsSection sessionTypes={sessionTypes} />
+            <SessionsSection profile={profile} />
           </TabsContent>
 
           <TabsContent value="reviews">
-            <ReviewsSection reviews={reviews} stats={stats} />
+            <ReviewsSection stats={stats} />
           </TabsContent>
 
           <TabsContent value="achievements">
-            <AchievementsSection achievements={achievements} />
+            <AchievementsSection profile={profile} />
           </TabsContent>
         </Tabs>
       </motion.div>
+
     </div>
   );
 }

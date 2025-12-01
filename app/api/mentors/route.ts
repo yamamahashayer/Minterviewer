@@ -9,14 +9,14 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export async function POST(req: Request) {
+export async function POST(req) {
   try {
     await connectDB();
 
     const body = await req.json();
+    const { user: userId } = body;
 
-    const { userId } = body;
-
+    /* -------------------- Validate userId -------------------- */
     if (!userId || !mongoose.isValidObjectId(userId)) {
       return NextResponse.json(
         { ok: false, message: "Invalid or missing userId" },
@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Check if mentor already exists
+    /* -------------------- Prevent duplicate mentor -------------------- */
     const exists = await Mentor.findOne({ user: userId }).lean();
     if (exists) {
       return NextResponse.json(
@@ -33,29 +33,40 @@ export async function POST(req: Request) {
       );
     }
 
+    /* ============================================================
+       CREATE MENTOR WITH ONLY THE NEW CLEAN MODEL FIELDS 
+       ============================================================ */
+
     const mentor = await Mentor.create({
       user: new mongoose.Types.ObjectId(userId),
-      title: body.title || "",
-      yearsOfExperience: body.yearsOfExperience || 0,
-      tags: body.tags || [],
-      languages: body.languages || [],
-      industries: body.industries || [],
-      expertise: body.expertise || [],
-      certifications: body.certifications || [],
-      sessionTypes: body.sessionTypes || [],
-      social: body.social || {},
-      achievements: body.achievements || [],
-      availability: body.availability || [],
+
+      // BASIC
+      yearsOfExperience: Number(body.yearsOfExperience || 0),
+      hourlyRate: Number(body.hourlyRate || 0),
+
+      // SPECIALIZATION
+      focusArea: body.focusArea || "",
+      availabilityType: body.availabilityType || "",
+
+      // LISTS
+      languages: Array.isArray(body.languages) ? body.languages : [],
+      sessionTypes: Array.isArray(body.sessionTypes) ? body.sessionTypes : [],
+      certifications: Array.isArray(body.certifications) ? body.certifications : [],
+      achievements: Array.isArray(body.achievements) ? body.achievements : [],
+
+      // STATS
+      rating: 0,
+      reviewsCount: 0,
+      sessionsCount: 0,
+      menteesCount: 0,
+      profileCompletion: 0,
     });
 
+    return NextResponse.json({ ok: true, mentor }, { status: 201 });
+  } catch (err) {
+    console.error("CREATE MENTOR ERROR:", err);
     return NextResponse.json(
-      { ok: true, mentor },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("CREATE MENTOR ERROR:", error);
-    return NextResponse.json(
-      { ok: false, message: "Server error" },
+      { ok: false, message: "Server Error" },
       { status: 500 }
     );
   }

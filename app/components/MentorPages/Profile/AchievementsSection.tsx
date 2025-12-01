@@ -1,32 +1,32 @@
 "use client";
 
-import { motion } from "framer-motion";
+export default function AchievementsSection({ profile }) {
+  const data = profile || {};
 
-export default function AchievementsSection({ achievements }: any) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {achievements.map((item: any, i: number) => (
-        <motion.div
-          key={i}
-          whileHover={{ scale: 1.02 }}
-          className={`relative overflow-hidden rounded-xl backdrop-blur-xl p-6 border border-${item.color}-500/30 bg-gradient-to-br from-${item.color}-500/10 to-${item.color}-600/10`}
-        >
-          <div className="flex items-start gap-4">
-            <div
-              className={`w-12 h-12 rounded-lg flex items-center justify-center bg-gradient-to-br from-${item.color}-500/20 to-${item.color}-600/20`}
-            >
-              <item.icon className={`w-6 h-6 text-${item.color}-400`} />
-            </div>
+    <div
+      className="p-6 rounded-xl border backdrop-blur-xl"
+      style={{ background: "var(--card)", borderColor: "var(--border)" }}
+    >
+      <h3 className="text-lg font-semibold mb-4 text-[var(--foreground)]">
+        Achievements
+      </h3>
 
-            <div>
-              <h4 className="text-[var(--foreground)] mb-1">{item.title}</h4>
-              <p className="text-[var(--foreground-muted)] text-sm">
-                {item.desc}
-              </p>
+      {data.achievements?.length > 0 ? (
+        <div className="space-y-3">
+          {data.achievements.map((a, i) => (
+            <div
+              key={i}
+              className="p-4 rounded-lg border"
+              style={{ borderColor: "var(--border)" }}
+            >
+              {a}
             </div>
-          </div>
-        </motion.div>
-      ))}
+          ))}
+        </div>
+      ) : (
+        <p className="text-[var(--foreground-muted)]">No achievements listed.</p>
+      )}
     </div>
   );
 }

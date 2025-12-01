@@ -1,26 +1,53 @@
 "use client";
 
-import { Progress } from "@/app/components/ui/progress";
+import { Badge } from "@/app/components/ui/badge";
+import { Briefcase, Layers, BookOpen, Sparkles } from "lucide-react";
 
-export default function ExpertiseSection({ expertise }: any) {
+export default function ExpertiseSection({ profile }) {
+  const data = profile || {};
+
+  return (
+    <div className="space-y-6">
+
+      <Section title="Expertise Areas" icon={<Briefcase />}>
+        {data.expertise?.map((x, i) => (
+          <Badge key={i}>{x}</Badge>
+        ))}
+      </Section>
+
+      <Section title="Industries" icon={<Layers />}>
+        {data.industries?.map((x, i) => (
+          <Badge key={i}>{x}</Badge>
+        ))}
+      </Section>
+
+      <Section title="Languages" icon={<Sparkles />}>
+        {data.languages?.map((x, i) => (
+          <Badge key={i}>{x}</Badge>
+        ))}
+      </Section>
+
+      <Section title="Session Types" icon={<BookOpen />}>
+        {data.sessionTypes?.map((x, i) => (
+          <Badge key={i}>{x}</Badge>
+        ))}
+      </Section>
+    </div>
+  );
+}
+
+function Section({ title, icon, children }) {
   return (
     <div
-      className="relative overflow-hidden rounded-xl backdrop-blur-xl p-6"
-      style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+      className="p-6 rounded-xl border backdrop-blur-xl"
+      style={{ background: "var(--card)", borderColor: "var(--border)" }}
     >
-      <h3 className="text-[var(--foreground)] mb-6">Areas of Expertise</h3>
-
-      <div className="space-y-6">
-        {expertise.map((item: any, index: number) => (
-          <div key={index}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[var(--foreground)]">{item.name}</span>
-              <span className="text-cyan-400">{item.level}%</span>
-            </div>
-            <Progress value={item.level} className="h-2" />
-          </div>
-        ))}
+      <div className="flex items-center gap-2 mb-4 text-[var(--foreground)]">
+        {icon}
+        <h3 className="text-lg font-semibold">{title}</h3>
       </div>
+
+      <div className="flex flex-wrap gap-2">{children}</div>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 
 const backgroundSchema = new mongoose.Schema(
   {
+    // Owner (Mentor or Mentee)
     ownerModel: {
       type: String,
       required: true,
@@ -16,19 +17,25 @@ const backgroundSchema = new mongoose.Schema(
       index: true,
     },
 
-    // "work" | "education"
-    entry_type: { type: String, enum: ["work", "education"], required: true, index: true },
+    // Type of entry (Work or Education)
+    entry_type: {
+      type: String,
+      enum: ["work", "education"],
+      required: true,
+      index: true,
+    },
 
-    // work
-    company_name: { type: String, default: "—" },
-    position: { type: String, default: "—" },
+    // Work Fields
+    company_name: { type: String, default: "" },
+    position: { type: String, default: "" },
 
-    // education
-    school: { type: String, default: "—" },
-    degree: { type: String, default: "—" },
+    // Education Fields
+    school: { type: String, default: "" },
+    degree: { type: String, default: "" },
 
-    start_date: Date,
-    end_date: Date,
+    // Shared Fields
+    start_date: { type: Date },
+    end_date: { type: Date },
     description: { type: String, default: "" },
   },
   { timestamps: true }
