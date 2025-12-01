@@ -1,69 +1,168 @@
 "use client";
 
+import {
+  Award,
+  Users,
+  Calendar,
+  DollarSign,
+  Clock,
+  MapPin
+} from "lucide-react";
+
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/components/ui/avatar";
 import { Badge } from "@/app/components/ui/badge";
-import { Star, Award, MapPin, Briefcase } from "lucide-react";
 
-export default function ProfileHeader({ mentorInfo, stats, bio }: any) {
+type HeaderProps = {
+  profile: any;
+  stats: any;
+};
+
+export default function MentorPremiumHeader({ profile, stats }: HeaderProps) {
+  const data = profile || {};
+
   return (
     <div
-      className="relative overflow-hidden rounded-xl backdrop-blur-xl p-8 mb-6"
-      style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+      className="relative overflow-hidden rounded-3xl p-10 mb-10 shadow-lg"
+      style={{
+        background: "var(--card)",
+        border: "1px solid var(--border)",
+      }}
     >
-      <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-cyan-500/10 to-teal-500/10 rounded-full blur-3xl" />
+      {/* ======= Premium Gradient Blur ======= */}
+      <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-purple-400/30 via-pink-400/20 to-transparent blur-3xl opacity-60" />
+      <div className="absolute -bottom-10 -left-10 w-72 h-72 bg-gradient-to-tr from-purple-300/20 to-pink-300/20 blur-2xl opacity-40" />
 
-      <div className="relative flex flex-col md:flex-row gap-6">
-        {/* Avatar */}
+      <div className="relative flex flex-col md:flex-row items-start gap-8 z-10">
+
+        {/* ======================= Avatar ======================= */}
         <div className="relative">
-          <Avatar className="w-32 h-32 border-4 border-cyan-500/30">
-            <AvatarImage src={mentorInfo.avatar} />
-            <AvatarFallback>{mentorInfo.name[0]}</AvatarFallback>
+          <Avatar className="w-28 h-28 border-4 border-purple-500/40 shadow-md">
+            <AvatarImage src={data.profile_photo} />
+            <AvatarFallback className="text-3xl font-bold text-purple-700">
+              {data.full_name?.charAt(0) || "M"}
+            </AvatarFallback>
           </Avatar>
+
+          {/* Rank */}
           <div
-            className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center border-4"
+            className="absolute -bottom-3 -right-3 w-10 h-10 rounded-full bg-gradient-to-br from-yellow-500 to-orange-500 
+            flex items-center justify-center border-4 shadow-md"
             style={{ borderColor: "var(--card)" }}
           >
-            <Award className="w-5 h-5 text-white" />
+            <Award className="text-white w-5 h-5" />
           </div>
         </div>
 
-        {/* Info */}
-        <div className="flex-1">
-          <div className="flex items-start justify-between mb-3">
+        {/* ======================= Main Information ======================= */}
+        <div className="flex-1 w-full">
+
+          {/* Name & Title */}
+          <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
+
+            {/* Left */}
             <div>
-              <h2 className="text-[var(--foreground)] mb-1">{mentorInfo.name}</h2>
-              <p className="text-[var(--foreground-muted)] mb-2">
-                {mentorInfo.title}
+              <h1 className="text-3xl font-semibold text-[var(--foreground)] leading-tight">
+                {data.full_name}
+              </h1>
+
+              {/* Area of Expertise + Focus Area side-by-side */}
+              <p className="text-[var(--foreground-muted)] mt-1 text-sm flex items-center gap-1">
+                <span>{data.area_of_expertise || "Expert"}</span>
+
+                {/* dot separator */}
+                {(data.area_of_expertise && data.focusArea) && (
+                  <span className="text-purple-500 mx-1">•</span>
+                )}
+
+                <span>{data.focusArea || "Mentor"}</span>
               </p>
 
-              <div className="flex flex-wrap gap-2 mb-3">
-                <Badge className="bg-gradient-to-r from-cyan-500/20 to-teal-500/20 border border-cyan-500/50 text-cyan-300">
-                  {mentorInfo.level}
+
+              {/* Badges */}
+              <div className="flex flex-wrap items-center gap-3 mt-3">
+
+                <Badge className="bg-purple-500/20 text-purple-700 border border-purple-300/40">
+                  {data.yearsOfExperience || 0} yrs exp
                 </Badge>
 
-                <Badge variant="outline" style={{ color: "var(--foreground-muted)" }}>
-                  <Briefcase className="w-3 h-3 mr-1" />
-                  {mentorInfo.company}
-                </Badge>
-
-                <Badge variant="outline" style={{ color: "var(--foreground-muted)" }}>
-                  <MapPin className="w-3 h-3 mr-1" />
-                  {mentorInfo.location}
-                </Badge>
+                {data.Country && (
+                  <Badge
+                    variant="outline"
+                    className="border-purple-300/50 text-purple-700 flex items-center gap-1"
+                  >
+                    <MapPin className="w-3 h-3" />
+                    {data.Country}
+                  </Badge>
+                )}
               </div>
             </div>
 
-            <div className="flex items-center gap-1 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 px-3 py-1 rounded-lg border border-yellow-500/30">
-              <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-              <span className="text-[var(--foreground)]">{stats.rating}</span>
-              <span className="text-[var(--foreground-muted)] text-sm">
-                ({stats.totalReviews})
+            {/* Rating */}
+            <div className="px-4 py-2 bg-yellow-500/20 rounded-lg border border-yellow-500/40 shadow-sm flex items-center gap-2 h-fit">
+              <Award className="w-4 h-4 text-yellow-500" />
+              <span className="font-semibold text-[var(--foreground)]">
+                {stats?.rating || 0}
               </span>
             </div>
+
           </div>
 
-          <p className="text-[var(--foreground)] mb-4">{bio}</p>
+          {/* ======================= Quick Stats ======================= */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-8">
+
+            <StatItem
+              icon={<Calendar className="text-purple-500" />}
+              title="Sessions"
+              value={stats?.sessionsCount || stats?.sessions || 0}
+            />
+
+            <StatItem
+              icon={<Users className="text-purple-500" />}
+              title="Mentees"
+              value={stats?.menteesCount || stats?.mentees || 0}
+            />
+
+            <StatItem
+              icon={<DollarSign className="text-purple-500" />}
+              title="Earned"
+              value={`$${stats?.earned || 0}`}
+            />
+
+            <StatItem
+              icon={<Clock className="text-purple-500" />}
+              title="Response"
+              value={stats?.responseTime || "<2 hrs"}
+            />
+
+          </div>
+
         </div>
+
+      </div>
+    </div>
+  );
+}
+
+/* ============================================= */
+/*                   Stat Item                   */
+/* ============================================= */
+function StatItem({
+  icon,
+  title,
+  value,
+}: {
+  icon: any;
+  title: string;
+  value: any;
+}) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-7 h-7 flex items-center justify-center">
+        {icon}
+      </span>
+      <div>
+        <p className="text-xs text-[var(--foreground-muted)]">{title}</p>
+        <p className="text-[var(--foreground)] font-bold text-sm">{value}</p>
       </div>
     </div>
   );

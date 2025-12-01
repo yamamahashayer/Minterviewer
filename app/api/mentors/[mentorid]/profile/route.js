@@ -1,68 +1,40 @@
-// app/api/mentors/[mentorId]/profile/route.js
 import { NextResponse } from "next/server";
-import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
 
 import User from "@/models/User";
 import Mentor from "@/models/Mentor";
-import Background from "@/models/Background";
 import MentorFeedback from "@/models/MentorFeedback";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
-
-/* ----------------------- helpers ----------------------- */
-async function resolveParams(ctx) {
-  const p = ctx?.params;
-  return p && typeof p.then === "function" ? await p : p;
-}
 
 const isObjectId = (id) => /^[a-fA-F0-9]{24}$/.test(String(id ?? "").trim());
 
 const cleanUser = (u) => {
-  if (!u) return u;
-  const { password_hash, resetPasswordToken, resetPasswordExpires, ...rest } =
+  if (!u) return null;
+  const { password_hash, resetPasswordToken, resetPasswordExpires, ...safe } =
     u;
-  return rest;
+  return safe;
 };
 
-async function safeFindOneAndUpdate(Model, filter, update, options) {
+/* ========================================================= */
+/* ========================  GET  =========================== */
+/* ========================================================= */
+export async function GET(req, context) {
   try {
-    if (!update || (update.$set && Object.keys(update.$set).length === 0)) {
-      return await Model.findOne(filter).lean();
-    }
-    return await Model.findOneAndUpdate(filter, update, {
-      new: true,
-      runValidators: true,
-      ...options,
-    }).lean();
-  } catch (err) {
-    console.warn(`[safeUpdate ${Model.modelName}]`, err?.message);
-    return await Model.findOne(filter).lean();
-  }
-}
-
-/* ========================= GET PROFILE ========================= */
-
-export async function GET(req, ctx) {
-  try {
-    const p = (await resolveParams(ctx)) ?? {};
-    const mentorId = String(p.mentorId ?? p.mentorid ?? p.id ?? "").trim();
+    const params = await context.params;
+    const mentorId = params.mentorid;
 
     if (!isObjectId(mentorId)) {
       return NextResponse.json(
-        { ok: false, message: "Invalid mentorId", received: mentorId },
+        { ok: false, message: "Invalid mentorId" },
         { status: 400 }
       );
     }
 
     await connectDB();
-    const _mentorId = new mongoose.Types.ObjectId(mentorId);
 
-    /* -------- Mentor Document -------- */
-    const mentor = await Mentor.findById(_mentorId).populate("user").lean();
-
+    const mentor = await Mentor.findById(mentorId).populate("user").lean();
     if (!mentor) {
       return NextResponse.json(
         { ok: false, message: "Mentor not found" },
@@ -70,29 +42,62 @@ export async function GET(req, ctx) {
       );
     }
 
-    /* -------- Background (Work + Education) -------- */
-    const background = await Background.find({
-      owner: mentorId,
-      ownerModel: "Mentor",
-    })
-      .sort({ start_date: -1 })
-      .lean();
+    const user = cleanUser(mentor.user);
 
-    /* -------- Reviews -------- */
-    const reviews = await MentorFeedback.find({
-      mentor: mentorId,
-    })
-      .populate("mentee")
-      .populate("session")
-      .sort({ createdAt: -1 })
-      .lean();
+    const reviews = await MentorFeedback.find({ mentor: mentorId }).lean();
+    const avgRating = reviews.length
+      ? Number(
+          (
+            reviews.reduce((acc, r) => acc + (r.rating ?? 0), 0) /
+            reviews.length
+          ).toFixed(1)
+        )
+      : 0;
+
+    const stats = {
+      rating: avgRating,
+      reviewsCount: reviews.length,
+      menteesCount: mentor.menteesCount ?? 0,
+      sessionsCount: mentor.sessionsCount ?? 0,
+    };
+
+    const frontProfile = {
+      id: mentor._id.toString(),
+      full_name: user.full_name,
+      email: user.email,
+      profile_photo: user.profile_photo || null,
+      linkedin_url: user.linkedin_url || "",
+      github: user.github || "",
+      short_bio: user.short_bio || "",
+      phoneNumber: user.phoneNumber || "",
+      Country: user.Country || "",
+      area_of_expertise: user.area_of_expertise || "",
+      created_at: user.created_at,
+      yearsOfExperience: mentor.yearsOfExperience,
+      hourlyRate: mentor.hourlyRate,
+      focusArea: mentor.focusArea,
+      availabilityType: mentor.availabilityType,
+      languages: mentor.languages || [],
+      sessionTypes: mentor.sessionTypes || [],
+      certifications: mentor.certifications || [],
+      achievements: mentor.achievements || [],
+      social: {
+        github: user.github || "",
+        linkedin: user.linkedin_url || "",
+      },
+      level:
+        mentor.yearsOfExperience >= 5
+          ? 3
+          : mentor.yearsOfExperience >= 3
+          ? 2
+          : 1,
+    };
 
     return NextResponse.json(
       {
         ok: true,
-        mentor,
-        user: cleanUser(mentor.user),
-        background,
+        profile: frontProfile,
+        stats,
         reviews,
       },
       { status: 200 }
@@ -100,103 +105,32 @@ export async function GET(req, ctx) {
   } catch (err) {
     console.error("GET mentor profile error:", err);
     return NextResponse.json(
-      { ok: false, message: "Server error" },
+      { ok: false, message: "Server Error" },
       { status: 500 }
     );
   }
 }
 
-/* ========================= UPDATE PROFILE ========================= */
-
-export async function PUT(req, ctx) {
+/* ========================================================= */
+/* ========================  PUT  =========================== */
+/* ========================================================= */
+export async function PUT(req, context) {
   try {
-    const p = (await resolveParams(ctx)) ?? {};
-    const mentorId = String(p.mentorId ?? p.mentorid ?? p.id ?? "").trim();
+    const params = await context.params;
+    const mentorId = params.mentorid;
 
     if (!isObjectId(mentorId)) {
       return NextResponse.json(
-        { ok: false, message: "Invalid mentorId", received: mentorId },
-        { status: 400 }
-      );
-    }
-
-    let body;
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json(
-        { ok: false, message: "Invalid JSON body" },
-        { status: 400 }
-      );
-    }
-
-    const payload = body?.profile ?? body ?? {};
-    const has = (k) => Object.prototype.hasOwnProperty.call(payload, k);
-
-    /* -------- USER Updates -------- */
-    const userSet = {};
-    if (has("full_name"))
-      userSet.full_name = String(payload.full_name ?? "").trim();
-
-    if (has("phone")) userSet.phoneNumber = String(payload.phone ?? "").trim();
-
-    if (has("location"))
-      userSet.Country = String(payload.location ?? "").trim();
-
-    if (has("linkedin"))
-      userSet.linkedin_url = String(payload.linkedin ?? "").trim();
-
-    if (has("bio")) userSet.short_bio = String(payload.bio ?? "").trim();
-
-    /* -------- MENTOR Updates -------- */
-    const mentorSet = {};
-
-    if (has("title")) mentorSet.title = String(payload.title ?? "").trim();
-
-    if (has("yearsOfExperience"))
-      mentorSet.yearsOfExperience = Number(payload.yearsOfExperience ?? 0);
-
-    if (has("tags"))
-      mentorSet.tags = Array.isArray(payload.tags) ? payload.tags : [];
-
-    if (has("languages"))
-      mentorSet.languages = Array.isArray(payload.languages)
-        ? payload.languages
-        : [];
-
-    if (has("industries"))
-      mentorSet.industries = Array.isArray(payload.industries)
-        ? payload.industries
-        : [];
-
-    if (has("social")) mentorSet.social = payload.social;
-
-    if (has("expertise")) mentorSet.expertise = payload.expertise;
-
-    if (has("certifications"))
-      mentorSet.certifications = payload.certifications;
-
-    if (has("sessionTypes")) mentorSet.sessionTypes = payload.sessionTypes;
-
-    if (has("availability")) mentorSet.availability = payload.availability;
-
-    if (has("achievements")) mentorSet.achievements = payload.achievements;
-
-    if (
-      Object.keys(userSet).length === 0 &&
-      Object.keys(mentorSet).length === 0
-    ) {
-      return NextResponse.json(
-        { ok: false, message: "Nothing to update" },
+        { ok: false, message: "Invalid ID" },
         { status: 400 }
       );
     }
 
     await connectDB();
-    const _mentorId = new mongoose.Types.ObjectId(mentorId);
+    const body = await req.json();
+    const profile = body.profile || {};
 
-    /* ------------------ Update Mentor ------------------ */
-    const mentorDoc = await Mentor.findById(_mentorId).lean();
+    const mentorDoc = await Mentor.findById(mentorId).lean();
     if (!mentorDoc) {
       return NextResponse.json(
         { ok: false, message: "Mentor not found" },
@@ -204,43 +138,49 @@ export async function PUT(req, ctx) {
       );
     }
 
-    const updatedMentor = await safeFindOneAndUpdate(
-      Mentor,
-      { _id: _mentorId },
-      { $set: mentorSet }
-    );
+    const userSet = {};
+    const mentorSet = {};
 
-    /* ------------------ Update User ------------------ */
-    let updatedUser = null;
+    if (profile.full_name) userSet.full_name = profile.full_name;
+    if (profile.phoneNumber) userSet.phoneNumber = profile.phoneNumber;
+    if (profile.Country) userSet.Country = profile.Country;
+    if (profile.linkedin_url) userSet.linkedin_url = profile.linkedin_url;
+    if (profile.github) userSet.github = profile.github;
+    if (profile.short_bio) userSet.short_bio = profile.short_bio;
 
-    if (mentorDoc.user && Object.keys(userSet).length > 0) {
-      updatedUser = await safeFindOneAndUpdate(
-        User,
-        { _id: mentorDoc.user },
-        { $set: userSet }
-      );
-    }
+    if (profile.yearsOfExperience != null)
+      mentorSet.yearsOfExperience = Number(profile.yearsOfExperience);
 
-    /* -------- fresh data -------- */
-    const freshMentor =
-      updatedMentor ??
-      (await Mentor.findById(_mentorId).populate("user").lean());
+    if (profile.hourlyRate != null)
+      mentorSet.hourlyRate = Number(profile.hourlyRate);
 
-    const freshUser =
-      updatedUser ?? (await User.findById(mentorDoc.user).lean());
+    if (profile.focusArea) mentorSet.focusArea = profile.focusArea;
+    if (profile.availabilityType)
+      mentorSet.availabilityType = profile.availabilityType;
 
-    return NextResponse.json(
-      {
-        ok: true,
-        mentor: freshMentor,
-        user: cleanUser(freshUser),
-      },
-      { status: 200 }
-    );
+    if (Array.isArray(profile.languages))
+      mentorSet.languages = profile.languages;
+
+    if (Array.isArray(profile.sessionTypes))
+      mentorSet.sessionTypes = profile.sessionTypes;
+
+    if (Array.isArray(profile.certifications))
+      mentorSet.certifications = profile.certifications;
+
+    if (Array.isArray(profile.achievements))
+      mentorSet.achievements = profile.achievements;
+
+    if (Object.keys(userSet).length > 0)
+      await User.findByIdAndUpdate(mentorDoc.user, { $set: userSet });
+
+    if (Object.keys(mentorSet).length > 0)
+      await Mentor.findByIdAndUpdate(mentorId, { $set: mentorSet });
+
+    return NextResponse.json({ ok: true, message: "Updated successfully" });
   } catch (err) {
     console.error("PUT mentor profile error:", err);
     return NextResponse.json(
-      { ok: false, message: "Server error" },
+      { ok: false, message: "Server Error" },
       { status: 500 }
     );
   }

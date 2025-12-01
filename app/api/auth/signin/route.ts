@@ -28,17 +28,26 @@ export async function POST(req: NextRequest) {
 
     const { email, password } = await req.json();
     if (!email || !password) {
-      return NextResponse.json({ message: "Missing email or password" }, { status: 400 });
+      return NextResponse.json(
+        { message: "Missing email or password" },
+        { status: 400 }
+      );
     }
 
     const user = await User.findOne({ email });
     if (!user) {
-      return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json(
+        { message: "Invalid email or password" },
+        { status: 401 }
+      );
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
-      return NextResponse.json({ message: "Invalid email or password" }, { status: 401 });
+      return NextResponse.json(
+        { message: "Invalid email or password" },
+        { status: 401 }
+      );
     }
 
     const secret = process.env.JWT_SECRET!;
@@ -53,11 +62,11 @@ export async function POST(req: NextRequest) {
       { expiresIn: "7d" }
     );
 
-    // ✅ Get menteeId (if mentee)
+    // Get Mentee ID
     const mentee = await Mentee.findOne({ user: user._id }).select("_id");
     const menteeId = mentee?._id?.toString() || null;
 
-    // ✅ Get mentorId (if mentor)
+    // Get Mentor ID
     const mentor = await Mentor.findOne({ user: user._id }).select("_id");
     const mentorId = mentor?._id?.toString() || null;
 
@@ -70,14 +79,22 @@ export async function POST(req: NextRequest) {
         email: user.email,
         full_name: user.full_name,
         role: user.role,
+
+        // NEW FIELDS
+        github: user.github || "",
+        linkedin_url: user.linkedin_url || "",
+
         menteeId,
-        mentorId,  
+        mentorId,
       },
       redirectUrl: getRedirectForRole(user.role),
     });
 
   } catch (err: any) {
     console.error("💥 Signin error:", err);
-    return NextResponse.json({ message: err.message || "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { message: err.message || "Server error" },
+      { status: 500 }
+    );
   }
 }
