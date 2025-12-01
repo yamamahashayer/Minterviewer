@@ -80,7 +80,7 @@ export default function SignUp() {
     confirmPassword: '',
     linkedin_url: '',
     github: '',
-    area_of_expertise: '',
+    area_of_expertise: [] as string[],
     country: '',
     short_bio: '',
     phoneNumber: '',
@@ -89,7 +89,7 @@ export default function SignUp() {
   /* ========================== MENTOR EXTRA FIELDS ========================== */
   const [mentorFields, setMentorFields] = useState({
     yearsOfExperience: '',
-    focusArea: '',
+    focusAreas: [] as string[],
     availabilityType: '',
     languages: [] as string[],
   });
@@ -162,35 +162,36 @@ export default function SignUp() {
   const progress = (currentStep / 3) * 100;
 
   /* ========================== BUILD PAYLOAD ========================== */
-  const buildPayload = () => {
-    const payload: any = {
-      full_name: form.full_name,
-      email: form.email,
-      password: form.password,
-      role: role as Role,
+      const buildPayload = () => {
+  const payload: any = {
+    full_name: form.full_name,
+    email: form.email,
+    password: form.password,
+    role: role as Role,
 
-      linkedin_url: form.linkedin_url || undefined,
-      github: form.github || undefined,
+    linkedin_url: form.linkedin_url || undefined,
+    github: form.github || undefined,
 
-      area_of_expertise: form.area_of_expertise || undefined,
-      short_bio: form.short_bio || undefined,
-      Country: form.country || undefined,
-      phoneNumber: form.phoneNumber,
-    };
+    area_of_expertise: form.area_of_expertise,
 
-    if (role === "mentor") {
-      payload.yearsOfExperience = mentorFields.yearsOfExperience
-        ? Number(mentorFields.yearsOfExperience)
-        : undefined;
-
-      payload.focusArea = mentorFields.focusArea || undefined;
-      payload.availabilityType = mentorFields.availabilityType || undefined;
-
-      payload.languages = mentorFields.languages || [];
-    }
-
-    return payload;
+    short_bio: form.short_bio || undefined,
+    Country: form.country || undefined,
+    phoneNumber: form.phoneNumber,
   };
+
+  if (role === "mentor") {
+    payload.yearsOfExperience = mentorFields.yearsOfExperience
+      ? Number(mentorFields.yearsOfExperience)
+      : 0;
+
+    payload.focusAreas = mentorFields.focusAreas;
+
+    payload.availabilityType = mentorFields.availabilityType || "";
+    payload.languages = mentorFields.languages || [];
+  }
+
+  return payload;
+};
 
   /* ========================== FETCH HELPERS ========================== */
   const sendJSON = async (payload: unknown): Promise<ApiResponse> => {
@@ -235,13 +236,19 @@ export default function SignUp() {
 
       /* ---- 2) If MENTOR → create Mentor document ---- */
       if (role === "mentor") {
-        const mentorPayload = {
-          user: userId,
-          yearsOfExperience: mentorFields.yearsOfExperience ? Number(mentorFields.yearsOfExperience) : 0,
-          focusArea: mentorFields.focusArea || "",
-          availabilityType: mentorFields.availabilityType || "",
-          languages: mentorFields.languages || [],
-        };
+         const mentorPayload = {
+        user: userId,
+        yearsOfExperience: mentorFields.yearsOfExperience
+          ? Number(mentorFields.yearsOfExperience)
+          : 0,
+
+        focusAreas: mentorFields.focusAreas,   // ✅ هنا التصحيح
+
+        availabilityType: mentorFields.availabilityType || "",
+        languages: mentorFields.languages || [],
+      };
+
+
 
         await fetch("/api/mentors", {
           method: "POST",
@@ -568,23 +575,47 @@ export default function SignUp() {
                     </Select>
                   </div>
 
-                  {/* AREA OF EXPERTISE */}
-                  <div className="space-y-1">
-                    <Label className="text-gray-200">Area of Expertise</Label>
-                    <Select value={form.area_of_expertise}
-                      onValueChange={(v) =>
-                        setForm(p => ({ ...p, area_of_expertise: v }))
-                      }>
-                      <SelectTrigger className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white">
-                        <SelectValue placeholder="Select your expertise" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#1a1f35] border-[#00FFB2]/30 text-white max-h-56">
-                        {EXPERTISE.map(x => (
-                          <SelectItem key={x} value={x}>{x}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    {/* AREA OF EXPERTISE — Multi Select */}
+                    <div className="space-y-1">
+                      <Label className="text-gray-200">Area of Expertise</Label>
+
+                      <Select
+                        onValueChange={(v) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            area_of_expertise: prev.area_of_expertise.includes(v)
+                              ? prev.area_of_expertise
+                              : [...prev.area_of_expertise, v],
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white">
+                          <SelectValue placeholder="Select expertise areas" />
+                        </SelectTrigger>
+
+                        <SelectContent className="bg-[#1a1f35] border-[#00FFB2]/30 text-white max-h-56">
+                          {EXPERTISE.map((item) => (
+                            <SelectItem key={item} value={item}>
+                              {item}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* BADGES */}
+                      {form.area_of_expertise.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {form.area_of_expertise.map((exp, idx) => (
+                            <span
+                              key={idx}
+                              className="px-3 py-1 text-xs rounded-md bg-[#00FFB2]/10 border border-[#00FFB2]/30 text-[#00FFB2]"
+                            >
+                              {exp}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
 
                   {/* LINKEDIN */}
                   <div className="space-y-1">
@@ -665,39 +696,62 @@ export default function SignUp() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3">
 
                       {/* FOCUS AREA */}
-                      <div className="space-y-1 md:col-span-2">
-                        <Label className="text-gray-200">Mentor Focus Area</Label>
-                        <Select
-                          value={mentorFields.focusArea}
-                          onValueChange={(v) =>
-                            setMentorFields(s => ({ ...s, focusArea: v }))
-                          }>
-                          <SelectTrigger className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white">
-                            <SelectValue placeholder="Select your focus" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[#1a1f35] border-[#00FFB2]/30 text-white max-h-56">
-                            {[
-                              "Interview Preparation",
-                              "System Design Coaching",
-                              "Mock Interviews",
-                              "Career Guidance",
-                              "Resume / CV Review",
-                              "Portfolio Review",
-                              "Coding Interview Coaching",
-                              "Job Search Strategy",
-                              "Technical Skill Upskilling",
-                              "Career Roadmap Planning",
-                              "Leadership & Communication",
-                              "Tech Industry Insights",
-                            ].map(x => (
-                              <SelectItem key={x} value={x}>{x}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                       <div className="space-y-1 md:col-span-2">
+                      <Label className="text-gray-200">Mentor Focus Areas</Label>
+                      <Select
+                        onValueChange={(v) =>
+                          setMentorFields((prev) => ({
+                            ...prev,
+                            focusAreas: prev.focusAreas.includes(v)
+                              ? prev.focusAreas
+                              : [...prev.focusAreas, v],
+                          }))
+                        }
+                      >
+                        <SelectTrigger className="bg-[#1a1f35]/60 border-[#00FFB2]/30 text-white">
+                          <SelectValue placeholder="Select focus areas" />
+                        </SelectTrigger>
+
+                        <SelectContent className="bg-[#1a1f35] border-[#00FFB2]/30 text-white max-h-56">
+                          {[
+                            "Interview Preparation",
+                            "System Design Coaching",
+                            "Mock Interviews",
+                            "Career Guidance",
+                            "Resume / CV Review",
+                            "Portfolio Review",
+                            "Coding Interview Coaching",
+                            "Job Search Strategy",
+                            "Technical Skill Upskilling",
+                            "Career Roadmap Planning",
+                            "Leadership & Communication",
+                            "Tech Industry Insights",
+                          ].map((item) => (
+                            <SelectItem key={item} value={item}>
+                              {item}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                    {/* BADGES */}
+                    {mentorFields.focusAreas.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {mentorFields.focusAreas.map((fa, idx) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1 text-xs rounded-md bg-[#00FFB2]/10 border border-[#00FFB2]/30 text-[#00FFB2]"
+                          >
+                            {fa}
+                          </span>
+                        ))}
                       </div>
+                    )}
+                  </div>
+
 
                       {/* YEARS + AVAILABILITY */}
-                      {mentorFields.focusArea && (
+                      {mentorFields.focusAreas && (
                         <>
                           {/* YEARS */}
                           <div className="space-y-1">

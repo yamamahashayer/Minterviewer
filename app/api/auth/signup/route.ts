@@ -20,39 +20,47 @@ export async function POST(req: Request) {
       profile_photo,
       linkedin_url,
       github,
-      area_of_expertise,
+      area_of_expertise, // array now
       short_bio,
       phoneNumber,
       Country,
 
       // MENTOR FIELDS
       yearsOfExperience,
-      focusArea,
+      focusAreas, // array now
       availabilityType,
-      languages,
+      languages, // array
     } = await req.json();
 
-    if (!full_name || !email || !password || !role)
+    // ============================
+    // VALIDATION
+    // ============================
+    if (!full_name || !email || !password || !role) {
       return NextResponse.json(
         { message: "Missing required fields" },
         { status: 400 }
       );
+    }
 
-    if (role !== "mentor" && role !== "mentee")
+    if (!["mentor", "mentee"].includes(role)) {
       return NextResponse.json(
         { message: "Invalid role" },
         { status: 400 }
       );
+    }
 
     // Check existing user
     const exists = await User.findOne({ email });
-    if (exists)
+    if (exists) {
       return NextResponse.json(
         { message: "Email already in use" },
         { status: 400 }
       );
+    }
 
-    // Create User
+    // ============================
+    // CREATE USER
+    // ============================
     const password_hash = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
@@ -63,16 +71,19 @@ export async function POST(req: Request) {
       profile_photo,
       linkedin_url,
       github,
-      area_of_expertise,
+      area_of_expertise: Array.isArray(area_of_expertise)
+        ? area_of_expertise
+        : [],
       short_bio,
       phoneNumber,
       Country,
     });
 
-    // Origin
+    // ============================
+    // SEND WELCOME NOTIFICATION
+    // ============================
     const origin = new URL(req.url).origin;
 
-    // Welcome Notification
     await fetch(`${origin}/api/notifications`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -85,16 +96,18 @@ export async function POST(req: Request) {
       }),
     });
 
-    // Create ROLE record
+    // ============================
+    // CREATE MENTOR / MENTEE RECORD
+    // ============================
     let roleDoc = null;
 
     if (role === "mentor") {
       roleDoc = await Mentor.create({
         user: newUser._id,
         yearsOfExperience: yearsOfExperience || 0,
-        focusArea: focusArea || "",
+        focusAreas: Array.isArray(focusAreas) ? focusAreas : [],
         availabilityType: availabilityType || "",
-        languages: languages || [],
+        languages: Array.isArray(languages) ? languages : [],
         social: {
           github: github || "",
           linkedin: linkedin_url || "",
@@ -113,26 +126,27 @@ export async function POST(req: Request) {
       });
     }
 
-    // Compute Profile Completion Score
+    // ============================
+    // PROFILE COMPLETION SCORE
+    // ============================
     let score = 0;
 
-    // Base USER fields (70%)
+    // USER fields — 70%
     if (full_name) score += 10;
     if (Country) score += 10;
     if (phoneNumber) score += 10;
     if (profile_photo) score += 10;
     if (linkedin_url) score += 10;
-    if (area_of_expertise) score += 10;
+    if (area_of_expertise?.length > 0) score += 10;
     if (short_bio) score += 10;
 
-    // Mentor extra (30%)
+    // Mentor fields — 30%
     if (role === "mentor") {
       if (yearsOfExperience) score += 10;
-      if (focusArea) score += 10;
+      if (focusAreas?.length > 0) score += 10;
       if (languages?.length > 0) score += 10;
     }
 
-    // Send "Profile incomplete" notification
     if (score < 100) {
       await fetch(`${origin}/api/notifications`, {
         method: "POST",
@@ -147,6 +161,9 @@ export async function POST(req: Request) {
       });
     }
 
+    // ============================
+    // RESPONSE
+    // ============================
     return NextResponse.json(
       {
         message: `${role === "mentor" ? "Mentor" : "Mentee"} registered successfully!`,
@@ -158,14 +175,11 @@ export async function POST(req: Request) {
       },
       { status: 201 }
     );
-
   } catch (err: any) {
     console.error("[REGISTER_ERROR]", err);
 
     return NextResponse.json(
-      {
-        message: err?.message || "Internal Server Error",
-      },
+      { message: err?.message || "Internal Server Error" },
       { status: 500 }
     );
   }
