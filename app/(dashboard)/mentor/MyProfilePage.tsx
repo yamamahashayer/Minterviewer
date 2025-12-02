@@ -77,10 +77,22 @@ export default function MyProfilePage() {
 
     console.log("UPDATED FIELD:", key, value);
   };
+
+  
   useEffect(() => {
-  const dark = document.documentElement.classList.contains("dark");
-  setIsDark(dark);
+  const check = () => {
+    const dark = document.documentElement.classList.contains("dark");
+    setIsDark(dark);
+  };
+
+  check();
+
+  const observer = new MutationObserver(check);
+  observer.observe(document.documentElement, { attributes: true });
+
+  return () => observer.disconnect();
 }, []);
+
 
   /* ---------------- SAVE ---------------- */
   const handleSave = async () => {
