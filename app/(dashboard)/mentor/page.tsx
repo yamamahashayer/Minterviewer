@@ -15,7 +15,7 @@ import { MyMenteesContent } from "@/app/(dashboard)/mentor/MyMenteesContent";
 import { SessionsPage } from "@/app/(dashboard)/mentor/SessionsPage";
 import { FeedbacksPage } from "@/app/(dashboard)/mentor/FeedbacksPage";
 import  MentorMessages  from "@/app/(dashboard)/mentor/MessagesPage";
-import { SettingsPage } from "@/app/(dashboard)/mentor/SettingsPage";
+import SettingsPage  from "@/app/(dashboard)/mentor/SettingsPage";
 import { EarningsPage } from "@/app/(dashboard)/mentor/EarningsPage";
 import { AvailabilityPage } from "@/app/(dashboard)/mentor/AvailabilityPage";
 import { CVReviewPage } from "@/app/(dashboard)/mentor/CVReviewPage";
@@ -105,7 +105,7 @@ export default function MentorPage() {
       case "help":
         return <HelpSupportPage />;
       case "settings":
-        return <SettingsPage />;
+        return <SettingsPage theme={theme}/>;
       default:
         return <ProfileOverview />;
     }

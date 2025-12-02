@@ -1,4 +1,5 @@
 "use client";
+
 import { Tabs, TabsContent } from "@/app/components/ui/tabs";
 
 import SettingsHeader from "@/app/components/MenteePages/MenteeSetting/SettingsHeader";
@@ -9,12 +10,17 @@ import SecuritySettings from "@/app/components/MenteePages/MenteeSetting/Securit
 import DataPrivacySettings from "@/app/components/MenteePages/MenteeSetting/DataPrivacySettings";
 import { useEffect, useState } from "react";
 
-export default function SettingsPage({ theme = "dark" }: { theme?: "dark" | "light" }) {
+export default function SettingsPage({
+  theme = "dark",
+}: {
+  theme?: "dark" | "light";
+}) {
   const isDark = theme === "dark";
 
   const [menteeId, setMenteeId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  /* ========================= Load Session ========================= */
   useEffect(() => {
     const token = sessionStorage.getItem("token");
 
@@ -30,9 +36,6 @@ export default function SettingsPage({ theme = "dark" }: { theme?: "dark" | "lig
         if (mid) {
           setMenteeId(mid);
           sessionStorage.setItem("menteeId", mid);
-          console.log("🧩 menteeId loaded:", mid);
-        } else {
-          console.warn("⚠ menteeId not found in session response");
         }
       } catch (err) {
         console.error("❌ Failed to fetch session:", err);
@@ -42,42 +45,46 @@ export default function SettingsPage({ theme = "dark" }: { theme?: "dark" | "lig
     })();
   }, []);
 
- if (loading)
-      return (
-        <div
-          className={`flex items-center justify-center min-h-screen ${
-            isDark ? "bg-[#0a0f1e] text-white" : "bg-[#f5f3ff] text-[#2e1065]"
-          }`}
-        >
-          <div className="flex flex-col items-center">
-            {/* Spinner */}
-            <div
-              className={`w-12 h-12 border-4 border-t-transparent rounded-full animate-spin ${
-                isDark ? "border-teal-400" : "border-purple-500"
-              }`}
-            />
-            {/* Text */}
-            <p className="mt-4 text-lg font-medium tracking-wide">Loading your profile...</p>
-          </div>
+  /* ========================= Loading ========================= */
+  if (loading)
+    return (
+      <div
+        className={`flex items-center justify-center min-h-screen ${
+          isDark
+            ? "bg-[#0a0f1e] text-white"
+            : "bg-[#f5f3ff] text-[#2e1065]"
+        }`}
+      >
+        <div className="flex flex-col items-center">
+          <div
+            className={`w-12 h-12 border-4 border-t-transparent rounded-full animate-spin ${
+              isDark ? "border-teal-400" : "border-purple-500"
+            }`}
+          />
+          <p className="mt-4 text-lg font-medium tracking-wide">
+            Loading your profile...
+          </p>
         </div>
-      );
+      </div>
+    );
 
-
-      
+  /* ========================= MAIN ========================= */
   return (
     <div
-      className={`min-h-screen p-8 ${
-        isDark
-          ? "bg-gradient-to-b from-[#0a0f1e] to-[#000000]"
-          : "bg-[#f5f3ff]"
-      }`}
+      className="min-h-screen p-8 w-full flex justify-center"
+      style={{
+        background:
+          theme === "light"
+            ? "#f9fafb" // نفس Light Theme المستخدم في Mentor Settings
+            : "linear-gradient(180deg, #0A0F1E 0%, #0F172A 100%)",
+      }}
     >
-      {/* Header */}
-      <SettingsHeader isDark={isDark} />
+      <div className="w-full max-w-5xl">
+        {/* Header */}
+        <SettingsHeader isDark={isDark} />
 
-      {/* Tabs Section */}
-      <div className="max-w-4xl">
-        <Tabs defaultValue="account" className="w-full">
+        {/* Tabs & Content */}
+        <Tabs defaultValue="account" className="w-full mt-6">
           <SettingsTabsNav isDark={isDark} />
 
           <TabsContent value="account">
@@ -87,8 +94,6 @@ export default function SettingsPage({ theme = "dark" }: { theme?: "dark" | "lig
           <TabsContent value="notifications">
             <NotificationSettings isDark={isDark} />
           </TabsContent>
-
-
 
           <TabsContent value="security">
             <SecuritySettings isDark={isDark} />
