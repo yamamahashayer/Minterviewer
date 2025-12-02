@@ -8,9 +8,9 @@ import Header from "@/app/components/MenteePages/Profile/Header";
 import StatsSection from "@/app/components/MenteePages/Profile/StatsSection";
 import SkillsSection from "@/app/components/MenteePages/Profile/SkillsSection";
 import ActivitySection from "@/app/components/MenteePages/Profile/ActivitySection";
-import BackgroundSection from "@/app/components/MenteePages/Profile/BackgroundSection";
 import AchievementsSection from "@/app/components/MenteePages/Profile/AchievementsSection";
 import EditDialog from "@/app/components/MenteePages/Profile/EditDialog";
+import MenteeBackgroundSection from "@/app/components/Background/MenteeBackgroundSection";
 
 
 type Theme = "dark" | "light";
@@ -323,7 +323,10 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
         <div className="lg:col-span-2 space-y-6">
           <SkillsSection profile={profile} isDark={isDark} />
 
-          <BackgroundSection menteeId={menteeId} isDark={isDark} />
+        <MenteeBackgroundSection
+            menteeId={menteeId}
+            theme={isDark ? "dark" : "light"}
+        />
 
           <ActivitySection
             activities={activities}

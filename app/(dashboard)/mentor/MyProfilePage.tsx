@@ -150,12 +150,14 @@ export default function MyProfilePage() {
           <TabsContent value="expertise">
             <ExpertiseSection
               profile={form}
+              mentorId={mentorId}   //  ←  أضف هذا  
               isEditing={isEditing}
               onFieldChange={handleFieldChange}
               onSave={handleSave}
               onCancel={handleCancel}
             />
           </TabsContent>
+
 
           <TabsContent value="sessions">
             <SessionsSection profile={form} />

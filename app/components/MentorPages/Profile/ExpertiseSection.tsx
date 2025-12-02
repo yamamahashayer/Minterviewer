@@ -1,27 +1,35 @@
 "use client";
 
+import React from "react";
 import {
   Briefcase,
-  Calendar,
   Languages,
   Tag,
   Plus,
-  X,
+  X
 } from "lucide-react";
 
 import { Badge } from "@/app/components/ui/badge";
-import React from "react";
+import MentorBackgroundSection from "../../Background/MentorBackgroundSection";
 
+/* ============================================
+   Props
+============================================ */
 type ExpertiseProps = {
-  profile: any; 
+  profile: any;
+  mentorId: string | null;
   isEditing: boolean;
   onFieldChange: (key: string, value: any) => void;
   onSave: () => void;
   onCancel: () => void;
 };
 
+/* ============================================
+   MAIN COMPONENT
+============================================ */
 export default function ExpertiseSection({
   profile,
+  mentorId,
   isEditing,
   onFieldChange,
   onSave,
@@ -31,10 +39,10 @@ export default function ExpertiseSection({
   const data = profile || {};
   const iconClass = "w-5 h-5 text-purple-600";
 
+  /* ---------- Helpers ---------- */
   const addToArray = (key: string, item: string) => {
     if (!item.trim()) return;
-    const arr = [...(data[key] || [])];
-    arr.push(item.trim());
+    const arr = [...(data[key] || []), item.trim()];
     onFieldChange(key, arr);
   };
 
@@ -44,14 +52,27 @@ export default function ExpertiseSection({
     onFieldChange(key, arr);
   };
 
+  /* ---------- Input States ---------- */
   const [expertiseInput, setExpertiseInput] = React.useState("");
   const [focusInput, setFocusInput] = React.useState("");
   const [langInput, setLangInput] = React.useState("");
 
+  /* ============================================
+     RETURN UI
+  ============================================ */
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-      {/* AREAS OF EXPERTISE */}
+      {/* ===============================
+          🔥 FIRST ROW — ONLY Background
+      ================================= */}
+      <div className="md:col-span-2">
+        <MentorBackgroundSection mentorId={mentorId} theme="light" />
+      </div>
+
+      {/* ===============================
+          AREAS OF EXPERTISE
+      ================================= */}
       <Card>
         <SectionTitle title="Areas of Expertise" icon={<Tag className={iconClass} />} />
 
@@ -74,7 +95,9 @@ export default function ExpertiseSection({
         )}
       </Card>
 
-      {/* FOCUS AREAS */}
+      {/* ===============================
+          FOCUS AREAS
+      ================================= */}
       <Card>
         <SectionTitle title="Focus Areas" icon={<Tag className={iconClass} />} />
 
@@ -97,7 +120,9 @@ export default function ExpertiseSection({
         )}
       </Card>
 
-      {/* YEARS OF EXPERIENCE */}
+      {/* ===============================
+          YEARS OF EXPERIENCE
+      ================================= */}
       <Card>
         <SectionTitle title="Years of Experience" icon={<Briefcase className={iconClass} />} />
 
@@ -114,7 +139,9 @@ export default function ExpertiseSection({
         )}
       </Card>
 
-      {/* LANGUAGES */}
+      {/* ===============================
+          LANGUAGES
+      ================================= */}
       <Card>
         <SectionTitle title="Languages" icon={<Languages className={iconClass} />} />
 
@@ -156,8 +183,9 @@ export default function ExpertiseSection({
   );
 }
 
-
-/* ---------------- COMPONENTS ---------------- */
+/* ============================================
+   SUB COMPONENTS
+============================================ */
 
 function Card({ children }: any) {
   return (
@@ -198,7 +226,6 @@ function BadgeList({ items, isEditing, onRemove }: any) {
           {isEditing && (
             <X
               className="w-3 h-3 cursor-pointer hover:text-red-500"
-              role="button"
               onClick={() => onRemove(i)}
             />
           )}
@@ -217,7 +244,11 @@ function AddRow({ placeholder, value, onChange, onAdd }: any) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
-      <button onClick={onAdd} className="px-3 py-2 bg-purple-600 text-white rounded-md">
+
+      <button
+        onClick={onAdd}
+        className="px-3 py-2 bg-purple-600 text-white rounded-md"
+      >
         <Plus className="w-4 h-4" />
       </button>
     </div>
