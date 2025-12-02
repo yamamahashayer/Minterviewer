@@ -107,7 +107,7 @@ export default function MyProfilePage() {
 
       if (!res.ok) throw new Error("Save failed");
 
-      setProfile(form); // ← نثبت التغييرات الحقيقية
+      setProfile(form); 
       setIsEditing(false);
     } catch (err) {
       console.error(err);
@@ -116,7 +116,7 @@ export default function MyProfilePage() {
 
   /* ---------------- CANCEL ---------------- */
   const handleCancel = () => {
-    setForm(JSON.parse(JSON.stringify(profile))); // ← ارجاع القيم الأصلية
+    setForm(JSON.parse(JSON.stringify(profile)));
     setIsEditing(false);
   };
 

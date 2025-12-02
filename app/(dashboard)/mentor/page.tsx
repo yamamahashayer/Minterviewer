@@ -14,13 +14,13 @@ import { HighlightBanner } from "@/app/(dashboard)/mentor/HighlightBanner";
 import { MyMenteesContent } from "@/app/(dashboard)/mentor/MyMenteesContent";
 import { SessionsPage } from "@/app/(dashboard)/mentor/SessionsPage";
 import { FeedbacksPage } from "@/app/(dashboard)/mentor/FeedbacksPage";
-import { MessagesPage } from "@/app/(dashboard)/mentor/MessagesPage";
+import  MentorMessages  from "@/app/(dashboard)/mentor/MessagesPage";
 import { SettingsPage } from "@/app/(dashboard)/mentor/SettingsPage";
 import { EarningsPage } from "@/app/(dashboard)/mentor/EarningsPage";
 import { AvailabilityPage } from "@/app/(dashboard)/mentor/AvailabilityPage";
 import { CVReviewPage } from "@/app/(dashboard)/mentor/CVReviewPage";
 import { HelpSupportPage } from "@/app/(dashboard)/mentor/HelpSupportPage";
-import { NotificationsPage } from "@/app/(dashboard)/mentor/NotificationsPage";
+import MentorNotifications from "@/app/(dashboard)/mentor/NotificationsPage";
 
 type PageType =
   | "overview"
@@ -36,9 +36,29 @@ type PageType =
   | "help"
   | "settings";
 
+  type Theme = "dark" | "light";
+
+
 export default function MentorPage() {
   const params = useSearchParams();
   const tab = (params.get("tab") || "overview").toLowerCase() as PageType;
+
+   const getTheme = (): Theme =>
+      (typeof document !== "undefined" && document.documentElement.classList.contains("dark"))
+        ? "dark"
+        : "light";
+  
+    const [theme, setTheme] = React.useState<Theme>(() => getTheme());
+  
+    React.useEffect(() => {
+      const el = document.documentElement;
+      const obs = new MutationObserver(() => setTheme(getTheme()));
+      obs.observe(el, { attributes: true, attributeFilter: ["class"] });
+  
+      setTheme(getTheme());
+      return () => obs.disconnect();
+    }, []);
+
 
   const render = () => {
     switch (tab) {
@@ -73,7 +93,7 @@ export default function MentorPage() {
       case "feedbacks":
         return <FeedbacksPage />;
       case "messages":
-        return <MessagesPage />;
+        return <MentorMessages theme={theme}/>;
       case "earnings":
         return <EarningsPage />;
       case "availability":
@@ -81,7 +101,7 @@ export default function MentorPage() {
       case "cv-review":
         return <CVReviewPage />;
       case "notifications":
-        return <NotificationsPage />;
+        return <MentorNotifications theme={theme} />;
       case "help":
         return <HelpSupportPage />;
       case "settings":

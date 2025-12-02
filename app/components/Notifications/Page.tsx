@@ -29,7 +29,6 @@ export default function NotificationsPage({ theme = "dark" }) {
 
     const user = JSON.parse(raw);
 
-    // 🔥 متوافق مع login الحالي
     const userId = user?._id || user?.id;
     if (!userId) return;
 
@@ -65,13 +64,12 @@ export default function NotificationsPage({ theme = "dark" }) {
   });
 
   return (
-    <div
-      className="min-h-screen p-8"
-      style={{
-        background: "var(--background)",
-        color: "var(--foreground)",
-      }}
-    >
+   <div
+  className={`min-h-screen p-8 ${
+    isDark ? "bg-[#0a0f1e] text-white" : "bg-[#f5f3ff] text-[#2e1065]"
+  }`}
+>
+
       {/* HEADER */}
       <NotificationsHeader
         notifications={notifications}
