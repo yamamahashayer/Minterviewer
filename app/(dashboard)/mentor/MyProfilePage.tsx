@@ -8,7 +8,6 @@ import AboutSection from "@/app/components/MentorPages/Profile/AboutSection";
 import ExpertiseSection from "@/app/components/MentorPages/Profile/ExpertiseSection";
 import SessionsSection from "@/app/components/MentorPages/Profile/SessionsSection";
 import ReviewsSection from "@/app/components/MentorPages/Profile/ReviewsSection";
-import AchievementsSection from "@/app/components/MentorPages/Profile/AchievementsSection";
 
 import {
   Tabs,
@@ -25,6 +24,8 @@ export default function MyProfilePage() {
   const [form, setForm] = useState<any>(null);       // ← النسخة التي نعدلها على الشاشة
   const [stats, setStats] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+
 
   /* ---------------- Load mentorId ---------------- */
   useEffect(() => {
@@ -77,6 +78,22 @@ export default function MyProfilePage() {
     console.log("UPDATED FIELD:", key, value);
   };
 
+  
+  useEffect(() => {
+  const check = () => {
+    const dark = document.documentElement.classList.contains("dark");
+    setIsDark(dark);
+  };
+
+  check();
+
+  const observer = new MutationObserver(check);
+  observer.observe(document.documentElement, { attributes: true });
+
+  return () => observer.disconnect();
+}, []);
+
+
   /* ---------------- SAVE ---------------- */
   const handleSave = async () => {
     if (!mentorId) return;
@@ -90,7 +107,7 @@ export default function MyProfilePage() {
 
       if (!res.ok) throw new Error("Save failed");
 
-      setProfile(form); // ← نثبت التغييرات الحقيقية
+      setProfile(form); 
       setIsEditing(false);
     } catch (err) {
       console.error(err);
@@ -99,7 +116,7 @@ export default function MyProfilePage() {
 
   /* ---------------- CANCEL ---------------- */
   const handleCancel = () => {
-    setForm(JSON.parse(JSON.stringify(profile))); // ← ارجاع القيم الأصلية
+    setForm(JSON.parse(JSON.stringify(profile)));
     setIsEditing(false);
   };
 
@@ -117,14 +134,16 @@ export default function MyProfilePage() {
 
       {/* HEADER */}
       <ProfileHeader
-        profile={form}     // ← مهم!!!!!
-        stats={stats}
-        isEditing={isEditing}
-        setIsEditing={setIsEditing}
-        onFieldChange={handleFieldChange}
-        onSave={handleSave}
-        onCancel={handleCancel}
-      />
+          profile={form}
+          stats={stats}
+          isEditing={isEditing}
+          setIsEditing={setIsEditing}
+          onFieldChange={handleFieldChange}
+          onSave={handleSave}
+          onCancel={handleCancel}
+          isDark={isDark}
+        />
+
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <Tabs defaultValue="about" className="w-full mt-6">
@@ -134,28 +153,32 @@ export default function MyProfilePage() {
             <TabsTrigger value="expertise">Expertise</TabsTrigger>
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
-            <TabsTrigger value="achievements">Achievements</TabsTrigger>
           </TabsList>
 
           <TabsContent value="about">
             <AboutSection
-              profile={form}        // ← يعرض النسخة المعدّلة
-              isEditing={isEditing}
-              onFieldChange={handleFieldChange}
-              onSave={handleSave}
-              onCancel={handleCancel}
-            />
-          </TabsContent>
-
-          <TabsContent value="expertise">
-            <ExpertiseSection
               profile={form}
               isEditing={isEditing}
               onFieldChange={handleFieldChange}
               onSave={handleSave}
               onCancel={handleCancel}
+              isDark={isDark}     // ←🔥🔥 ضروري جداً
             />
           </TabsContent>
+
+
+          <TabsContent value="expertise">
+          <ExpertiseSection
+            profile={form}
+            mentorId={mentorId}
+            isEditing={isEditing}
+            isDark={isDark}            // ←🔥 مهم جدًا
+            onFieldChange={handleFieldChange}
+          />
+
+
+          </TabsContent>
+
 
           <TabsContent value="sessions">
             <SessionsSection profile={form} />
@@ -165,10 +188,7 @@ export default function MyProfilePage() {
             <ReviewsSection stats={stats} />
           </TabsContent>
 
-          <TabsContent value="achievements">
-            <AchievementsSection profile={form} />
-          </TabsContent>
-
+          
         </Tabs>
       </motion.div>
 

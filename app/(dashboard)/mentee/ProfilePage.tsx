@@ -8,9 +8,9 @@ import Header from "@/app/components/MenteePages/Profile/Header";
 import StatsSection from "@/app/components/MenteePages/Profile/StatsSection";
 import SkillsSection from "@/app/components/MenteePages/Profile/SkillsSection";
 import ActivitySection from "@/app/components/MenteePages/Profile/ActivitySection";
-import BackgroundSection from "@/app/components/MenteePages/Profile/BackgroundSection";
 import AchievementsSection from "@/app/components/MenteePages/Profile/AchievementsSection";
 import EditDialog from "@/app/components/MenteePages/Profile/EditDialog";
+import MenteeBackgroundSection from "@/app/components/Background/MenteeBackgroundSection";
 
 
 type Theme = "dark" | "light";
@@ -76,7 +76,7 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
 
   const [activities, setActivities] = useState([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
-const EDITABLE_KEYS = ["name", "bio", "phone", "location"] as const;
+const EDITABLE_KEYS = ["name", "bio", "phone", "location", "profile_photo"] as const;
 
 function diff(next: Record<string, any>, prev: Record<string, any>) {
   const changed: Record<string, any> = {};
@@ -294,18 +294,23 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
       }`}
     >
       {/* Header */}
-      <Header
+     <Header
         profile={profile}
         editedProfile={editedProfile}
         setEditedProfile={setEditedProfile}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
         isDark={isDark}
+        onSave={handleSave}
+        onCancel={handleCancel}
       />
 
 
+
+
       {/* Edit Dialog */}
-      <EditDialog
+     {/* Edit Dialog */}
+      {/* <EditDialog
         editedProfile={editedProfile}
         setEditedProfile={setEditedProfile}
         isEditing={isEditing}
@@ -313,7 +318,8 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
         isDark={isDark}
         onSave={handleSave}
         onCancel={handleCancel}
-      />
+      /> */}
+
 
       {/* Stats */}
       <StatsSection stats={stats} isDark={isDark} />
@@ -323,7 +329,10 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
         <div className="lg:col-span-2 space-y-6">
           <SkillsSection profile={profile} isDark={isDark} />
 
-          <BackgroundSection menteeId={menteeId} isDark={isDark} />
+        <MenteeBackgroundSection
+            menteeId={menteeId}
+            theme={isDark ? "dark" : "light"}
+        />
 
           <ActivitySection
             activities={activities}

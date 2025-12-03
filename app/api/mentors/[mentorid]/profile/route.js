@@ -156,6 +156,8 @@ export async function PUT(req, context) {
       userSet.linkedin_url = profile.linkedin_url;
     if (profile.github !== undefined) userSet.github = profile.github;
     if (profile.short_bio !== undefined) userSet.short_bio = profile.short_bio;
+    if (profile.profile_photo !== undefined)
+      userSet.profile_photo = profile.profile_photo;
 
     if (Array.isArray(profile.area_of_expertise))
       userSet.area_of_expertise = profile.area_of_expertise; // ARRAY ✔️

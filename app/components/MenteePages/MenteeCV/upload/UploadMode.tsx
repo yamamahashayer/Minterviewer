@@ -32,27 +32,39 @@ export default function UploadCV({ isDark = true, onBack, onSuccess, onError }: 
   const [aiLoading, setAiLoading] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false); // 🔹 حماية من التكرار
 
-  // 🧠 استرجاع الـ menteeId من السيشن
-  useEffect(() => {
-    const token = sessionStorage.getItem("token");
-    if (!token) return;
-    (async () => {
-      try {
-        const res = await fetch("/api/auth/session", {
-          headers: { Authorization: `Bearer ${token}` },
-          cache: "no-store",
-        });
-        const data = await res.json();
-        const mid = data?.menteeId || data?.user?.menteeId || null;
-        if (mid) {
-          setMenteeId(mid);
-          console.log("🧩 menteeId loaded:", mid);
-        }
-      } catch (err) {
-        console.error("⚠️ Failed to fetch session:", err);
+useEffect(() => {
+  const token = sessionStorage.getItem("token");
+  if (!token) return;
+
+  (async () => {
+    try {
+      const res = await fetch("/api/auth/session", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+
+      const data = await res.json();
+
+      const mid =
+        data?.mentee?._id ||
+        data?.user?.mentee?._id ||
+        data?.user?.menteeId ||
+        data?.menteeId ||
+        null;
+
+      if (mid) {
+        sessionStorage.setItem("menteeId", mid);
+        setMenteeId(mid);
+        console.log("🧩 menteeId loaded:", mid);
+      } else {
+        console.warn("⚠️ No menteeId found in session response:", data);
       }
-    })();
-  }, []);
+
+    } catch (err) {
+      console.error("⚠️ Failed to fetch session:", err);
+    }
+  })();
+}, []);
 
   // 🧾 اختيار الملف
   function pickFile() {

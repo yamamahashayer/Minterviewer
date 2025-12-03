@@ -22,7 +22,18 @@ const MentorSchema = new mongoose.Schema(
 
     // === SESSION OPTIONS ===
     sessionTypes: { type: [String], default: [] }, // Mock interview, CV review...
-    certifications: { type: [String], default: [] },
+    certifications: {
+      type: [
+        {
+          title: { type: String, required: true },
+          issuer: { type: String, default: "" },
+          date: { type: String, default: "" },
+          id: { type: String, default: "" },
+          url: { type: String, default: "" },
+        },
+      ],
+      default: [],
+    },
     achievements: { type: [String], default: [] },
 
     // === SOCIAL LINKS (اختياري جداً) ===
