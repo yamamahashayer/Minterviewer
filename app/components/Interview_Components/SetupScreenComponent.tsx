@@ -128,7 +128,116 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
                 };
 
             case 2: // Tech stack
-                const techKeywords = ['react', 'node', 'python', 'java', 'javascript', 'typescript', 'angular', 'vue'];
+                const techKeywords = [
+                    'react',
+                    'node',
+                    'python',
+                    'java',
+                    'javascript',
+                    'typescript',
+                    'angular',
+                    'vue',
+
+                    // Core CS skills
+                    'oop',
+                    'object_oriented_programming',
+                    'problem_solving',
+                    'data_structures',
+                    'algorithms',
+
+                    // Frontend
+                    'nextjs',
+                    'nuxt',
+                    'svelte',
+                    'solidjs',
+                    'react_native',
+                    'flutter',
+                    , 'android',
+                    'ios',
+                    'html',
+                    'css',
+                    'tailwindcss',
+                    'sass',
+                    'webpack',
+                    'vite',
+                    'graphql',
+                    'rest_api',
+                    'apollo',
+
+                    // Backend
+                    'nestjs',
+                    'spring_boot',
+                    'django',
+                    'flask',
+                    'express',
+                    'ruby_on_rails',
+                    'laravel',
+                    'fastapi',
+                    'dotnet',
+
+                    // Languages
+                    'kotlin',
+                    'swift',
+                    'go',
+                    'rust',
+                    'c',
+                    'cpp',
+                    'csharp',
+                    'php',
+                    'r',
+                    'scala',
+
+                    // Databases
+                    'postgresql',
+                    'mysql',
+                    'mongodb',
+                    'redis',
+                    'elasticsearch',
+                    'cassandra',
+                    'neo4j',
+                    'supabase',
+                    'firebase',
+
+                    // Cloud and DevOps
+                    'aws',
+                    'azure',
+                    'gcp',
+                    'docker',
+                    'kubernetes',
+                    'terraform',
+                    'ansible',
+                    'linux',
+                    'ci_cd',
+
+                    // AI & ML
+                    'pytorch',
+                    'tensorflow',
+                    'scikit_learn',
+                    'huggingface',
+                    'langchain',
+
+                    // Web3 / Blockchain
+                    'solidity',
+                    'ethersjs',
+                    'web3js',
+
+                    // Testing
+                    'jest',
+                    'cypress',
+                    'pytest',
+
+                    // Tools
+                    'git',
+                    'figma',
+
+                    'Anything that is relevant',
+                    'any technology',
+                    'any programming language',
+                    'any',
+                    "everything related",
+                    'general',
+
+                ];
                 const hasTech = techKeywords.some(tech => lowerResponse.includes(tech));
                 if (!hasTech) {
                     return {
