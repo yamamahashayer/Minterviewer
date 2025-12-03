@@ -7,7 +7,6 @@ import {
   Target,
   TrendingUp,
   CheckCircle2,
-  Sparkles,
   Layers,
   BookOpen,
   Brain,
@@ -17,7 +16,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
 import html2pdf from "html2pdf.js";
-import HistorySection from "./History/Analyzed";
 import Analyzed from "./History/Analyzed";
 
 export default function CVReportView({
@@ -41,6 +39,7 @@ export default function CVReportView({
 
   const resumeIdFromUrl = searchParams.get("resumeId") || resumeId;
 
+  /* ========================= FIXED FETCH ========================= */
   useEffect(() => {
     if (fetched || !menteeId || !resumeIdFromUrl) return;
 
@@ -49,10 +48,12 @@ export default function CVReportView({
         setLoading(true);
         setError(null);
 
+        // 🚀🚀🚀 HERE IS THE FIX
         const res = await fetch(
-          `/api/mentees/${menteeId}/cv/report?resumeId=${resumeIdFromUrl}`,
+          `/api/mentees/${menteeId}/cv/report/${resumeIdFromUrl}`,
           { cache: "no-store" }
         );
+
         const json = await res.json();
 
         if (!res.ok) throw new Error(json?.error || "Failed to load analysis");
@@ -98,13 +99,16 @@ export default function CVReportView({
   const handleDownload = () => {
     const element = document.getElementById("cv-report-content");
     if (!element) return;
-    html2pdf().set({
-      margin: 0.5,
-      filename: "CV_Analysis_Report.pdf",
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
-    }).from(element).save();
+    html2pdf()
+      .set({
+        margin: 0.5,
+        filename: "CV_Analysis_Report.pdf",
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+      })
+      .from(element)
+      .save();
   };
 
   return (
@@ -277,14 +281,17 @@ export default function CVReportView({
         />
       )}
 
-
-
-      {activeTab === "history" && <Analyzed menteeId={menteeId} isDark={isDark} />}
+      {activeTab === "history" && (
+        <Analyzed menteeId={menteeId} isDark={isDark} />
+      )}
     </div>
   );
 }
 
-/* ✅ Score Box */
+/*******************************
+ * UI COMPONENT HELPERS BELOW
+ *******************************/
+
 function ScoreBox({ icon, label, value, color, isDark }: any) {
   const colorMap = {
     teal: "from-teal-400 to-emerald-400",
@@ -327,7 +334,6 @@ function ScoreBox({ icon, label, value, color, isDark }: any) {
   );
 }
 
-/* ✅ Category Card */
 function CategoryCard({ title, icon, score, insights, color, isDark }: any) {
   const colorGradients = {
     teal: "from-teal-400 to-emerald-400",
@@ -380,7 +386,6 @@ function CategoryCard({ title, icon, score, insights, color, isDark }: any) {
   );
 }
 
-/* ✅ Improvements Section */
 function ImprovementSection({ improvements, isDark }: any) {
   return (
     <div
@@ -412,4 +417,3 @@ function ImprovementSection({ improvements, isDark }: any) {
     </div>
   );
 }
-

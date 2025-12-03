@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useMemo, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
+
 import {
   User,
   Briefcase,
@@ -80,7 +82,6 @@ export default function CVReviewPage({
   const [targetRole, setTargetRole] = useState<string>("");
   const [jobDescription, setJobDescription] = useState<string>("");
 
-  // 📋 إعداد خطوات الإنشاء
   const allSteps: StepMeta[] = [
     { key: "type", title: "CV Type", icon: Target },
     { key: "target", title: "Targeting", icon: Target },
@@ -114,6 +115,23 @@ export default function CVReviewPage({
       setActiveIdx(visibleSteps.length - 1);
     }
   }, [visibleSteps, activeIdx]);
+
+const searchParams = useSearchParams();
+const resumeIdFromURL = searchParams.get("resumeId");
+
+useEffect(() => {
+  if (resumeIdFromURL) {
+    const menteeId = sessionStorage.getItem("menteeId");
+
+    setAnalysisData({
+      resumeId: resumeIdFromURL,
+      menteeId: menteeId || undefined,
+    });
+
+    setMode("report");
+  }
+}, [resumeIdFromURL]);
+
 
   if (mode === "choice") {
     return (
@@ -149,7 +167,6 @@ export default function CVReviewPage({
           setCvType("general");
           setActiveIdx(0);
         }}
-        // ✅ استلام تحليل من الإنشاء اليدوي
         onSubmit={(data) => {
           setAnalysisData({
             menteeId: data?.menteeId,
@@ -167,7 +184,6 @@ export default function CVReviewPage({
       <UploadMode
         isDark={isDark}
         onBack={() => setMode("choice")}
-        // ✅ استلام تحليل من رفع Affinda
         onSuccess={(data) => {
           setAnalysisData({
             menteeId: data?.menteeId,

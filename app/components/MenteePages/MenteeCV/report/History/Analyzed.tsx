@@ -88,8 +88,8 @@ export default function Analyzed({
               whileTap={{ scale: 0.97 }}
               onClick={() => {
                 if (item.resume?._id && menteeId) {
-                  window.location.href = `/mentee/${menteeId}/cv/report?resumeId=${item.resume._id}`;
-                }
+                  window.location.href = `/mentee?tab=cv-review&resumeId=${item.resume._id}`;
+                  }
               }}
               className={`p-4 rounded-xl border shadow-sm transition-all cursor-pointer ${
                 isDark

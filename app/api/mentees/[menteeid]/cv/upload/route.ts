@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
 import Resume from "@/models/Resume";
 import Mentee from "@/models/Mentee";
+import { uploadToDrive } from "../../../../../../lib/google/googleDrive";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,35 +42,56 @@ export async function POST(req: NextRequest, ctx: any) {
   try {
     await connectDB();
 
-    const url = new URL(req.url);
-    const parts = url.pathname.split("/");
-    const menteeId = parts[3]; 
-    console.log("🟢 CV UPLOAD route hit!");
-    console.log("🧩 menteeId extracted from URL:", menteeId);
+    // ================================
+    // ⭐ FIX: ctx.params كان Promise
+    // ================================
+    const p = await ctx.params;
+    const menteeId = p?.menteeid;
+
+    console.log("🟢 CV UPLOAD route hit! menteeId =", menteeId);
 
     if (!isObjectId(menteeId)) {
-      return NextResponse.json({ ok: false, error: "Invalid menteeId" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "Invalid menteeId" },
+        { status: 400 }
+      );
     }
 
     const ct = req.headers.get("content-type") || "";
     if (!ct.includes("multipart/form-data")) {
-      return NextResponse.json({ ok: false, error: "Use multipart/form-data" }, { status: 415 });
+      return NextResponse.json(
+        { ok: false, error: "Use multipart/form-data" },
+        { status: 415 }
+      );
     }
 
     const form = await req.formData();
     const file = form.get("file") as File | null;
+
     if (!file) {
-      return NextResponse.json({ ok: false, error: "No file uploaded" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "No file uploaded" },
+        { status: 400 }
+      );
     }
 
     const AFFINDA_API_KEY = process.env.AFFINDA_API_KEY;
     if (!AFFINDA_API_KEY) {
-      return NextResponse.json({ ok: false, error: "Missing AFFINDA_API_KEY" }, { status: 500 });
+      return NextResponse.json(
+        { ok: false, error: "Missing AFFINDA_API_KEY" },
+        { status: 500 }
+      );
     }
 
-    const menteeDoc = await Mentee.findById(menteeId).select("_id user").lean();
+    const menteeDoc = await Mentee.findById(menteeId)
+      .select("_id user")
+      .lean();
+
     if (!menteeDoc) {
-      return NextResponse.json({ ok: false, error: "Mentee not found" }, { status: 404 });
+      return NextResponse.json(
+        { ok: false, error: "Mentee not found" },
+        { status: 404 }
+      );
     }
 
     const userId =
@@ -77,6 +99,9 @@ export async function POST(req: NextRequest, ctx: any) {
         ? new mongoose.Types.ObjectId(String(menteeDoc.user))
         : undefined;
 
+    // ================================
+    // ⭐ Send to Affinda
+    // ================================
     console.log("📤 Uploading file to Affinda...");
     const affindaJson = await postToAffinda(file, AFFINDA_API_KEY);
 
@@ -87,12 +112,27 @@ export async function POST(req: NextRequest, ctx: any) {
       affindaJson?.redactedHtml ??
       "";
 
+    // ================================
+    // ⭐ Upload to Google Drive
+    // ================================
+    console.log("📤 Uploading file to Google Drive...");
+    const folderId = process.env.GOOGLE_DRIVE_FOLDER_ID;
+    const driveFile = await uploadToDrive(file, folderId);
+
+    console.log("📁 Drive upload:", driveFile);
+
+    // ================================
+    // ⭐ Save resume in MongoDB
+    // ================================
     const resumeDoc = await Resume.create({
       user: userId,
       mentee: new mongoose.Types.ObjectId(menteeId),
       source: "affinda",
       parsed: affindaJson,
       html,
+      driveFileId: driveFile.id,
+      driveViewUrl: driveFile.webViewLink,
+      driveDownloadUrl: driveFile.webContentLink,
     });
 
     console.log("✅ Resume created:", resumeDoc._id);
@@ -102,13 +142,22 @@ export async function POST(req: NextRequest, ctx: any) {
         ok: true,
         resumeId: String(resumeDoc._id),
         affinda: affindaJson,
+        drive: driveFile,
       },
       { status: 201 }
     );
+
   } catch (e: any) {
     console.error("💥 CV UPLOAD error:", e?.message || e);
+
     const msg = e?.message || "Server error";
-    const isNetwork = /Cannot reach Affinda|fetch failed|ENOTFOUND|ECONN|ECONNREFUSED|ETIMEDOUT/i.test(msg);
-    return NextResponse.json({ ok: false, error: msg }, { status: isNetwork ? 502 : 500 });
+    const isNetwork = /Cannot reach Affinda|fetch failed|ENOTFOUND|ECONN|ECONNREFUSED|ETIMEDOUT/i.test(
+      msg
+    );
+
+    return NextResponse.json(
+      { ok: false, error: msg },
+      { status: isNetwork ? 502 : 500 }
+    );
   }
 }
