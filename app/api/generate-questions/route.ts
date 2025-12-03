@@ -30,6 +30,8 @@ export async function POST(req: NextRequest) {
     1. The question text
     2. The type (verbal or coding)
     3. isCoding (boolean) - true if it requires writing code
+    4. thinkingTime (integer) - suggested time in seconds to think before answering (e.g., 15-30 seconds)
+    5. answerTime (integer) - suggested time in seconds to record the answer (e.g., 60-120 seconds)
     
     If the interview type is "technical", include a mix of conceptual and coding questions.
     If "behavioral", focus on soft skills and past experiences.
@@ -53,9 +55,11 @@ export async function POST(req: NextRequest) {
                 properties: {
                   text: { type: Type.STRING },
                   type: { type: Type.STRING, enum: ["verbal", "coding"] },
-                  isCoding: { type: Type.BOOLEAN }
+                  isCoding: { type: Type.BOOLEAN },
+                  thinkingTime: { type: Type.INTEGER },
+                  answerTime: { type: Type.INTEGER }
                 },
-                required: ["text", "type", "isCoding"]
+                required: ["text", "type", "isCoding", "thinkingTime", "answerTime"]
               }
             }
           },

@@ -230,25 +230,25 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
 
             {/* Question Display */}
             <div className="text-center mb-8">
-                <div className="bg-slate-800/50 rounded-2xl p-6 max-w-2xl">
-                    <p className="text-xl text-white leading-relaxed">{questions[step]}</p>
+                <div className="bg-white dark:bg-slate-800/50 rounded-2xl p-6 max-w-2xl shadow-sm dark:shadow-none border border-gray-200 dark:border-transparent">
+                    <p className="text-xl text-gray-900 dark:text-white leading-relaxed">{questions[step]}</p>
                 </div>
             </div>
 
             {/* Progress Indicator */}
-            <div className="flex space-x-2 mb-6">
+            <div className="flex space-x-2 mb-8">
                 {questions.map((_, idx) => (
                     <div
                         key={idx}
-                        className={`h-2 w-16 rounded-full transition-all duration-300 ${idx === step ? 'bg-purple-500' : idx < step ? 'bg-green-500' : 'bg-slate-600'}`}
+                        className={`h-2 w-16 rounded-full transition-all duration-300 ${idx === step ? 'bg-purple-500' : idx < step ? 'bg-green-500' : 'bg-gray-200 dark:bg-slate-600'}`}
                     />
                 ))}
             </div>
 
             {/* Transcript Display */}
             {transcript && (
-                <div className="bg-green-500/20 border border-green-500/50 rounded-xl p-4 mb-6 max-w-2xl w-full">
-                    <p className="text-green-300 text-center">&quot;{transcript}&quot;</p>
+                <div className="bg-green-50 dark:bg-green-500/20 border border-green-200 dark:border-green-500/50 rounded-xl p-4 mb-6 max-w-2xl w-full">
+                    <p className="text-green-800 dark:text-green-300 text-center">&quot;{transcript}&quot;</p>
                 </div>
             )}
 
@@ -269,7 +269,7 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
                     <Mic className="w-12 h-12" />
                 )}
             </button>
-            <p className="text-white/70 mt-4 text-sm">
+            <p className="text-gray-600 dark:text-white/70 mt-4 text-sm">
                 {isListening ? 'Listening... Click to stop' : 'Click to speak your answer'}
             </p>
         </div>

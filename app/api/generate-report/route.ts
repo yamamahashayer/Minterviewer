@@ -3,7 +3,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 
 export async function POST(req: NextRequest) {
     try {
-        const { answers, emotionData, toneData, setupData } = await req.json();
+        const { answers, emotionData, toneData, setupData, hasVideoData } = await req.json();
 
         // Debug: Log incoming data
         console.log("Incoming interview data:", {
@@ -57,7 +57,7 @@ MANDATORY REQUIREMENTS:
 1. EVERY QUESTION must have a non-empty feedback field with exactly 2-3 sentences
 2. The feedback must include: what was good, what needs improvement, specific action items
 3. For toneAnalysis: KEEP IT BRIEF - maximum 3-4 sentences total, not more
-4. For visualAnalysis in each question: Include 1-2 sentences about body language, confidence level, engagement
+${hasVideoData ? '4. For visualAnalysis in each question: Include 1-2 sentences about body language, confidence level, engagement' : '4. DO NOT include visualAnalysis fields - camera was not used during this interview'}
 5. Return ONLY valid JSON - no markdown, no extra text, ONLY JSON
 
 Example feedback format:
@@ -81,7 +81,7 @@ Full structure required:
       "candidateAnswer": "<their answer>",
       "score": <number 0-100>,
       "feedback": "<MANDATORY 2-3 sentence evaluation>",
-      "visualAnalysis": "<1-2 sentence observation about body language, confidence, engagement>",
+${hasVideoData ? '      "visualAnalysis": "<1-2 sentence observation about body language, confidence, engagement>",' : ''}
       "emotion": "<emotion>",
       "tone": "<tone>"
     }
@@ -94,7 +94,7 @@ Full structure required:
 CRITICAL:
 - Do not skip any feedback field
 - Keep toneAnalysis SHORT (3-4 sentences, not 200+ words)
-- Include visualAnalysis for each question based on observed body language and engagement
+${hasVideoData ? '- Include visualAnalysis for each question based on observed body language and engagement' : '- DO NOT include visualAnalysis fields'}
 - USE 0-100 SCALE FOR ALL SCORES
 - Score fairly based on actual performance (coding skill, understanding, clarity)`;
 
@@ -162,11 +162,11 @@ CRITICAL:
                                     candidateAnswer: { type: Type.STRING },
                                     score: { type: Type.NUMBER },
                                     feedback: { type: Type.STRING },
-                                    visualAnalysis: { type: Type.STRING },
+                                    ...(hasVideoData ? { visualAnalysis: { type: Type.STRING } } : {}),
                                     emotion: { type: Type.STRING },
                                     tone: { type: Type.STRING }
                                 },
-                                required: ["question", "candidateAnswer", "score", "feedback", "visualAnalysis", "emotion", "tone"]
+                                required: ["question", "candidateAnswer", "score", "feedback", ...(hasVideoData ? ["visualAnalysis"] : []), "emotion", "tone"]
                             }
                         },
                         recommendations: { type: Type.ARRAY, items: { type: Type.STRING } },

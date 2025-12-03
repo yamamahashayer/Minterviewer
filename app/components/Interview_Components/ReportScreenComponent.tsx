@@ -342,14 +342,14 @@ const ReportScreenComponent = ({ interviewData, onRestart }: { interviewData: an
     }
 
     return (
-        <div className="min-h-screen p-6 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="min-h-screen p-6 bg-white dark:bg-[#0A0F1E]">
             <div className="max-w-6xl mx-auto">
                 {/* Header */}
-                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/20">
+                <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-gray-200 dark:border-white/20 shadow-sm dark:shadow-none">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h1 className="text-4xl font-bold text-white mb-2">Interview Report</h1>
-                            <p className="text-purple-300 text-lg">Your Performance Analysis</p>
+                            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">Interview Report</h1>
+                            <p className="text-purple-600 dark:text-purple-300 text-lg">Your Performance Analysis</p>
                         </div>
                         <div className="flex gap-3">
                             <button
@@ -395,64 +395,64 @@ const ReportScreenComponent = ({ interviewData, onRestart }: { interviewData: an
                 {/* Strengths and Areas for Improvement */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                     {/* Strengths */}
-                    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                        <h3 className="text-xl font-bold text-white mb-4">✓ Strengths</h3>
+                    <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 dark:border-white/20 shadow-sm dark:shadow-none">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">✓ Strengths</h3>
                         <ul className="space-y-3">
                             {Array.isArray(report.strengths) && report.strengths.length > 0 ? (
                                 report.strengths.map((strength: string, idx: number) => (
                                     <li key={idx} className="flex items-start space-x-3">
                                         <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
-                                        <p className="text-white/90">{strength}</p>
+                                        <p className="text-gray-700 dark:text-white/90">{strength}</p>
                                     </li>
                                 ))
                             ) : (
-                                <p className="text-white/60">No strengths data available</p>
+                                <p className="text-gray-500 dark:text-white/60">No strengths data available</p>
                             )}
                         </ul>
                     </div>
 
                     {/* Areas for Improvement */}
-                    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                        <h3 className="text-xl font-bold text-white mb-4">↗ Areas for Improvement</h3>
+                    <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 dark:border-white/20 shadow-sm dark:shadow-none">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">↗ Areas for Improvement</h3>
                         <ul className="space-y-3">
                             {Array.isArray(report.improvements) && report.improvements.length > 0 ? (
                                 report.improvements.map((improvement: string, idx: number) => (
                                     <li key={idx} className="flex items-start space-x-3">
                                         <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
-                                        <p className="text-white/90">{improvement}</p>
+                                        <p className="text-gray-700 dark:text-white/90">{improvement}</p>
                                     </li>
                                 ))
                             ) : (
-                                <p className="text-white/60">No improvement suggestions available</p>
+                                <p className="text-gray-500 dark:text-white/60">No improvement suggestions available</p>
                             )}
                         </ul>
                     </div>
                 </div>
 
                 {/* Detailed Feedback */}
-                <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 mb-6">
-                    <h3 className="text-xl font-bold text-white mb-4">📋 Detailed Feedback</h3>
+                <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 dark:border-white/20 mb-6 shadow-sm dark:shadow-none">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">📋 Detailed Feedback</h3>
                     <div className="space-y-4">
                         {report.feedback ? (
-                            <p className="text-white/90 leading-relaxed">{report.feedback}</p>
+                            <p className="text-gray-700 dark:text-white/90 leading-relaxed">{report.feedback}</p>
                         ) : (
-                            <p className="text-white/60">No detailed feedback available</p>
+                            <p className="text-gray-500 dark:text-white/60">No detailed feedback available</p>
                         )}
                     </div>
                 </div>
 
                 {/* Performance Metrics Graph */}
                 {report.performanceMetrics && (
-                    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 mb-6">
-                        <h3 className="text-xl font-bold text-white mb-4">📊 Performance Metrics</h3>
+                    <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 dark:border-white/20 mb-6 shadow-sm dark:shadow-none">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">📊 Performance Metrics</h3>
                         <div className="space-y-4">
                             {Object.entries(report.performanceMetrics).map(([key, value]: [string, any]) => (
                                 <div key={key}>
                                     <div className="flex justify-between mb-2">
-                                        <span className="text-white/80 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                                        <span className="text-purple-300 font-semibold">{value}%</span>
+                                        <span className="text-gray-600 dark:text-white/80 capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
+                                        <span className="text-purple-600 dark:text-purple-300 font-semibold">{value}%</span>
                                     </div>
-                                    <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
+                                    <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
                                         <div
                                             className="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-700"
                                             style={{ width: `${value}%` }}
@@ -466,36 +466,36 @@ const ReportScreenComponent = ({ interviewData, onRestart }: { interviewData: an
 
                 {/* Per-Question Detailed Feedback */}
                 {report.perQuestionFeedback && Array.isArray(report.perQuestionFeedback) && report.perQuestionFeedback.length > 0 && (
-                    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 mb-6">
-                        <h3 className="text-xl font-bold text-white mb-6">❓ Per-Question Feedback</h3>
+                    <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 dark:border-white/20 mb-6 shadow-sm dark:shadow-none">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6">❓ Per-Question Feedback</h3>
                         <div className="space-y-6">
                             {report.perQuestionFeedback.map((item: any, idx: number) => (
-                                <div key={idx} className="bg-white/5 rounded-xl p-5 border border-white/10">
+                                <div key={idx} className="bg-gray-50 dark:bg-white/5 rounded-xl p-5 border border-gray-200 dark:border-white/10">
                                     {/* Question */}
                                     <div className="mb-4">
-                                        <h4 className="text-lg font-semibold text-white mb-2">Question {idx + 1}</h4>
-                                        <p className="text-white/80 italic">{item.question || 'No question text available'}</p>
+                                        <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Question {idx + 1}</h4>
+                                        <p className="text-gray-600 dark:text-white/80 italic">{item.question || 'No question text available'}</p>
                                     </div>
 
                                     {/* Candidate Answer */}
                                     {item.candidateAnswer && (
-                                        <div className="mb-4 bg-blue-900/20 border-l-4 border-blue-500 rounded p-4">
-                                            <p className="text-blue-300 text-sm font-semibold mb-2">Your Answer:</p>
-                                            <p className="text-white/90">{item.candidateAnswer}</p>
+                                        <div className="mb-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 rounded p-4">
+                                            <p className="text-blue-700 dark:text-blue-300 text-sm font-semibold mb-2">Your Answer:</p>
+                                            <p className="text-gray-800 dark:text-white/90">{item.candidateAnswer}</p>
                                         </div>
                                     )}
 
                                     {/* Score and Progress Bar */}
                                     <div className="flex justify-between items-center mb-4">
                                         <div>
-                                            <p className="text-white/70 text-sm font-semibold mb-1">Score</p>
+                                            <p className="text-gray-500 dark:text-white/70 text-sm font-semibold mb-1">Score</p>
                                             <div className="flex items-center gap-2">
-                                                <div className="text-3xl font-bold text-purple-400">{Math.round(item.score || 0)}</div>
-                                                <div className="text-white/60 text-sm">/ 100</div>
+                                                <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">{Math.round(item.score || 0)}</div>
+                                                <div className="text-gray-400 dark:text-white/60 text-sm">/ 100</div>
                                             </div>
                                         </div>
                                         <div className="flex-1 ml-6">
-                                            <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
+                                            <div className="h-3 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
                                                 <div
                                                     className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
                                                     style={{ width: `${Math.min(item.score || 0, 100)}%` }}
@@ -507,29 +507,29 @@ const ReportScreenComponent = ({ interviewData, onRestart }: { interviewData: an
                                     {/* Feedback */}
                                     <div className="space-y-3">
                                         <div>
-                                            <p className="text-white/70 text-sm font-semibold mb-2">Feedback & Suggestions:</p>
-                                            <p className="text-white/90 leading-relaxed">{item.feedback || 'No feedback available'}</p>
+                                            <p className="text-gray-500 dark:text-white/70 text-sm font-semibold mb-2">Feedback & Suggestions:</p>
+                                            <p className="text-gray-700 dark:text-white/90 leading-relaxed">{item.feedback || 'No feedback available'}</p>
                                         </div>
 
                                         {item.visualAnalysis && (
-                                            <div className="bg-green-900/20 border-l-4 border-green-500 rounded p-4">
-                                                <p className="text-green-300 text-sm font-semibold mb-2">📸 Visual Analysis:</p>
-                                                <p className="text-white/90">{item.visualAnalysis}</p>
+                                            <div className="bg-green-50 dark:bg-green-900/20 border-l-4 border-green-500 rounded p-4">
+                                                <p className="text-green-700 dark:text-green-300 text-sm font-semibold mb-2">📸 Visual Analysis:</p>
+                                                <p className="text-gray-800 dark:text-white/90">{item.visualAnalysis}</p>
                                             </div>
                                         )}
 
                                         <div className="flex flex-wrap gap-4">
                                             {item.emotion && (
                                                 <div className="flex gap-2">
-                                                    <span className="text-white/70 text-sm">😊 Emotion:</span>
-                                                    <span className="text-white/90 font-semibold">{item.emotion}</span>
+                                                    <span className="text-gray-500 dark:text-white/70 text-sm">😊 Emotion:</span>
+                                                    <span className="text-gray-900 dark:text-white/90 font-semibold">{item.emotion}</span>
                                                 </div>
                                             )}
 
                                             {item.tone && (
                                                 <div className="flex gap-2">
-                                                    <span className="text-white/70 text-sm">🎤 Tone:</span>
-                                                    <span className="text-white/90 font-semibold">{item.tone}</span>
+                                                    <span className="text-gray-500 dark:text-white/70 text-sm">🎤 Tone:</span>
+                                                    <span className="text-gray-900 dark:text-white/90 font-semibold">{item.tone}</span>
                                                 </div>
                                             )}
                                         </div>
@@ -542,13 +542,13 @@ const ReportScreenComponent = ({ interviewData, onRestart }: { interviewData: an
 
                 {/* Recommendations */}
                 {report.recommendations && report.recommendations.length > 0 && (
-                    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20 mb-6">
-                        <h3 className="text-xl font-bold text-white mb-4">🎯 Recommendations for Improvement</h3>
+                    <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 dark:border-white/20 mb-6 shadow-sm dark:shadow-none">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">🎯 Recommendations for Improvement</h3>
                         <ol className="space-y-3">
                             {report.recommendations.map((rec: string, idx: number) => (
                                 <li key={idx} className="flex items-start space-x-3">
-                                    <span className="text-purple-400 font-bold flex-shrink-0">{idx + 1}.</span>
-                                    <p className="text-white/90">{rec}</p>
+                                    <span className="text-purple-600 dark:text-purple-400 font-bold flex-shrink-0">{idx + 1}.</span>
+                                    <p className="text-gray-700 dark:text-white/90">{rec}</p>
                                 </li>
                             ))}
                         </ol>
@@ -557,9 +557,9 @@ const ReportScreenComponent = ({ interviewData, onRestart }: { interviewData: an
 
                 {/* Tone Analysis */}
                 {report.toneAnalysis && (
-                    <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
-                        <h3 className="text-xl font-bold text-white mb-4">🎙️ Tone Analysis</h3>
-                        <p className="text-white/90 leading-relaxed">{report.toneAnalysis}</p>
+                    <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 dark:border-white/20 shadow-sm dark:shadow-none">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">🎙️ Tone Analysis</h3>
+                        <p className="text-gray-700 dark:text-white/90 leading-relaxed">{report.toneAnalysis}</p>
                     </div>
                 )}
             </div>
