@@ -49,6 +49,13 @@ export async function uploadToDrive(file: File, folderId: string) {
     return final.data;
   } catch (err) {
     console.error("Google Drive upload error:", err);
+
+
+    
     throw err;
   }
 }
+
+
+
+
