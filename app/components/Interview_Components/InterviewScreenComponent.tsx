@@ -307,6 +307,7 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
                         answers: formattedAnswers,
                         emotionData,
                         questions,
+                        setupData,
                         hasVideoData: videoEnabled && emotionData.length > 0,
                         timestamp: new Date().toISOString()
                     });
@@ -338,6 +339,7 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
                     answers: formattedAnswers,
                     emotionData,
                     questions,
+                    setupData,
                     hasVideoData: videoEnabled && emotionData.length > 0,
                     timestamp: new Date().toISOString()
                 });

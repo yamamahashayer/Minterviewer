@@ -9,18 +9,49 @@ const AIInterviewerApp = () => {
     const [currentScreen, setCurrentScreen] = useState<'welcome' | 'setup' | 'interview' | 'report'>('welcome');
     const [setupData, setSetupData] = useState<any>(null);
     const [interviewData, setInterviewData] = useState<any>(null);
+    const [interviewStartTime, setInterviewStartTime] = useState<number>(0);
 
     const handleStartInterview = () => {
         setCurrentScreen('setup');
     };
 
-    const handleSetupComplete = (data: any) => {
-        setSetupData(data);
-        setCurrentScreen('interview');
+    const handleSetupComplete = async (data: any) => {
+        try {
+            // Create interview document and get ID
+            const response = await fetch('/api/create-interview', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    role: data.role,
+                    techstack: Array.isArray(data.techStack) ? data.techStack.join(', ') : data.techStack,
+                    type: data.interviewType
+                })
+            });
+
+            if (response.ok) {
+                const { interviewId } = await response.json();
+                setSetupData({ ...data, interviewId });
+                setInterviewStartTime(Date.now());
+                setCurrentScreen('interview');
+            } else {
+                console.error('Failed to create interview');
+                // Proceed anyway for now
+                setSetupData(data);
+                setInterviewStartTime(Date.now());
+                setCurrentScreen('interview');
+            }
+        } catch (error) {
+            console.error('Error creating interview:', error);
+            // Proceed anyway for now
+            setSetupData(data);
+            setInterviewStartTime(Date.now());
+            setCurrentScreen('interview');
+        }
     };
 
     const handleInterviewComplete = (data: any) => {
-        setInterviewData(data);
+        const duration = Math.floor((Date.now() - interviewStartTime) / 1000); // Duration in seconds
+        setInterviewData({ ...data, duration });
         setCurrentScreen('report');
     };
 
@@ -28,6 +59,7 @@ const AIInterviewerApp = () => {
         setCurrentScreen('welcome');
         setSetupData(null);
         setInterviewData(null);
+        setInterviewStartTime(0);
     };
 
     return (

@@ -280,6 +280,29 @@ const ReportScreenComponent = ({ interviewData, onRestart }: { interviewData: an
 
                 const data = await response.json();
                 setReport(data);
+
+                // Save interview results to database
+                if (interviewData.setupData?.interviewId) {
+                    try {
+                        await fetch('/api/save-interview-result', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                interviewId: interviewData.setupData.interviewId,
+                                overallScore: data.overallScore,
+                                technicalScore: data.technicalScore,
+                                communicationScore: data.communicationScore,
+                                confidenceScore: data.confidenceScore,
+                                duration: interviewData.duration || 0,
+                                strengths: data.strengths || [],
+                                improvements: data.improvements || []
+                            })
+                        });
+                    } catch (saveError) {
+                        console.error('Failed to save interview result:', saveError);
+                        // Don't fail the UI if saving fails
+                    }
+                }
             } catch (err) {
                 console.error('Report generation error:', err);
                 setError(err instanceof Error ? err.message : 'Failed to generate report');
