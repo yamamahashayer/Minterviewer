@@ -8,22 +8,33 @@ import { getRedirectForRole } from "@/lib/notifications/roleRedirect";
 
 export async function POST(req: Request) {
   try {
+    await dbConnect();
+
     const {
       full_name,
       email,
       password,
       role,
+
+      // USER FIELDS
       profile_photo,
       linkedin_url,
-      area_of_expertise,
+      github,
+      area_of_expertise, // array now
       short_bio,
       phoneNumber,
       Country,
+
+      // MENTOR FIELDS
       yearsOfExperience,
-      field,
-      availabilities,
+      focusAreas, // array now
+      availabilityType,
+      languages, // array
     } = await req.json();
 
+    // ============================
+    // VALIDATION
+    // ============================
     if (!full_name || !email || !password || !role) {
       return NextResponse.json(
         { message: "Missing required fields" },
@@ -31,45 +42,48 @@ export async function POST(req: Request) {
       );
     }
 
-    if (role !== "mentor" && role !== "mentee") {
+    if (!["mentor", "mentee"].includes(role)) {
       return NextResponse.json(
         { message: "Invalid role" },
         { status: 400 }
       );
     }
 
-    await dbConnect();
-
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    // Check existing user
+    const exists = await User.findOne({ email });
+    if (exists) {
       return NextResponse.json(
         { message: "Email already in use" },
         { status: 400 }
       );
     }
 
+    // ============================
+    // CREATE USER
+    // ============================
     const password_hash = await bcrypt.hash(password, 10);
 
-    const userData = {
+    const newUser = await User.create({
       full_name,
       email,
       password_hash,
       role,
       profile_photo,
       linkedin_url,
-      area_of_expertise,
+      github,
+      area_of_expertise: Array.isArray(area_of_expertise)
+        ? area_of_expertise
+        : [],
       short_bio,
       phoneNumber,
       Country,
-    };
+    });
 
-    // CREATE USER
-    const newUser = await User.create(userData);
-
-    // === ORIGIN (WORKS LOCAL + DEPLOY) ===
+    // ============================
+    // SEND WELCOME NOTIFICATION
+    // ============================
     const origin = new URL(req.url).origin;
 
-    // === WELCOME NOTIFICATION ===
     await fetch(`${origin}/api/notifications`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -82,20 +96,22 @@ export async function POST(req: Request) {
       }),
     });
 
-    // CREATE ROLE DOCS
+    // ============================
+    // CREATE MENTOR / MENTEE RECORD
+    // ============================
     let roleDoc = null;
 
     if (role === "mentor") {
       roleDoc = await Mentor.create({
         user: newUser._id,
-        totalEarnings: 0,
-        totalSessions: 0,
-        totalMentees: 0,
-        feedback: [],
-        rating: 0,
         yearsOfExperience: yearsOfExperience || 0,
-        field: field || area_of_expertise,
-        availabilities: availabilities || [],
+        focusAreas: Array.isArray(focusAreas) ? focusAreas : [],
+        availabilityType: availabilityType || "",
+        languages: Array.isArray(languages) ? languages : [],
+        social: {
+          github: github || "",
+          linkedin: linkedin_url || "",
+        },
       });
     }
 
@@ -110,31 +126,27 @@ export async function POST(req: Request) {
       });
     }
 
-    // === PROFILE COMPLETION SCORE ===
+    // ============================
+    // PROFILE COMPLETION SCORE
+    // ============================
     let score = 0;
 
-    // User fields (70%)
+    // USER fields — 70%
     if (full_name) score += 10;
     if (Country) score += 10;
     if (phoneNumber) score += 10;
     if (profile_photo) score += 10;
     if (linkedin_url) score += 10;
-    if (area_of_expertise) score += 10;
+    if (area_of_expertise?.length > 0) score += 10;
     if (short_bio) score += 10;
 
-    // Extra mentee fields (30%)
-    if (role === "mentee") {
-      if (roleDoc?.skills?.length > 0) score += 30;
-    }
-
-    // Extra mentor fields (30%)
+    // Mentor fields — 30%
     if (role === "mentor") {
-      if (roleDoc?.yearsOfExperience) score += 10;
-      if (roleDoc?.field) score += 10;
-      if (roleDoc?.availabilities?.length > 0) score += 10;
+      if (yearsOfExperience) score += 10;
+      if (focusAreas?.length > 0) score += 10;
+      if (languages?.length > 0) score += 10;
     }
 
-    // SEND PROFILE INCOMPLETE NOTIFICATION
     if (score < 100) {
       await fetch(`${origin}/api/notifications`, {
         method: "POST",
@@ -149,7 +161,9 @@ export async function POST(req: Request) {
       });
     }
 
-    // RETURN RESPONSE
+    // ============================
+    // RESPONSE
+    // ============================
     return NextResponse.json(
       {
         message: `${role === "mentor" ? "Mentor" : "Mentee"} registered successfully!`,
@@ -164,15 +178,8 @@ export async function POST(req: Request) {
   } catch (err: any) {
     console.error("[REGISTER_ERROR]", err);
 
-    if (err.code === 11000) {
-      return NextResponse.json(
-        { message: "Email already exists" },
-        { status: 400 }
-      );
-    }
-
     return NextResponse.json(
-      { message: "Internal Server Error" },
+      { message: err?.message || "Internal Server Error" },
       { status: 500 }
     );
   }

@@ -10,7 +10,9 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: Object.values(UserRole), required: true },
     profile_photo: String,
     linkedin_url: String,
-    area_of_expertise: String,
+    github: { type: String, default: "" },
+
+    area_of_expertise: { type: [String], default: [] },
     short_bio: String,
     phoneNumber: String,
     Country: String,

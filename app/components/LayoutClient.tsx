@@ -19,8 +19,10 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
   }, [pathname]);
 
   const isAuthPage = pathname.startsWith("/login") || pathname.startsWith("/signup");
-
   const isMenteeDashboard = pathname.startsWith("/mentee");
+  const isMentorDashboard = pathname.startsWith("/mentor");
+
+  const hideLayout = isAuthPage || isMenteeDashboard || isMentorDashboard;
 
   return (
     <ThemeProvider>
@@ -28,11 +30,11 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
         <Loader />
       ) : (
         <>
-          {!isAuthPage && !isMenteeDashboard && <Nav />}
+          {!hideLayout && <Nav />}
 
           <main className="min-h-screen">{children}</main>
 
-          {!isAuthPage && !isMenteeDashboard && <Footer />}
+          {!hideLayout && <Footer />}
 
           <Toaster />
         </>
