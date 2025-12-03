@@ -37,11 +37,13 @@ export default function ChoiceScreen({
         const data = await res.json();
         console.log("🧩 Session data:", data);
 
-        let mid =
-          data?.menteeId ||
-          data?.user?.menteeId ||
-          data?.user?.mentee?._id ||
-          null;
+       let mid =
+      data?.mentee?._id ||      // ← أهم واحد بعد تعديل API session
+      data?.menteeId || 
+      data?.user?.menteeId ||
+      data?.user?.mentee?._id ||
+      null;
+
 
         if (!mid && data?.user?._id) {
           console.log("🧭 Trying fallback: /api/mentees/by-user/", data.user._id);
