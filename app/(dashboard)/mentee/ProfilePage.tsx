@@ -76,7 +76,7 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
 
   const [activities, setActivities] = useState([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
-const EDITABLE_KEYS = ["name", "bio", "phone", "location"] as const;
+const EDITABLE_KEYS = ["name", "bio", "phone", "location", "profile_photo"] as const;
 
 function diff(next: Record<string, any>, prev: Record<string, any>) {
   const changed: Record<string, any> = {};
@@ -294,18 +294,23 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
       }`}
     >
       {/* Header */}
-      <Header
+     <Header
         profile={profile}
         editedProfile={editedProfile}
         setEditedProfile={setEditedProfile}
         isEditing={isEditing}
         setIsEditing={setIsEditing}
         isDark={isDark}
+        onSave={handleSave}
+        onCancel={handleCancel}
       />
 
 
+
+
       {/* Edit Dialog */}
-      <EditDialog
+     {/* Edit Dialog */}
+      {/* <EditDialog
         editedProfile={editedProfile}
         setEditedProfile={setEditedProfile}
         isEditing={isEditing}
@@ -313,7 +318,8 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
         isDark={isDark}
         onSave={handleSave}
         onCancel={handleCancel}
-      />
+      /> */}
+
 
       {/* Stats */}
       <StatsSection stats={stats} isDark={isDark} />

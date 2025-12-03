@@ -3,7 +3,7 @@
 import React from "react";
 import { useSearchParams } from "next/navigation";
 
-import { ProfileOverview } from "@/app/(dashboard)/mentor/ProfileOverview";
+import  ProfileOverview  from "@/app/(dashboard)/mentor/ProfileOverview";
 import MyProfilePage from "@/app/(dashboard)/mentor/MyProfilePage";
 import { UpcomingSessions } from "@/app/(dashboard)/mentor/UpcomingSessions";
 import { MenteesProgress } from "@/app/(dashboard)/mentor/MenteesProgress";
@@ -65,10 +65,7 @@ export default function MentorPage() {
       case "overview":
         return (
           <div className="p-8 max-w-7xl mx-auto">
-            <ProfileOverview />
-            <div className="mt-8">
-              <HighlightBanner />
-            </div>
+            <ProfileOverview />       
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
               <div className="lg:col-span-2">
                 <UpcomingSessions />

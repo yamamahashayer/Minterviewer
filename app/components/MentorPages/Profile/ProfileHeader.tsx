@@ -23,8 +23,10 @@ export default function ProfileHeader({
   onFieldChange,
   onSave,
   onCancel,
-  isDark, // ←🔥 الآن نستقبل وضع الدارك
+  isDark,
+  hideEdit = false, 
 }) {
+ {
   const user = profile || {};
 
   const headerClass = `
@@ -53,16 +55,16 @@ export default function ProfileHeader({
 
       {/* ================= HEADER ACTIONS ================= */}
       <div className="relative flex justify-end mb-4">
-        {!isEditing && (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="px-4 py-2 flex items-center gap-2 rounded-lg 
-              bg-purple-600 text-white shadow hover:bg-purple-700 transition"
-          >
-            <Pencil className="w-4 h-4" />
-            Edit Profile
-          </button>
-        )}
+        {!hideEdit && !isEditing && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="px-4 py-2 flex items-center gap-2 rounded-lg 
+                bg-purple-600 text-white shadow hover:bg-purple-700 transition"
+            >
+              <Pencil className="w-4 h-4" />
+              Edit Profile
+            </button>
+          )}
 
         {isEditing && (
           <div className="flex gap-3">
@@ -94,28 +96,69 @@ export default function ProfileHeader({
       <div className="relative flex flex-col md:flex-row gap-6 items-center md:items-start">
 
         {/* Avatar */}
-        <div className="relative">
-          <Avatar
-            className={`w-28 h-28 border-4 ${
-              isDark ? "border-teal-400/40" : "border-purple-500/30"
-            }`}
-          >
-            <AvatarImage src={user.profile_photo} />
-            <AvatarFallback className="text-3xl">
-              {user.full_name?.charAt(0) || "M"}
-            </AvatarFallback>
-          </Avatar>
+          <div className="relative group">
+            {/* Hidden file input */}
+            {isEditing && (
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                id="profilePhotoInput"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
 
-          <div
-            className={`absolute -bottom-2 -right-2 w-10 h-10 rounded-full 
-              bg-gradient-to-br from-yellow-500 to-orange-500 
-              flex items-center justify-center border-4
-              ${isDark ? "border-[rgba(0,0,0,0.5)]" : "border-[var(--card)]"}
-            `}
-          >
-            <Award className="text-white w-5 h-5" />
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    const base64 = ev.target?.result;
+                    onFieldChange("profile_photo", base64);
+                  };
+                  reader.readAsDataURL(file);
+                }}
+              />
+            )}
+
+            {/* Image Preview */}
+            <div
+              className={`relative w-28 h-28 rounded-full cursor-pointer ${
+                isEditing ? "ring-2 ring-purple-400" : ""
+              }`}
+              onClick={() => {
+                if (isEditing) {
+                  document.getElementById("profilePhotoInput")?.click();
+                }
+              }}
+            >
+              <Avatar
+                className={`w-28 h-28 border-4 ${
+                  isDark ? "border-teal-400/40" : "border-purple-500/30"
+                }`}
+              >
+                <AvatarImage src={user.profile_photo} />
+                <AvatarFallback className="text-3xl">
+                  {user.full_name?.charAt(0) || "M"}
+                </AvatarFallback>
+              </Avatar>
+
+              {/* Hover Overlay */}
+              {isEditing && (
+                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition">
+                  Change Photo
+                </div>
+              )}
+            </div>
+
+            {/* Award Badge */}
+            <div
+              className={`absolute -bottom-2 -right-2 w-10 h-10 rounded-full 
+                  bg-gradient-to-br from-yellow-500 to-orange-500 
+                  flex items-center justify-center border-4
+                  ${isDark ? "border-[rgba(0,0,0,0.5)]" : "border-[var(--card)]"}`}
+            >
+              <Award className="text-white w-5 h-5" />
+            </div>
           </div>
-        </div>
+
 
         {/* TEXT INFO */}
         <div className="flex-1 w-full">
@@ -262,4 +305,5 @@ function SimpleStat({ icon, title, value, isDark }) {
       </div>
     </div>
   );
+}
 }
