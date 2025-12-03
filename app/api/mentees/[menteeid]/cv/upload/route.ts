@@ -3,7 +3,6 @@ import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
 import Resume from "@/models/Resume";
 import Mentee from "@/models/Mentee";
-import { uploadToDrive } from "../../../../../../lib/google/googleDrive";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
