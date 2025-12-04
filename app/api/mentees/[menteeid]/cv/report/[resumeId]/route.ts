@@ -10,15 +10,16 @@ export const dynamic = "force-dynamic";
 const isObjectId = (id?: string) =>
   !!id && mongoose.Types.ObjectId.isValid(String(id));
 
-export async function GET(
-  req: NextRequest,
-  ctx: { params: { menteeid: string; resumeId: string } }
-) {
+export async function GET(req: NextRequest, ctx: any) {
   try {
     await connectDB();
 
-    const { menteeid, resumeId } = ctx.params;
-    console.log("📘 Fetching CV report for:", { menteeid, resumeId });
+    // 🔥 أهم خطوة — params لازم await
+    const params = await ctx.params;
+    const menteeid = params.menteeid;
+    const resumeId = params.resumeId;
+
+    console.log("Extracted:", { menteeid, resumeId });
 
     if (!isObjectId(menteeid) || !isObjectId(resumeId)) {
       return NextResponse.json(
