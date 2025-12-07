@@ -1,9 +1,14 @@
 import React, { useState } from 'react';
 import { CheckCircle2, Clock, Brain, BarChart3, Zap } from 'lucide-react';
+import SetupScreenComponent from './SetupScreenComponent';
+import InterviewScreenComponent from './InterviewScreenComponent';
+import ReportScreenComponent from './ReportScreenComponent';
 
 const AIInterviewerApp = () => {
     const [currentScreen, setCurrentScreen] = useState('welcome');
     const [showProcessFlow, setShowProcessFlow] = useState(false);
+    const [setupData, setSetupData] = useState(null);
+    const [interviewData, setInterviewData] = useState(null);
 
     const handleStartInterview = () => {
         setShowProcessFlow(true);
@@ -16,6 +21,22 @@ const AIInterviewerApp = () => {
 
     const handleGoBack = () => {
         setShowProcessFlow(false);
+    };
+
+    const handleSetupComplete = (data: any) => {
+        setSetupData(data);
+        setCurrentScreen('interview');
+    };
+
+    const handleInterviewComplete = (data: any) => {
+        setInterviewData(data);
+        setCurrentScreen('report');
+    };
+
+    const handleRestart = () => {
+        setSetupData(null);
+        setInterviewData(null);
+        setCurrentScreen('welcome');
     };
 
     const processSteps = [
@@ -191,6 +212,22 @@ const AIInterviewerApp = () => {
         );
     }
 
+    // Render Setup Screen
+    if (currentScreen === 'setup') {
+        return <SetupScreenComponent onComplete={handleSetupComplete} />;
+    }
+
+    // Render Interview Screen
+    if (currentScreen === 'interview' && setupData) {
+        return <InterviewScreenComponent setupData={setupData} onComplete={handleInterviewComplete} />;
+    }
+
+    // Render Report Screen
+    if (currentScreen === 'report' && interviewData) {
+        return <ReportScreenComponent interviewData={interviewData} onRestart={handleRestart} />;
+    }
+
+    // Welcome Screen (default)
     return (
         <div className={`h-screen bg-white dark:bg-[#0A0F1E] text-foreground flex flex-col overflow-hidden`}>
             <div className="flex-1 flex flex-col items-center justify-center p-4">

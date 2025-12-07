@@ -32,19 +32,24 @@ SCORING GUIDELINES (0-100 scale):
 - 60-69: Acceptable - Mostly correct with some explanations or clarity issues
 - 50-59: Below Average - Shows understanding but has significant gaps or unclear explanations
 - 40-49: Poor - Incomplete answer with notable errors or misunderstandings
-- Below 40: Very Poor - Incorrect or incomplete answer with major gaps
+- 20-39: Very Poor - Minimal attempt, major errors, or mostly incorrect understanding
+- 0-19: No Answer/Nonsense - Non-answer (e.g., "uh, mmm, okay"), completely wrong, or no meaningful content
+
+IMPORTANT: Be STRICT with scoring. If the answer provides NO meaningful content, NO relevant information, or is just filler words/hesitation (e.g., "Oh yeah. Uh, mmm. Okay, this one."), score it 0-10. Such responses demonstrate zero knowledge and should receive the lowest possible scores.
 
 For CODING questions:
 - If code is correct and efficient: 75-100 (depending on clarity and completeness)
 - If code works but not optimal: 60-75
 - If code has minor bugs: 40-60
-- If code is fundamentally wrong: Below 40
+- If code is fundamentally wrong: 20-40
+- If no meaningful code provided or just nonsense: 0-19
 
 For CONCEPTUAL questions:
 - If answer is comprehensive and well-explained: 75-100
 - If answer covers main points with good clarity: 60-75
 - If answer is partially correct or unclear: 45-60
-- If answer is mostly incorrect: Below 45
+- If answer is mostly incorrect: 20-45
+- If no meaningful answer or just filler words/hesitation: 0-19
 
 IMPORTANT SCORING RULES:
 1. Score each question based on correctness, clarity, and completeness
@@ -52,6 +57,8 @@ IMPORTANT SCORING RULES:
 3. Average scores should fall in 50-85 range for typical interviews
 4. Excellent code solutions should score 80+
 5. Calculate overall score as average of all question scores (normalized to 0-100)
+6. BE STRICT: Non-answers (just "uh", "mmm", hesitation) MUST score 0-10, NOT 40+
+7. Only give 40+ if the answer shows at least SOME understanding or attempt at the question
 
 MANDATORY REQUIREMENTS:
 1. EVERY QUESTION must have a non-empty feedback field with exactly 2-3 sentences
