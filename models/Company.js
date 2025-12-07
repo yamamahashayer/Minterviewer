@@ -21,7 +21,6 @@ const CompanySchema = new Schema(
 
     // PROFILE EXTRA (Editable later)
     description: { type: String },
-    companySize: { type: String }, // 1-10, 10-50...
     foundedYear: { type: Number },
 
     social: {
