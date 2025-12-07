@@ -288,64 +288,55 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
     return <div className="text-red-500 p-8">Failed to load profile: {err}</div>;
 
   return (
-    <div
-      className={`min-h-screen p-8 ${
-        isDark ? "bg-[#0a0f1e]" : "bg-[#f5f3ff]"
-      }`}
-    >
-      {/* Header */}
-     <Header
-        profile={profile}
-        editedProfile={editedProfile}
-        setEditedProfile={setEditedProfile}
-        isEditing={isEditing}
-        setIsEditing={setIsEditing}
-        isDark={isDark}
-        onSave={handleSave}
-        onCancel={handleCancel}
-      />
+  <div
+    className={`min-h-screen ${isDark ? "bg-[#0a0f1e]" : "bg-[#f5f3ff]"}`}
+  >
+    <div className="w-full flex justify-center">
+      <div className="w-full max-w-6xl px-4 py-8">
 
-
-
-
-      {/* Edit Dialog */}
-     {/* Edit Dialog */}
-      {/* <EditDialog
-        editedProfile={editedProfile}
-        setEditedProfile={setEditedProfile}
-        isEditing={isEditing}
-        saving={saving}
-        isDark={isDark}
-        onSave={handleSave}
-        onCancel={handleCancel}
-      /> */}
-
-
-      {/* Stats */}
-      <StatsSection stats={stats} isDark={isDark} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-        {/* Left Side */}
-        <div className="lg:col-span-2 space-y-6">
-          <SkillsSection profile={profile} isDark={isDark} />
-
-        <MenteeBackgroundSection
-            menteeId={menteeId}
-            theme={isDark ? "dark" : "light"}
+        {/* Header */}
+        <Header
+          profile={profile}
+          editedProfile={editedProfile}
+          setEditedProfile={setEditedProfile}
+          isEditing={isEditing}
+          setIsEditing={setIsEditing}
+          isDark={isDark}
+          onSave={handleSave}
+          onCancel={handleCancel}
         />
 
-          <ActivitySection
-            activities={activities}
-            loading={activitiesLoading}
-            isDark={isDark}
-          />
+        {/* Stats */}
+        <StatsSection stats={stats} isDark={isDark} />
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          
+          {/* Left Side */}
+          <div className="lg:col-span-2 space-y-6">
+            <SkillsSection profile={profile} isDark={isDark} />
+
+            <MenteeBackgroundSection
+              menteeId={menteeId}
+              theme={isDark ? "dark" : "light"}
+            />
+
+            <ActivitySection
+              activities={activities}
+              loading={activitiesLoading}
+              isDark={isDark}
+            />
+          </div>
+
+          {/* Right Side */}
+          <div>
+            <AchievementsSection isDark={isDark} />
+          </div>
+
         </div>
 
-        {/* Right Column */}
-        <div>
-          <AchievementsSection isDark={isDark} />
-        </div>
       </div>
     </div>
-  );
+  </div>
+);
+
 }
