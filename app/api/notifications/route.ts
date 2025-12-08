@@ -12,7 +12,6 @@ import {
 } from "firebase/firestore";
 
 // =======================================================
-// 📥 GET - استرجاع إشعارات user معيّن
 // =======================================================
 export async function GET(req: NextRequest) {
   await connectDB();

@@ -14,7 +14,7 @@ export async function POST(req) {
 
     const {
       full_name,
-      workEmail, // login email
+      workEmail,
       password,
       country,
 
@@ -41,7 +41,7 @@ export async function POST(req) {
       );
     }
 
-    // check if user exists
+    // Check if exists
     const exists = await User.findOne({ email: workEmail });
     if (exists) {
       return NextResponse.json(
@@ -51,16 +51,16 @@ export async function POST(req) {
     }
 
     // =============================
-    // CREATE USER (role: company)
+    // CREATE USER
     // =============================
     const password_hash = await bcrypt.hash(password, 10);
 
     const newUser = await User.create({
       full_name,
-      email: workEmail, // login email
+      email: workEmail,
       password_hash,
       role: "company",
-      country,
+      Country: country,
     });
 
     // =============================
@@ -73,8 +73,7 @@ export async function POST(req) {
       industry,
       website,
       location,
-
-      isVerified: false,   // ⛔ VERY IMPORTANT
+      isVerified: false,
       description: "",
       companySize: "",
       foundedYear: null,
@@ -82,10 +81,31 @@ export async function POST(req) {
       hiringStatus: "open",
     });
 
+    // =============================
+    // SEND NOTIFICATIONS
+    // =============================
+    const origin = new URL(req.url).origin;
+
+    // 🔔 1) Welcome Notification
+    await fetch(`${origin}/api/notifications`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        userId: newUser._id.toString(),
+        title: "🎉 Welcome to Minterviewer!",
+        message: `Welcome ${full_name}! Your company account has been created.`,
+        type: "system",
+        redirectTo: "/company/overview",
+      }),
+    });
+
+    // =============================
+    // RESPONSE
+    // =============================
     return NextResponse.json(
       {
         ok: true,
-        message: "Company created and pending admin verification",
+        message: "Company account created successfully",
         companyId: company._id,
         userId: newUser._id,
       },
