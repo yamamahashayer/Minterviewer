@@ -242,8 +242,7 @@ export default function SignUp() {
           ? Number(mentorFields.yearsOfExperience)
           : 0,
 
-        focusAreas: mentorFields.focusAreas,   // ✅ هنا التصحيح
-
+        focusAreas: mentorFields.focusAreas,   
         availabilityType: mentorFields.availabilityType || "",
         languages: mentorFields.languages || [],
       };
