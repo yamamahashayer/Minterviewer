@@ -9,8 +9,8 @@ import ProfilePage from "@/app/(dashboard)/company/ProfilePage";
 import JobsPage from "@/app/(dashboard)/company/JobsPage";
 import CandidatesPage from "@/app/(dashboard)/company/CandidatesPage";
 import MessagesPage from "@/app/(dashboard)/company/MessagesPage";
-import NotificationsPage from "@/app/(dashboard)/company/NotificationsPage";
 import SettingsPage from "@/app/(dashboard)/company/SettingsPage";
+import CompanyNotifications from "@/app/(dashboard)/company/NotificationsPage";
 
 type Theme = "dark" | "light";
 
@@ -47,7 +47,7 @@ export default function CompanyPage() {
       case "messages":
         return <MessagesPage theme={theme} />;
       case "notifications":
-        return <NotificationsPage theme={theme} />;
+        return <CompanyNotifications theme={theme} />;
       case "settings":
         return <SettingsPage theme={theme} />;
       default:

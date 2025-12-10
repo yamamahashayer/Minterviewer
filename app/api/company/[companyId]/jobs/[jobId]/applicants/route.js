@@ -6,7 +6,6 @@ import CvAnalysis from "@/models/CvAnalysis";
 
 export const dynamic = "force-dynamic";
 
-// helper لحل مشكلة ctx.params
 const getParams = async (ctx) => {
   const p = ctx?.params;
   return p && typeof p.then === "function" ? await p : p;
@@ -17,12 +16,9 @@ export async function GET(req, ctx) {
     await connectDB();
 
     const p = await getParams(ctx);
-
-    // 🔥 صار عندك params: { companyId, jobId }
     const companyId = p.companyId;
     const jobId = p.jobId;
 
-    // 🔍 نلاقي الجوب ونضمن إنها تابعة للشركة نفسها
     const job = await Job.findOne({ _id: jobId, companyId });
 
     if (!job) {
@@ -32,21 +28,39 @@ export async function GET(req, ctx) {
       );
     }
 
-    const applicants = [];
+    // -----------------------------------------------------
+    // 1) جمع كل IDs دفعة واحدة
+    // -----------------------------------------------------
+    const menteeIds = job.applicants.map((a) => a.menteeId);
+    const analysisIds = job.applicants
+      .map((a) => a.analysisId)
+      .filter(Boolean); // احذف undefined
 
-    for (const app of job.applicants) {
-      const mentee = await Mentee.findById(app.menteeId);
-      const analysis = await CvAnalysis.findById(app.analysisId);
+    // -----------------------------------------------------
+    // 2) جلب البيانات دفعة واحدة
+    // -----------------------------------------------------
+    const mentees = await Mentee.find({ _id: { $in: menteeIds } });
+    const analyses = await CvAnalysis.find({ _id: { $in: analysisIds } });
 
-      applicants.push({
-        _id: app._id,
-        menteeId: app.menteeId,
-        status: app.status,
-        createdAt: app.createdAt,
-        mentee,
-        analysis,
-      });
-    }
+    // سهولة الوصول
+    const menteeMap = new Map(mentees.map((m) => [m._id.toString(), m]));
+    const analysisMap = new Map(
+      analyses.map((a) => [a._id.toString(), a])
+    );
+
+    // -----------------------------------------------------
+    // 3) بناء نتيجة applicants بطريقة مرتبة
+    // -----------------------------------------------------
+    const applicants = job.applicants.map((app) => ({
+      _id: app._id,
+      menteeId: app.menteeId,
+      status: app.status,
+      createdAt: app.createdAt,
+      mentee: menteeMap.get(app.menteeId.toString()) || null,
+      analysis: app.analysisId
+        ? analysisMap.get(app.analysisId.toString())
+        : null,
+    }));
 
     return NextResponse.json({ ok: true, applicants });
   } catch (err) {
@@ -57,3 +71,4 @@ export async function GET(req, ctx) {
     );
   }
 }
+

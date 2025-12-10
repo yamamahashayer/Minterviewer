@@ -1,9 +1,7 @@
 import mongoose, { Schema, model, models } from "mongoose";
 
 /* ============================================================
-   🟣 Applicant Schema (المتقدم للوظيفة)
-   بسيط — يخزن فقط العلاقات IDs
-   وسيتم استدعاء CV + Analysis + Interview لاحقاً عند الطلب
+   🟣 Applicant Schema
 =============================================================*/
 const ApplicantSchema = new Schema({
   menteeId: {
@@ -13,10 +11,9 @@ const ApplicantSchema = new Schema({
   },
 
   analysisId: {
-  type: Schema.Types.ObjectId,
-  ref: "CvAnalysis",
-  required: true,      
-},
+    type: Schema.Types.ObjectId,
+    ref: "CvAnalysis",
+  },
 
   interviewId: {
     type: Schema.Types.ObjectId,
@@ -33,6 +30,7 @@ const ApplicantSchema = new Schema({
 });
 
 /* ============================================================
+   🟣 Job Schema
 =============================================================*/
 const JobSchema = new Schema(
   {
@@ -43,20 +41,50 @@ const JobSchema = new Schema(
     },
 
     title: { type: String, required: true },
-    type: { type: String, default: "" }, // Full-time / Part-time / Internship
+    type: { type: String, default: "" },
     location: { type: String, default: "" },
-    level: { type: String, default: "" }, // Junior / Mid / Senior
+    level: { type: String, default: "" },
     salaryRange: { type: String, default: "" },
     description: { type: String, default: "" },
     skills: { type: [String], default: [] },
     deadline: { type: Date },
+    reminder3DaysSent: { type: Boolean, default: false },
+    reminder1DaySent: { type: Boolean, default: false },
 
+
+    /* ===============================
+         🌟 NEW FIELDS WE MUST ADD
+    ================================*/
+
+    // --- CV ANALYSIS ---
+    enableCVAnalysis: { type: Boolean, default: false },
+
+    // --- INTERVIEW TYPE ---
+    interviewType: {
+      type: String,
+      enum: ["none", "ai", "human"],
+      default: "none",
+    },
+
+    // --- AI INTERVIEW SETTINGS ---
+    aiFocus: { type: [String], default: [] },
+    aiQuestions: { type: String, default: "" },
+
+    // --- HUMAN INTERVIEW SETTINGS ---
+    humanType: {
+      type: String,
+      enum: ["hr", "mentor", ""],
+      default: "",
+    },
+
+    // --- JOB STATUS ---
     status: {
       type: String,
       enum: ["active", "closed"],
       default: "active",
     },
 
+    // --- APPLICANTS ---
     applicants: { type: [ApplicantSchema], default: [] },
   },
   { timestamps: true }

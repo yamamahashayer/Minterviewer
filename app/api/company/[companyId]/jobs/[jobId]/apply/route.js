@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
 import Job from "@/models/Job";
 import CvAnalysis from "@/models/CvAnalysis";
@@ -13,8 +14,7 @@ export async function POST(req, ctx) {
     await connectDB();
 
     const params = await unwrapParams(ctx);
-
-    const companyId = params?.companyId; // ← مهم الآن
+    const companyId = params?.companyId;
     const jobId = params?.jobId;
 
     const { menteeId, analysisId } = await req.json();
@@ -26,7 +26,18 @@ export async function POST(req, ctx) {
       );
     }
 
-    // 1) verify analysis exists
+    // Validate ObjectIDs
+    if (
+      !mongoose.Types.ObjectId.isValid(menteeId) ||
+      !mongoose.Types.ObjectId.isValid(analysisId)
+    ) {
+      return NextResponse.json(
+        { ok: false, message: "Invalid ObjectId." },
+        { status: 400 }
+      );
+    }
+
+    // 1) check analysis exists
     const analysis = await CvAnalysis.findById(analysisId);
     if (!analysis) {
       return NextResponse.json(
@@ -35,7 +46,7 @@ export async function POST(req, ctx) {
       );
     }
 
-    // 2) fetch job AND ensure it belongs to company
+    // 2) fetch job + ensure company owns the job
     const job = await Job.findOne({ _id: jobId, companyId });
     if (!job) {
       return NextResponse.json(
@@ -44,15 +55,30 @@ export async function POST(req, ctx) {
       );
     }
 
-    // 3) add applicant
-    job.applicants.push({
+    // 3) prevent duplicate application
+    const alreadyApplied = job.applicants.some(
+      (a) => a.menteeId.toString() === menteeId
+    );
+
+    if (alreadyApplied) {
+      return NextResponse.json(
+        { ok: false, message: "Applicant has already applied to this job." },
+        { status: 400 }
+      );
+    }
+
+    // 4) add applicant
+    const newApplicant = {
       menteeId,
       analysisId,
-    });
+      status: "pending",
+      createdAt: new Date(),
+    };
 
+    job.applicants.push(newApplicant);
     await job.save();
 
-    return NextResponse.json({ ok: true, job });
+    return NextResponse.json({ ok: true, applicant: newApplicant });
   } catch (err) {
     console.error("Apply Error:", err);
     return NextResponse.json(

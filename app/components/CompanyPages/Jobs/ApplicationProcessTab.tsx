@@ -22,6 +22,10 @@ interface ApplicationProcessTabProps {
   humanType: "" | "hr" | "mentor";
   setHumanType: (v: "" | "hr" | "mentor") => void;
 
+  errors: any;
+  setErrors: (v: any) => void;
+
+  loading: boolean;
   onSubmit: () => void;
 }
 
@@ -38,9 +42,11 @@ export default function ApplicationProcessTab({
   setAiQuestions,
   humanType,
   setHumanType,
+  errors,
+  setErrors,
+  loading,
   onSubmit,
 }: ApplicationProcessTabProps) {
-
   const isDark = theme === "dark";
 
   const cardClass = `p-6 rounded-xl border shadow-sm ${
@@ -49,28 +55,18 @@ export default function ApplicationProcessTab({
 
   return (
     <div className={cardClass}>
-
       {/* ===========================
           OVERVIEW
       ============================ */}
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold">
-          How the Application Process Works
-        </h3>
+        <h3 className="text-lg font-semibold">How the Application Process Works</h3>
 
         <p className={`text-sm leading-relaxed ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-          Your job post can include optional steps such as CV evaluation, AI screening,
-          and human interviews. These steps help your company identify the most qualified
-          candidates while providing a smooth and structured application experience.
+          Your job post can include optional steps such as CV evaluation, AI
+          screening, and human interviews. These steps help your company identify the
+          most qualified candidates.
         </p>
-
-        <ul className={`list-disc pl-5 space-y-1 text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>
-          <li><strong>AI CV Analysis:</strong> The system reviews the applicant’s CV automatically.</li>
-          <li><strong>Interview Stage:</strong> Select either AI or Human interviews.</li>
-          <li><strong>Final Selection:</strong> Candidates move forward depending on your settings.</li>
-        </ul>
       </div>
-
 
       {/* ===========================
           CV REQUIREMENTS
@@ -81,7 +77,9 @@ export default function ApplicationProcessTab({
         <FlowToggle
           label="Enable AI CV Analysis"
           value={enableCVAnalysis}
-          onChange={setEnableCVAnalysis}
+          onChange={(v) => {
+            setEnableCVAnalysis(v);
+          }}
           theme={theme}
         />
 
@@ -90,30 +88,25 @@ export default function ApplicationProcessTab({
         </p>
       </div>
 
-
       {/* ===========================
-          INTERVIEW TYPE
+          INTERVIEW TYPES
       ============================ */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Interview Type</h3>
 
-        {/* None */}
+        {/* No Interview */}
         <div>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
-              name="interview"
               checked={interviewType === "none"}
-              onChange={() => setInterviewType("none")}
+              onChange={() => {
+                setInterviewType("none");
+                setErrors({ ...errors, aiFocus: "", humanType: "" });
+              }}
             />
             <span>No Interview Required</span>
           </label>
-
-          {interviewType === "none" && (
-            <p className="text-xs ml-6 text-gray-500">
-              Applicants proceed based on CV analysis only.
-            </p>
-          )}
         </div>
 
         {/* AI Interview */}
@@ -121,45 +114,48 @@ export default function ApplicationProcessTab({
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
-              name="interview"
               checked={interviewType === "ai"}
-              onChange={() => setInterviewType("ai")}
+              onChange={() => {
+                setInterviewType("ai");
+                setErrors({ ...errors, humanType: "" });
+              }}
             />
             <span>AI Interview</span>
           </label>
 
-          <p className="text-xs ml-6 text-gray-500">
-            AI generates and evaluates all interview questions automatically.
-          </p>
-
           {interviewType === "ai" && (
             <div className="mt-3 ml-6 p-4 rounded-lg border bg-purple-50/10 space-y-4">
-
               <h4 className="font-semibold text-purple-600">AI Interview Settings</h4>
 
               {/* Focus Areas */}
               <div className="space-y-1">
-                <label className="text-sm font-medium">Focus Areas</label>
+                <label className="text-sm font-medium">
+                  Focus Areas <span className="text-red-500">*</span>
+                </label>
+
                 <input
                   className={inputClass}
                   value={aiFocus.join(", ")}
-                  onChange={(e) =>
-                    setAiFocus(e.target.value.split(",").map((s) => s.trim()))
-                  }
-                  placeholder="e.g. JavaScript, Problem Solving, Communication"
+                  onChange={(e) => {
+                    setAiFocus(e.target.value.split(",").map((s) => s.trim()));
+                    setErrors({ ...errors, aiFocus: "" });
+                  }}
+                  placeholder="e.g. JavaScript, Communication..."
                 />
+
+                {errors.aiFocus && (
+                  <p className="text-red-500 text-sm">{errors.aiFocus}</p>
+                )}
               </div>
 
               {/* Custom Questions */}
               <div className="space-y-1">
-                <label className="text-sm font-medium">
-                  Custom Interview Questions
-                </label>
+                <label className="text-sm font-medium">Custom Interview Questions</label>
                 <textarea
                   className={`${inputClass} min-h-[100px]`}
                   value={aiQuestions}
                   onChange={(e) => setAiQuestions(e.target.value)}
-                  placeholder="Optional guidelines or required questions..."
+                  placeholder="Optional custom questions..."
                 />
               </div>
             </div>
@@ -171,55 +167,71 @@ export default function ApplicationProcessTab({
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="radio"
-              name="interview"
               checked={interviewType === "human"}
-              onChange={() => setInterviewType("human")}
+              onChange={() => {
+                setInterviewType("human");
+                setErrors({ ...errors, aiFocus: "" });
+              }}
             />
             <span>Human Interview</span>
           </label>
 
-          <p className="text-xs ml-6 text-gray-500">
-            Choose whether interviews are handled by HR or a certified mentor.
-          </p>
-
           {interviewType === "human" && (
             <div className="mt-3 ml-6 p-4 rounded-lg border bg-blue-50/10 space-y-4">
-
               <h4 className="font-semibold text-blue-600">Human Interview Settings</h4>
 
-              {/* HR */}
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
                   name="humanType"
                   checked={humanType === "hr"}
-                  onChange={() => setHumanType("hr")}
+                  onChange={() => {
+                    setHumanType("hr");
+                    setErrors({ ...errors, humanType: "" });
+                  }}
                 />
                 <span>HR Interview</span>
               </label>
 
-              {/* Mentor */}
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="radio"
                   name="humanType"
                   checked={humanType === "mentor"}
-                  onChange={() => setHumanType("mentor")}
+                  onChange={() => {
+                    setHumanType("mentor");
+                    setErrors({ ...errors, humanType: "" });
+                  }}
                 />
                 <span>Mentor Interview</span>
               </label>
+
+              {errors.humanType && (
+                <p className="text-red-500 text-sm">{errors.humanType}</p>
+              )}
             </div>
           )}
         </div>
       </div>
 
-
       {/* SUBMIT BUTTON */}
       <button
         onClick={onSubmit}
-        className="mt-6 px-6 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
+        disabled={loading}
+        className={`
+          mt-6 px-6 py-3 rounded-lg text-white font-semibold
+          ${loading
+            ? "bg-purple-400 cursor-not-allowed"
+            : "bg-purple-600 hover:bg-purple-700"
+          }
+          flex items-center justify-center gap-2
+        `}
       >
-        Publish Job
+        {loading ? (
+          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+        ) : (
+          "Publish Job"
+        )}
       </button>
     </div>
   );

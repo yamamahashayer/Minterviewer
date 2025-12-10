@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import JobCard from "./JobCard";
 import {
   Tabs,
@@ -12,16 +12,22 @@ import {
 export default function JobList({
   jobs,
   theme,
+  onEdit,
+  onClose,
+  onDelete,
 }: {
   jobs: any[];
   theme: "dark" | "light";
+  onEdit: (job: any) => void;
+  onClose: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
   const isDark = theme === "dark";
 
   return (
     <Tabs defaultValue="active" className="w-full space-y-6">
 
-      {/* =============== INTERNAL TABS =============== */}
+      {/* INTERNAL TABS */}
       <TabsList
         className={`
           flex gap-1 w-fit rounded-lg p-1
@@ -30,23 +36,16 @@ export default function JobList({
       >
         <TabsTrigger
           value="active"
-          className={`
-            px-4 py-2 rounded-md text-sm font-medium capitalize
-            data-[state=active]:bg-white data-[state=active]:shadow
-            ${isDark ? "text-gray-300 data-[state=active]:text-black" : "text-gray-700"}
-          `}
+          className="px-4 py-2 rounded-md text-sm font-medium capitalize
+            data-[state=active]:bg-white data-[state=active]:shadow"
         >
           Active
         </TabsTrigger>
 
-      
         <TabsTrigger
           value="closed"
-          className={`
-            px-4 py-2 rounded-md text-sm font-medium capitalize
-            data-[state=active]:bg-white data-[state=active]:shadow
-            ${isDark ? "text-gray-300 data-[state=active]:text-black" : "text-gray-700"}
-          `}
+          className="px-4 py-2 rounded-md text-sm font-medium capitalize
+            data-[state=active]:bg-white data-[state=active]:shadow"
         >
           Closed
         </TabsTrigger>
@@ -54,20 +53,25 @@ export default function JobList({
 
       {/* ACTIVE JOBS */}
       <TabsContent value="active">
-        {jobs.filter((j) => j.status !== "closed" && j.status !== "draft").length === 0 ? (
+        {jobs.filter((j) => j.status === "active").length === 0 ? (
           <p className="text-gray-500 text-sm">No active jobs.</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {jobs
-              .filter((j) => j.status !== "closed" && j.status !== "draft")
+              .filter((j) => j.status === "active")
               .map((job) => (
-                <JobCard key={job._id} job={job} theme={theme} />
+                <JobCard
+                  key={job._id}
+                  job={job}
+                  theme={theme}
+                  onEdit={() => onEdit(job)}
+                  onClose={() => onClose(job._id)}
+                  onDelete={() => onDelete(job._id)}
+                />
               ))}
           </div>
         )}
       </TabsContent>
-
-      
 
       {/* CLOSED JOBS */}
       <TabsContent value="closed">
@@ -78,7 +82,14 @@ export default function JobList({
             {jobs
               .filter((j) => j.status === "closed")
               .map((job) => (
-                <JobCard key={job._id} job={job} theme={theme} />
+                <JobCard
+                  key={job._id}
+                  job={job}
+                  theme={theme}
+                  onEdit={() => onEdit(job)}
+                  onClose={() => onClose(job._id)}
+                  onDelete={() => onDelete(job._id)}
+                />
               ))}
           </div>
         )}

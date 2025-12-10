@@ -1,6 +1,15 @@
 "use client";
 
 import React from "react";
+import {
+  Briefcase,
+  CheckCircle,
+  Users,
+  TrendingUp,
+  ThumbsUp,
+  ThumbsDown,
+  BarChart3,
+} from "lucide-react";
 
 type Theme = "dark" | "light";
 
@@ -13,14 +22,15 @@ export default function JobsOverview({
 }) {
   const isDark = theme === "dark";
 
-  // ==============================
-  // Derive Stats
-  // ==============================
-
+  // ===========================
+  // Stats
+  // ===========================
   const activeJobs = jobs.filter((j) => j.status !== "closed");
   const closedJobs = jobs.filter((j) => j.status === "closed");
-
-  const totalApplicants = jobs.reduce((sum, job) => sum + (job.applicants?.length || 0), 0);
+  const totalApplicants = jobs.reduce(
+    (sum, job) => sum + (job.applicants?.length || 0),
+    0
+  );
 
   const mostPopular = [...jobs].sort(
     (a, b) => (b.applicants?.length || 0) - (a.applicants?.length || 0)
@@ -30,125 +40,115 @@ export default function JobsOverview({
     (a, b) => (a.applicants?.length || 0) - (b.applicants?.length || 0)
   )[0];
 
-  // Card Styles
-  const cardClass = `
-    p-6 rounded-xl border shadow-sm 
-    ${isDark ? "bg-[#0f0f0f] border-gray-700" : "bg-white border-gray-200"}
+  // ===========================
+  // Style Classes
+  // ===========================
+  const card = `
+    p-6 rounded-2xl border shadow-sm transition-all
+    hover:shadow-md hover:-translate-y-1 duration-200
+    ${isDark ? "bg-[#0F172A]/50 border-gray-700 text-white" : "bg-white border-gray-200"}
   `;
 
-  const numberClass = `
-    text-4xl font-bold
-    ${isDark ? "text-purple-400" : "text-purple-600"}
+  const number = `
+    text-4xl font-extrabold
+    ${isDark ? "text-purple-300" : "text-purple-600"}
+  `;
+
+  const label = "text-sm font-semibold opacity-70";
+
+  const iconBox = `
+    w-10 h-10 flex items-center justify-center rounded-lg 
+    bg-purple-100 text-purple-700
   `;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
 
-      {/* ========= ROW 1: STAT CARDS ========= */}
+      {/* ====================== TOP STAT CARDS ====================== */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
         {/* Active Jobs */}
-        <div className={cardClass}>
-          <p className="font-semibold mb-2">Active Jobs</p>
-          <p className={numberClass}>{activeJobs.length}</p>
+        <div className={card}>
+          <div className="flex items-center gap-3">
+            <div className={iconBox}>
+              <Briefcase size={20} />
+            </div>
+            <p className="font-semibold text-lg">Active Jobs</p>
+          </div>
+          <p className={`${number} mt-2`}>{activeJobs.length}</p>
         </div>
 
         {/* Closed Jobs */}
-        <div className={cardClass}>
-          <p className="font-semibold mb-2">Closed Jobs</p>
-          <p className={numberClass}>{closedJobs.length}</p>
+        <div className={card}>
+          <div className="flex items-center gap-3">
+            <div className={iconBox}>
+              <CheckCircle size={20} />
+            </div>
+            <p className="font-semibold text-lg">Closed Jobs</p>
+          </div>
+          <p className={`${number} mt-2`}>{closedJobs.length}</p>
         </div>
 
         {/* Total Applicants */}
-        <div className={cardClass}>
-          <p className="font-semibold mb-2">Total Applicants</p>
-          <p className={numberClass}>{totalApplicants}</p>
+        <div className={card}>
+          <div className="flex items-center gap-3">
+            <div className={iconBox}>
+              <Users size={20} />
+            </div>
+            <p className="font-semibold text-lg">Total Applicants</p>
+          </div>
+          <p className={`${number} mt-2`}>{totalApplicants}</p>
         </div>
 
       </div>
 
-      {/* ========= ROW 2: POPULARITY ========= */}
+      {/* ====================== MIDDLE ROW ====================== */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-        {/* Most Popular Job */}
-        <div className={cardClass}>
-          <h3 className="text-lg font-semibold mb-3">
-            Most Popular Job
-          </h3>
+        {/* Most Popular */}
+        <div className={card}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className={iconBox}>
+              <ThumbsUp size={20} />
+            </div>
+            <h3 className="text-lg font-semibold">Most Popular Job</h3>
+          </div>
 
           {mostPopular ? (
-            <div>
-              <p className="font-bold text-lg">{mostPopular.title}</p>
-              <p className="text-sm opacity-70">
+            <>
+              <p className="text-lg font-bold">{mostPopular.title}</p>
+              <p className={label}>
                 Applicants: {mostPopular.applicants?.length || 0}
               </p>
-            </div>
+            </>
           ) : (
-            <p>No jobs posted yet.</p>
+            <p className={label}>No jobs posted yet.</p>
           )}
         </div>
 
-        {/* Least Popular Job */}
-        <div className={cardClass}>
-          <h3 className="text-lg font-semibold mb-3">
-            Least Popular Job
-          </h3>
+        {/* Least Popular */}
+        <div className={card}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className={iconBox}>
+              <ThumbsDown size={20} />
+            </div>
+            <h3 className="text-lg font-semibold">Least Popular Job</h3>
+          </div>
 
           {leastPopular ? (
-            <div>
-              <p className="font-bold text-lg">{leastPopular.title}</p>
-              <p className="text-sm opacity-70">
+            <>
+              <p className="text-lg font-bold">{leastPopular.title}</p>
+              <p className={label}>
                 Applicants: {leastPopular.applicants?.length || 0}
               </p>
-            </div>
+            </>
           ) : (
-            <p>No jobs posted yet.</p>
+            <p className={label}>No jobs posted yet.</p>
           )}
         </div>
       </div>
 
-      {/* ========= ROW 3 — PIPELINE PREVIEW ========= */}
-      <div className={cardClass}>
-        <h3 className="text-lg font-semibold mb-4">Application Pipeline Overview</h3>
-
-        <p className="text-sm opacity-80 mb-3">
-          Snapshot of your hiring flow across all job posts.
-        </p>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-
-          <div>
-            <p className="font-semibold">Submitted</p>
-            <p className={numberClass}>
-              {totalApplicants}
-            </p>
-          </div>
-
-          <div>
-            <p className="font-semibold">Screening</p>
-            <p className={numberClass}>
-              {Math.floor(totalApplicants * 0.6)}
-            </p>
-          </div>
-
-          <div>
-            <p className="font-semibold">Interviewing</p>
-            <p className={numberClass}>
-              {Math.floor(totalApplicants * 0.3)}
-            </p>
-          </div>
-
-          <div>
-            <p className="font-semibold">Finalists</p>
-            <p className={numberClass}>
-              {Math.floor(totalApplicants * 0.1)}
-            </p>
-          </div>
-
-        </div>
-
-      </div>
-
+      
     </div>
   );
 }
