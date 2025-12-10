@@ -9,17 +9,23 @@ import {
   ThumbsUp,
   ThumbsDown,
   BarChart3,
+  CircleDot,
 } from "lucide-react";
+import DashboardJobsTable from "./DashboardJobsTable";
+import ApplicantsBarChart from "./ApplicantsBarChart";
 
 type Theme = "dark" | "light";
 
 export default function JobsOverview({
   jobs,
   theme,
+  onGoToJobs,
 }: {
   jobs: any[];
   theme: Theme;
+  onGoToJobs: () => void;
 }) {
+
   const isDark = theme === "dark";
 
   // ===========================
@@ -61,6 +67,29 @@ export default function JobsOverview({
     bg-purple-100 text-purple-700
   `;
 
+
+
+  const avgApplicants = jobs.length
+  ? Math.round(totalApplicants / jobs.length)
+  : 0;
+
+const noApplicants = jobs.filter(
+  (j) => (j.applicants?.length || 0) === 0
+);
+
+const trendingJob = [...jobs]
+  .filter((j) => {
+    const daysAgo =
+      // eslint-disable-next-line react-hooks/purity
+      (Date.now() - new Date(j.createdAt).getTime()) /
+      (1000 * 60 * 60 * 24);
+    return daysAgo <= 7; // last 7 days
+  })
+  .sort(
+    (a, b) => (b.applicants?.length || 0) - (a.applicants?.length || 0)
+  )[0];
+
+
   return (
     <div className="space-y-8">
 
@@ -100,7 +129,58 @@ export default function JobsOverview({
           <p className={`${number} mt-2`}>{totalApplicants}</p>
         </div>
 
+      
+       {/* Avg Applicants */}
+      <div className={card}>
+        <div className="flex items-center gap-3">
+          <div className={iconBox}>
+            <BarChart3 size={20} />
+          </div>
+          <p className="font-semibold text-lg">Avg Applicants / Job</p>
+        </div>
+        <p className={`${number} mt-2`}>{avgApplicants}</p>
       </div>
+
+        {/* Jobs With No Applicants */}
+        <div className={card}>
+          <div className="flex items-center gap-3">
+            <div className={iconBox}>
+              <CircleDot size={20} />
+            </div>
+            <p className="font-semibold text-lg">Jobs with 0 Applicants</p>
+          </div>
+          <p className={`${number} mt-2`}>{noApplicants.length}</p>
+        </div>
+
+        {/* Trending Job */}
+        <div className={card}>
+          <div className="flex items-center gap-3 mb-3">
+            <div className={iconBox}>
+              <TrendingUp size={20} />
+            </div>
+            <h3 className="text-lg font-semibold">Trending Job</h3>
+          </div>
+
+          {trendingJob ? (
+            <>
+              <p className="text-lg font-bold">{trendingJob.title}</p>
+              <p className={label}>
+                Applicants: {trendingJob.applicants?.length || 0}
+              </p>
+            </>
+          ) : (
+            <p className={label}>No trending jobs this week.</p>
+          )}
+        </div>
+    </div>
+
+     <DashboardJobsTable 
+          jobs={jobs}
+          theme={theme}
+          onGoToJobs={onGoToJobs}
+        />
+    <ApplicantsBarChart jobs={jobs}  theme={theme} />
+
 
       {/* ====================== MIDDLE ROW ====================== */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -147,6 +227,8 @@ export default function JobsOverview({
           )}
         </div>
       </div>
+        
+
 
       
     </div>

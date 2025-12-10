@@ -14,12 +14,14 @@ export default function JobCard({
   onEdit,
   onClose,
   onDelete,
+  onViewApplicants,
 }: {
   job: any;
   theme: "dark" | "light";
   onEdit: () => void;
   onClose: () => void;
   onDelete: () => void;
+  onViewApplicants: (id: string) => void;
 }) {
   const isDark = theme === "dark";
 
@@ -28,8 +30,12 @@ export default function JobCard({
 
   // STATUS COLORS
   const statusColor = (status: string) => {
-    if (status === "active") return isDark ? "bg-green-300 text-green-900" : "bg-green-100 text-green-700";
-    if (status === "closed") return isDark ? "bg-red-300 text-red-900" : "bg-red-100 text-red-700";
+    if (status === "active")
+      return isDark
+        ? "bg-green-300 text-green-900"
+        : "bg-green-100 text-green-700";
+    if (status === "closed")
+      return isDark ? "bg-red-300 text-red-900" : "bg-red-100 text-red-700";
     return isDark ? "bg-gray-400 text-gray-900" : "bg-gray-200 text-gray-700";
   };
 
@@ -38,7 +44,11 @@ export default function JobCard({
     <span
       className={`
         px-2 py-1 rounded-full text-xs font-medium 
-        ${isDark ? "bg-gray-700 text-gray-100 border border-gray-600" : "bg-gray-100 text-gray-800"}
+        ${
+          isDark
+            ? "bg-gray-700 text-gray-100 border border-gray-600"
+            : "bg-gray-100 text-gray-800"
+        }
       `}
     >
       {value}
@@ -49,9 +59,11 @@ export default function JobCard({
     <div
       className={`
         relative rounded-2xl p-5 transition-all duration-200
-        ${isDark 
-          ? "bg-[#1b2333] border border-[#2e3a55] shadow-[0_0_20px_rgba(0,0,0,0.6)] text-white" 
-          : "bg-white border-gray-200 shadow-sm text-black"}
+        ${
+          isDark
+            ? "bg-[#1b2333] border border-[#2e3a55] shadow-[0_0_20px_rgba(0,0,0,0.6)] text-white"
+            : "bg-white border-gray-200 shadow-sm text-black"
+        }
         hover:shadow-xl hover:-translate-y-1
       `}
     >
@@ -63,7 +75,9 @@ export default function JobCard({
           </DropdownMenuTrigger>
 
           <DropdownMenuContent
-            className={`${isDark ? "bg-[#1f2333] text-white" : "bg-white text-black"}`}
+            className={`${
+              isDark ? "bg-[#1f2333] text-white" : "bg-white text-black"
+            }`}
           >
             <DropdownMenuItem onClick={onEdit}> Edit</DropdownMenuItem>
             <DropdownMenuItem onClick={onClose}> Close</DropdownMenuItem>
@@ -82,7 +96,9 @@ export default function JobCard({
         <div>
           <p className="text-xs font-semibold mb-1">Status</p>
           <span
-            className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColor(job.status)}`}
+            className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColor(
+              job.status
+            )}`}
           >
             {job.status}
           </span>
@@ -113,7 +129,9 @@ export default function JobCard({
       {job.description && (
         <div className="mb-4">
           <p className="text-xs font-semibold mb-1">Description</p>
-          <p className={`text-sm line-clamp-2 ${muted}`}>{job.description}</p>
+          <p className={`text-sm line-clamp-2 ${muted}`}>
+            {job.description}
+          </p>
         </div>
       )}
 
@@ -137,8 +155,7 @@ export default function JobCard({
           <div className="flex flex-wrap gap-2 items-center">
             {bubble(`Type: ${job.interviewType}`)}
 
-            {job.interviewType === "human" &&
-              bubble(`By: ${job.humanType}`)}
+            {job.interviewType === "human" && bubble(`By: ${job.humanType}`)}
 
             {job.interviewType === "ai" &&
               job.aiFocus?.map((f: string, idx: number) => (
@@ -160,7 +177,10 @@ export default function JobCard({
           Applicants: {job.applicants?.length || 0}
         </span>
 
-        <button className="font-semibold underline hover:opacity-70 transition">
+        <button
+          onClick={() => onViewApplicants(job._id)}
+          className="font-semibold underline hover:opacity-70 transition"
+        >
           View Applicants →
         </button>
       </div>
