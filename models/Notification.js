@@ -5,7 +5,7 @@ const NotificationSchema = new mongoose.Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,   
+      required: true,
     },
 
     title: {
@@ -22,7 +22,15 @@ const NotificationSchema = new mongoose.Schema(
 
     type: {
       type: String,
-      enum: ["achievement", "message", "reminder", "performance", "goal", "system"],
+      enum: [
+        "achievement",
+        "message",
+        "reminder",
+        "performance",
+        "goal",
+        "system",
+        "job",
+      ],
       default: "system",
     },
 
@@ -39,6 +47,5 @@ const NotificationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// reuse model if exists
 export default mongoose.models.Notification ||
   mongoose.model("Notification", NotificationSchema);
