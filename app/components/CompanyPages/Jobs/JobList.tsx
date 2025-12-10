@@ -15,12 +15,14 @@ export default function JobList({
   onEdit,
   onClose,
   onDelete,
+  onViewApplicants,     // ⭐ لازم نستقبله
 }: {
   jobs: any[];
   theme: "dark" | "light";
   onEdit: (job: any) => void;
   onClose: (id: string) => void;
   onDelete: (id: string) => void;
+  onViewApplicants: (id: string) => void;   // ⭐ لازم نعرّفه
 }) {
   const isDark = theme === "dark";
 
@@ -67,6 +69,7 @@ export default function JobList({
                   onEdit={() => onEdit(job)}
                   onClose={() => onClose(job._id)}
                   onDelete={() => onDelete(job._id)}
+                  onViewApplicants={() => onViewApplicants(job._id)}  // ⭐ هون السر
                 />
               ))}
           </div>
@@ -89,6 +92,7 @@ export default function JobList({
                   onEdit={() => onEdit(job)}
                   onClose={() => onClose(job._id)}
                   onDelete={() => onDelete(job._id)}
+                  onViewApplicants={() => onViewApplicants(job._id)}  // ⭐ نفس الشي
                 />
               ))}
           </div>

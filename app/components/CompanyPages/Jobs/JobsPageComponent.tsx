@@ -10,7 +10,9 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@/app/components/ui/tabs";
+
 import JobsOverview from "./JobsOverview";
+import ApplicantsList from "./ApplicantsList";
 
 type Theme = "dark" | "light";
 
@@ -28,6 +30,31 @@ export default function JobsPageComponent({
   const [savingEdit, setSavingEdit] = useState(false);
 
   const isDark = theme === "dark";
+  const [mainTab, setMainTab] = useState("overview");
+
+  // ⭐ NEW STATES للمتقدمين
+  const [showApplicants, setShowApplicants] = useState(false);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
+  const [applicants, setApplicants] = useState<any[]>([]);
+
+  const onGoToJobs = () => {
+    setMainTab("jobs");
+  };
+
+  /* ==================================
+        VIEW APPLICANTS
+  =================================== */
+  const handleViewApplicants = async (jobId: string) => {
+    setSelectedJobId(jobId);
+    setShowApplicants(true);
+
+    const res = await fetch(`/api/company/jobs/${jobId}/applicants`);
+    const data = await res.json();
+
+    if (data.ok) {
+      setApplicants(data.applicants);
+    }
+  };
 
   /* ==================================
         HANDLERS
@@ -89,149 +116,6 @@ export default function JobsPageComponent({
   return (
     <div className={`p-6 space-y-6 ${isDark ? "text-white" : "text-black"}`}>
 
-      {/* SUCCESS ANIMATION */}
-      {showSuccess && (
-        <div
-          className="
-            fixed bottom-8 right-8 
-            bg-purple-600 text-white 
-            px-6 py-3 rounded-xl shadow-lg
-            flex items-center gap-3
-            animate-fade-in-out 
-            z-50
-          "
-        >
-          <span className="text-xl">✔</span>
-          <span className="font-medium">Job Published Successfully</span>
-        </div>
-      )}
-
-      {/* ============================
-            EDIT MODAL
-      ============================= */}
-      {editJob && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
-          <div
-            className={`
-              w-[550px] rounded-xl p-6 shadow-xl
-              ${isDark ? "bg-[#1b1c26] text-white" : "bg-white text-black"}
-            `}
-          >
-            <h2 className="text-xl font-bold mb-4">
-              Edit Job — {editJob.title}
-            </h2>
-
-            {/* Title */}
-            <div className="mb-3">
-              <label className="text-sm font-medium">Job Title</label>
-              <input
-                value={editJob.title}
-                onChange={(e) =>
-                  setEditJob({ ...editJob, title: e.target.value })
-                }
-                className="w-full mt-1 px-3 py-2 rounded-md border dark:bg-[#141414]"
-              />
-            </div>
-
-            {/* Location & Type */}
-            <div className="grid grid-cols-2 gap-4 mb-3">
-              <div>
-                <label className="text-sm font-medium">Location</label>
-                <input
-                  value={editJob.location}
-                  onChange={(e) =>
-                    setEditJob({ ...editJob, location: e.target.value })
-                  }
-                  className="w-full mt-1 px-3 py-2 rounded-md border dark:bg-[#141414]"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Type</label>
-                <input
-                  value={editJob.type}
-                  onChange={(e) =>
-                    setEditJob({ ...editJob, type: e.target.value })
-                  }
-                  className="w-full mt-1 px-3 py-2 rounded-md border dark:bg-[#141414]"
-                />
-              </div>
-            </div>
-
-            {/* Level & Deadline */}
-            <div className="grid grid-cols-2 gap-4 mb-3">
-              <div>
-                <label className="text-sm font-medium">Level</label>
-                <input
-                  value={editJob.level}
-                  onChange={(e) =>
-                    setEditJob({ ...editJob, level: e.target.value })
-                  }
-                  className="w-full mt-1 px-3 py-2 rounded-md border dark:bg-[#141414]"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Deadline</label>
-                <input
-                  type="date"
-                  value={editJob.deadline?.substring(0, 10)}
-                  onChange={(e) =>
-                    setEditJob({ ...editJob, deadline: e.target.value })
-                  }
-                  className="w-full mt-1 px-3 py-2 rounded-md border dark:bg-[#141414]"
-                />
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="mb-3">
-              <label className="text-sm font-medium">Description</label>
-              <textarea
-                value={editJob.description}
-                onChange={(e) =>
-                  setEditJob({ ...editJob, description: e.target.value })
-                }
-                className="w-full mt-1 px-3 py-2 rounded-md border min-h-[90px] dark:bg-[#141414]"
-              />
-            </div>
-
-            {/* Skills */}
-            <div className="mb-3">
-              <label className="text-sm font-medium">Skills</label>
-              <input
-                value={editJob.skills?.join(", ")}
-                onChange={(e) =>
-                  setEditJob({
-                    ...editJob,
-                    skills: e.target.value.split(",").map((s) => s.trim()),
-                  })
-                }
-                className="w-full mt-1 px-3 py-2 rounded-md border dark:bg-[#141414]"
-              />
-            </div>
-
-            {/* BUTTONS */}
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                onClick={() => setEditJob(null)}
-                className="px-4 py-2 rounded-md border"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={saveEdit}
-                disabled={savingEdit}
-                className="px-5 py-2 rounded-md bg-purple-600 text-white"
-              >
-                {savingEdit ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* HEADER */}
       <div
         className="
@@ -247,7 +131,7 @@ export default function JobsPageComponent({
       </div>
 
       {/* MAIN TABS */}
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
 
         <TabsList
           className={`
@@ -262,29 +146,49 @@ export default function JobsPageComponent({
 
         {/* OVERVIEW */}
         <TabsContent value="overview">
-          <JobsOverview jobs={jobs} theme={theme} />
-        </TabsContent>
-
-        {/* JOBS LIST */}
-        <TabsContent value="jobs">
-          <JobList
+          <JobsOverview
             jobs={jobs}
             theme={theme}
-            onEdit={handleEdit}
-            onClose={handleClose}
-            onDelete={handleDelete}
+            onGoToJobs={() => setMainTab("jobs")}
           />
+        </TabsContent>
+
+        {/* JOB LIST OR APPLICANTS – نفس التاب */}
+        <TabsContent value="jobs">
+
+          {/* 👉 لو مش ضاغطة View Applicants */}
+          {!showApplicants && (
+            <JobList
+              jobs={jobs}
+              theme={theme}
+              onEdit={setEditJob}
+              onClose={handleClose}
+              onDelete={handleDelete}
+              onViewApplicants={handleViewApplicants}   // ⭐ مهم جداً
+            />
+          )}
+
+          {/* 👉 لو ضاغطة View Applicants */}
+          {showApplicants && (
+            <ApplicantsList
+              applicants={applicants}
+              theme={theme}
+              onBack={() => setShowApplicants(false)}
+            />
+          )}
+
         </TabsContent>
 
         {/* CREATE JOB */}
         <TabsContent value="create">
           <CreateJobInlineForm
             theme={theme}
-            onCancel={() => {}}
+            onCancel={() => setMainTab("overview")}
             onSaved={() => {
               refreshJobs();
               setShowSuccess(true);
               setTimeout(() => setShowSuccess(false), 2000);
+              setMainTab("jobs");
             }}
           />
         </TabsContent>
