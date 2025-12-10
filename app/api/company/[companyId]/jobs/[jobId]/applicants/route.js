@@ -6,7 +6,7 @@ import CvAnalysis from "@/models/CvAnalysis";
 
 export const dynamic = "force-dynamic";
 
-// 🔥 نفس الهيلبر اللي بيحل مشكلة params Promise
+// helper لحل مشكلة ctx.params
 const getParams = async (ctx) => {
   const p = ctx?.params;
   return p && typeof p.then === "function" ? await p : p;
@@ -16,14 +16,18 @@ export async function GET(req, ctx) {
   try {
     await connectDB();
 
-    const p = await getParams(ctx); // 🔥 فككنا params
+    const p = await getParams(ctx);
+
+    // 🔥 صار عندك params: { companyId, jobId }
+    const companyId = p.companyId;
     const jobId = p.jobId;
 
-    const job = await Job.findById(jobId);
+    // 🔍 نلاقي الجوب ونضمن إنها تابعة للشركة نفسها
+    const job = await Job.findOne({ _id: jobId, companyId });
 
     if (!job) {
       return NextResponse.json(
-        { ok: false, message: "Job not found." },
+        { ok: false, message: "Job not found for this company." },
         { status: 404 }
       );
     }

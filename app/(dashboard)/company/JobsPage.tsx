@@ -15,8 +15,22 @@ export default function JobsPage({ theme }: { theme: Theme }) {
 
   const fetchJobs = async () => {
     try {
-      const res = await fetch("/api/company/jobs");
+      // 🔥 جلب companyId من sessionStorage
+      const raw = sessionStorage.getItem("user");
+      if (!raw) return;
+
+      const user = JSON.parse(raw);
+      const companyId = user?.companyId;
+
+      if (!companyId) {
+        console.error("No companyId found in sessionStorage");
+        return;
+      }
+
+      // 🔥 استدعاء endpoint الجديد
+      const res = await fetch(`/api/company/${companyId}/jobs`);
       const data = await res.json();
+
       if (data.ok) setJobs(data.jobs);
     } catch (err) {
       console.error("Error fetching jobs:", err);
@@ -43,7 +57,7 @@ export default function JobsPage({ theme }: { theme: Theme }) {
         <JobCreateDialog
           onClose={() => {
             setOpen(false);
-            fetchJobs();
+            fetchJobs(); // إعادة تحميل القائمة بعد إنشاء وظيفة
           }}
         />
       )}

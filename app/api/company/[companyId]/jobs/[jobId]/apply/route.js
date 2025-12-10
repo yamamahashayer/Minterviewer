@@ -13,6 +13,8 @@ export async function POST(req, ctx) {
     await connectDB();
 
     const params = await unwrapParams(ctx);
+
+    const companyId = params?.companyId; // ← مهم الآن
     const jobId = params?.jobId;
 
     const { menteeId, analysisId } = await req.json();
@@ -24,9 +26,8 @@ export async function POST(req, ctx) {
       );
     }
 
-    // Step 1: verify analysisId exists
+    // 1) verify analysis exists
     const analysis = await CvAnalysis.findById(analysisId);
-
     if (!analysis) {
       return NextResponse.json(
         { ok: false, message: "CV Analysis not found." },
@@ -34,20 +35,19 @@ export async function POST(req, ctx) {
       );
     }
 
-    // Step 2: fetch job
-    const job = await Job.findById(jobId);
-
+    // 2) fetch job AND ensure it belongs to company
+    const job = await Job.findOne({ _id: jobId, companyId });
     if (!job) {
       return NextResponse.json(
-        { ok: false, message: "Job not found." },
+        { ok: false, message: "Job not found for this company." },
         { status: 404 }
       );
     }
 
-    // Step 3: add applicant
+    // 3) add applicant
     job.applicants.push({
       menteeId,
-      analysisId, // ← بدل cvId
+      analysisId,
     });
 
     await job.save();
