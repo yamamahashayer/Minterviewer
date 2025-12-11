@@ -26,6 +26,9 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizeCss: false,
   },
+
+  reactStrictMode: false,
+
 };
 
 export default nextConfig;
