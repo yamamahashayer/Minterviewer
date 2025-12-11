@@ -1,45 +1,40 @@
 "use client";
 
 import React from "react";
-import MentorSidebar from "./MentorSidebar";
+import CompanySidebar from "./Sidebar";
 import { Menu, Moon, Sun, ChevronLeft } from "lucide-react";
 
 import NotificationBell from "@/app/components/Notifications/NotificationBell";
 
-export default function MentorLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function CompanyLayout({ children }: { children: React.ReactNode }) {
   // ========================= THEME =========================
   const [theme, setTheme] = React.useState<"dark" | "light">(
     () =>
       (typeof window !== "undefined" &&
-        (localStorage.getItem("mentor-theme") as "dark" | "light")) ||
+        (localStorage.getItem("theme") as "dark" | "light")) ||
       "dark"
   );
 
   const isDark = theme === "dark";
-
   const toggleTheme = () => setTheme((t) => (t === "dark" ? "light" : "dark"));
 
   React.useEffect(() => {
     document.documentElement.classList.remove("dark", "light");
     document.documentElement.classList.add(theme);
-    localStorage.setItem("mentor-theme", theme);
+    localStorage.setItem("theme", theme);
   }, [theme]);
 
   // ========================= SIDEBAR =========================
   const [isSidebarOpen, setIsSidebarOpen] = React.useState<boolean>(
     () =>
       (typeof window !== "undefined"
-        ? localStorage.getItem("mentor-sidebar") !== "closed"
+        ? localStorage.getItem("company-sidebar") !== "closed"
         : true)
   );
 
   React.useEffect(() => {
     localStorage.setItem(
-      "mentor-sidebar",
+      "company-sidebar",
       isSidebarOpen ? "open" : "closed"
     );
   }, [isSidebarOpen]);
@@ -48,7 +43,7 @@ export default function MentorLayout({
     <div
       className={`${
         isDark
-          ? "bg-gradient-to-b from-[#0b0f19] via-[#0a0f1e] to-black"
+          ? "bg-gradient-to-b from-[#0e162c] via-[#111827] to-[#0b1223]"
           : "bg-[#f5f3ff]"
       } min-h-screen`}
     >
@@ -66,10 +61,12 @@ export default function MentorLayout({
           isSidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <MentorSidebar
+        <CompanySidebar
           theme={theme}
           isOpen={isSidebarOpen}
           onCloseMobile={() => setIsSidebarOpen(false)}
+          // NotificationBell الآن سيتولى unreadCount
+          notificationsCount={undefined}
         />
       </div>
 
@@ -83,8 +80,8 @@ export default function MentorLayout({
         <div
           className={`sticky top-0 z-30 backdrop-blur-xl border-b px-4 sm:px-8 py-4 ${
             isDark
-              ? "bg-[rgba(5,9,19,0.9)] border-teal-400/20 shadow-[0_4px_20px_rgba(0,0,0,0.5)]"
-              : "bg-[rgba(255,255,255,0.9)] border-purple-300 shadow-[0_4px_20px_rgba(168,85,247,0.15)]"
+              ? "bg-[rgba(16,21,33,0.85)] border-teal-400/20 shadow-lg"
+              : "bg-[rgba(255,255,255,0.9)] border-purple-300 shadow-lg"
           }`}
         >
           <div className="flex items-center justify-between gap-3">
@@ -93,7 +90,7 @@ export default function MentorLayout({
               onClick={() => setIsSidebarOpen((v) => !v)}
               className={`p-2 sm:p-3 rounded-xl transition-all ${
                 isDark
-                  ? "hover:bg-teal-300/10 border border-teal-400/30"
+                  ? "hover:bg-white/10 border border-white/20"
                   : "hover:bg-purple-100 border border-purple-300"
               }`}
             >
@@ -112,14 +109,14 @@ export default function MentorLayout({
               )}
             </button>
 
-            {/* RIGHT BUTTONS */}
+            {/* RIGHT TOOLS */}
             <div className="flex items-center gap-2 sm:gap-3">
-              {/* THEME SWITCH */}
+              {/* THEME TOGGLE */}
               <button
                 onClick={toggleTheme}
                 className={`p-2 sm:p-3 rounded-xl transition-all ${
                   isDark
-                    ? "hover:bg-teal-300/10 border border-teal-400/30"
+                    ? "hover:bg-white/10 border border-white/20"
                     : "hover:bg-purple-100 border border-purple-300"
                 }`}
               >
@@ -130,11 +127,11 @@ export default function MentorLayout({
                 )}
               </button>
 
-              {/* REAL-TIME NOTIFICATION BELL */}
+              {/* NOTIFICATION BELL (REALTIME + READY) */}
               <NotificationBell
                 theme={theme}
                 onViewAll={() => {
-                  window.location.href = "/mentor?tab=notifications";
+                  window.location.href = "/company?tab=notifications";
                 }}
               />
             </div>

@@ -22,7 +22,12 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
   const isMenteeDashboard = pathname.startsWith("/mentee");
   const isMentorDashboard = pathname.startsWith("/mentor");
 
-  const hideLayout = isAuthPage || isMenteeDashboard || isMentorDashboard;
+  // ⭐ NEW: hide layout for company dashboard
+  const isCompanyDashboard = pathname.startsWith("/company");
+
+  // ⭐ final combined condition
+  const hideLayout =
+    isAuthPage || isMenteeDashboard || isMentorDashboard || isCompanyDashboard;
 
   return (
     <ThemeProvider>
