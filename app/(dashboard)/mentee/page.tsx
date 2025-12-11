@@ -17,6 +17,7 @@ import NotificationsPage from "@/app/(dashboard)/mentee/NotificationsPage";
 import ReportsPage from "@/app/(dashboard)/mentee/ReportsPage";
 import SettingsPage from "@/app/(dashboard)/mentee/SettingsPage";
 import HelpSupportPage from "@/app/(dashboard)/mentee/HelpSupportPage";
+import BrowseSessionsPage from "@/app/(dashboard)/mentee/BrowseSessionsPage";
 
 type Theme = "dark" | "light";
 
@@ -42,21 +43,23 @@ export default function MenteePage() {
 
   const render = () => {
     switch (tab) {
-      case "overview":            return <OverviewPage onNavigate={() => {}} theme={theme} />;
-      case "profile":             return <ProfilePage theme={theme} />;
-      case "interview-practice":  return <InterviewPracticePage onNavigate={() => {}} theme={theme} />;
-      case "cv-review":           return <CVReviewPage theme={theme} />;
-      case "mentors":             return <MentorsPage theme={theme} />;
-      case "performance":         return <PerformancePage theme={theme} />;
-      case "achievements":        return <AchievementsPage theme={theme} />;
-      case "schedule":            return <SchedulePage theme={theme} />;
-      case "messages":            return <MessagesPage theme={theme} />;
-      case "notifications":       return <NotificationsPage theme={theme} />;
-      case "reports":             return <ReportsPage theme={theme} />;
-      case "settings":            return <SettingsPage theme={theme} />;
-      case "help":                return <HelpSupportPage theme={theme} />;
-      default:                    return <OverviewPage onNavigate={() => {}} theme={theme} />;
+      case "overview": return <OverviewPage onNavigate={() => { }} theme={theme} />;
+      case "browse-sessions": return <BrowseSessionsPage />;
+      case "profile": return <ProfilePage theme={theme} />;
+      case "interview-practice": return <InterviewPracticePage onNavigate={() => { }} theme={theme} />;
+      case "cv-review": return <CVReviewPage theme={theme} />;
+      case "mentors": return <MentorsPage theme={theme} />;
+      case "performance": return <PerformancePage theme={theme} />;
+      case "achievements": return <AchievementsPage theme={theme} />;
+      case "schedule": return <SchedulePage theme={theme} />;
+      case "messages": return <MessagesPage theme={theme} />;
+      case "notifications": return <NotificationsPage theme={theme} />;
+      case "reports": return <ReportsPage theme={theme} />;
+      case "settings": return <SettingsPage theme={theme} />;
+      case "help": return <HelpSupportPage theme={theme} />;
+      default: return <OverviewPage onNavigate={() => { }} theme={theme} />;
     }
   };
 
-  return <div>{render()}</div>;}
+  return <div>{render()}</div>;
+}
