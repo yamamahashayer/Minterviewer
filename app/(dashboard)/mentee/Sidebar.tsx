@@ -5,7 +5,8 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Home, User, Target, Calendar, MessageSquare, Settings, FileText, Bell,
-  Users, TrendingUp, Award, Search, LogOut
+  Users, TrendingUp, Award, Search, LogOut,
+  Briefcase
 } from "lucide-react";
 import {
   Tooltip,
@@ -32,14 +33,13 @@ export default function Sidebar({
 
   const items = [
     { id: "overview", label: "Overview", icon: Home },
-    { id: "browse-sessions", label: "Find Mentor", icon: Search },
     { id: "profile", label: "My Profile", icon: User },
     { id: "interview-practice", label: "Interview Practice", icon: Target },
     { id: "cv-review", label: "CV Review", icon: FileText },
-    { id: "mentors", label: "Mentors", icon: Users },
+    { id: "browse-sessions", label: "Find Mentor", icon: Search },
+    { id: "explore-jobs", label: "Explore Jobs", icon: Briefcase },
     { id: "schedule", label: "Schedule", icon: Calendar },
     { id: "performance", label: "Performance", icon: TrendingUp },
-    { id: "achievements", label: "Achievements", icon: Award },
     { id: "messages", label: "Messages", icon: MessageSquare, badge: 3 },
     { id: "notifications", label: "Notifications", icon: Bell, badge: notificationsCount },
     { id: "reports", label: "Reports", icon: FileText },
