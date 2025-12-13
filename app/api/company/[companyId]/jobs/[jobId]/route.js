@@ -8,7 +8,8 @@ const unwrapParams = async (ctx) => {
 };
 
 /* ============================================
-   GET — Single job
+   GET — Single job (ACTIVE ONLY)
+   ➜ للـ mentee / apply page
 =============================================*/
 export async function GET(req, ctx) {
   try {
@@ -16,11 +17,15 @@ export async function GET(req, ctx) {
     const p = await unwrapParams(ctx);
     const { companyId, jobId } = p;
 
-    const job = await Job.findOne({ _id: jobId, companyId });
+    const job = await Job.findOne({
+      _id: jobId,
+      companyId,
+      status: "active", // ✅ لا نرجّع closed jobs
+    });
 
     if (!job) {
       return NextResponse.json(
-        { ok: false, message: "Job not found" },
+        { ok: false, message: "Job not found or closed" },
         { status: 404 }
       );
     }
@@ -36,7 +41,7 @@ export async function GET(req, ctx) {
 }
 
 /* ============================================
-   PUT — Update entire job
+   PUT — Update entire job (Company only)
 =============================================*/
 export async function PUT(req, ctx) {
   try {

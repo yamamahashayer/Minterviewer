@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
+
 import Job from "@/models/Job";
+import Mentee from "@/models/Mentee";
 import CvAnalysis from "@/models/CvAnalysis";
+import User from "@/models/User";
 
 const unwrapParams = async (ctx) => {
   const p = ctx?.params;
@@ -17,36 +20,26 @@ export async function POST(req, ctx) {
     const companyId = params?.companyId;
     const jobId = params?.jobId;
 
-    const { menteeId, analysisId } = await req.json();
+    const { menteeId, analysisId, phone, country } = await req.json();
 
-    if (!menteeId || !analysisId) {
+    /* ================= VALIDATION ================= */
+
+    if (!menteeId) {
       return NextResponse.json(
-        { ok: false, message: "menteeId and analysisId are required" },
+        { ok: false, message: "menteeId is required" },
         { status: 400 }
       );
     }
 
-    // Validate ObjectIDs
-    if (
-      !mongoose.Types.ObjectId.isValid(menteeId) ||
-      !mongoose.Types.ObjectId.isValid(analysisId)
-    ) {
+    if (!mongoose.Types.ObjectId.isValid(menteeId)) {
       return NextResponse.json(
-        { ok: false, message: "Invalid ObjectId." },
+        { ok: false, message: "Invalid menteeId" },
         { status: 400 }
       );
     }
 
-    // 1) check analysis exists
-    const analysis = await CvAnalysis.findById(analysisId);
-    if (!analysis) {
-      return NextResponse.json(
-        { ok: false, message: "CV Analysis not found." },
-        { status: 404 }
-      );
-    }
+    /* ================= FETCH JOB ================= */
 
-    // 2) fetch job + ensure company owns the job
     const job = await Job.findOne({ _id: jobId, companyId });
     if (!job) {
       return NextResponse.json(
@@ -55,7 +48,34 @@ export async function POST(req, ctx) {
       );
     }
 
-    // 3) prevent duplicate application
+    /* ================= CV VALIDATION ================= */
+
+    if (job.enableCVAnalysis) {
+      if (!analysisId) {
+        return NextResponse.json(
+          { ok: false, message: "CV analysis is required for this job." },
+          { status: 400 }
+        );
+      }
+
+      if (!mongoose.Types.ObjectId.isValid(analysisId)) {
+        return NextResponse.json(
+          { ok: false, message: "Invalid analysisId" },
+          { status: 400 }
+        );
+      }
+
+      const analysis = await CvAnalysis.findById(analysisId);
+      if (!analysis) {
+        return NextResponse.json(
+          { ok: false, message: "CV Analysis not found." },
+          { status: 404 }
+        );
+      }
+    }
+
+    /* ================= DUPLICATE CHECK ================= */
+
     const alreadyApplied = job.applicants.some(
       (a) => a.menteeId.toString() === menteeId
     );
@@ -67,18 +87,34 @@ export async function POST(req, ctx) {
       );
     }
 
-    // 4) add applicant
-    const newApplicant = {
+    /* ================= UPDATE USER CONTACT ================= */
+
+    if (phone || country) {
+      const mentee = await Mentee.findById(menteeId);
+      if (mentee?.user) {
+        await User.findByIdAndUpdate(
+          mentee.user,
+          {
+            ...(phone ? { phoneNumber: phone } : {}),
+            ...(country ? { Country: country } : {}),
+          },
+          { new: true }
+        );
+      }
+    }
+
+    /* ================= ADD APPLICANT ================= */
+
+    job.applicants.push({
       menteeId,
-      analysisId,
+      analysisId: job.enableCVAnalysis ? analysisId : null,
       status: "pending",
       createdAt: new Date(),
-    };
+    });
 
-    job.applicants.push(newApplicant);
     await job.save();
 
-    return NextResponse.json({ ok: true, applicant: newApplicant });
+    return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("Apply Error:", err);
     return NextResponse.json(

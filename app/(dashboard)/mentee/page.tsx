@@ -8,9 +8,7 @@ import OverviewPage from "@/app/(dashboard)/mentee/OverviewPage";
 import ProfilePage from "@/app/(dashboard)/mentee/ProfilePage";
 import InterviewPracticePage from "@/app/(dashboard)/mentee/InterviewPracticePage";
 import CVReviewPage from "@/app/(dashboard)/mentee/CVReviewPage";
-import MentorsPage from "@/app/(dashboard)/mentee/MentorsPage";
 import PerformancePage from "@/app/(dashboard)/mentee/PerformancePage";
-import AchievementsPage from "@/app/(dashboard)/mentee/AchievementsPage";
 import SchedulePage from "@/app/(dashboard)/mentee/SchedulePage";
 import MessagesPage from "@/app/(dashboard)/mentee/MessagesPage";
 import NotificationsPage from "@/app/(dashboard)/mentee/NotificationsPage";
@@ -18,6 +16,8 @@ import ReportsPage from "@/app/(dashboard)/mentee/ReportsPage";
 import SettingsPage from "@/app/(dashboard)/mentee/SettingsPage";
 import HelpSupportPage from "@/app/(dashboard)/mentee/HelpSupportPage";
 import BrowseSessionsPage from "@/app/(dashboard)/mentee/BrowseSessionsPage";
+import ExploreJobsPage from "@/app/(dashboard)/mentee/ExploreJobsPage";
+
 
 type Theme = "dark" | "light";
 
@@ -44,13 +44,12 @@ export default function MenteePage() {
   const render = () => {
     switch (tab) {
       case "overview": return <OverviewPage onNavigate={() => { }} theme={theme} />;
-      case "browse-sessions": return <BrowseSessionsPage />;
       case "profile": return <ProfilePage theme={theme} />;
       case "interview-practice": return <InterviewPracticePage onNavigate={() => { }} theme={theme} />;
       case "cv-review": return <CVReviewPage theme={theme} />;
-      case "mentors": return <MentorsPage theme={theme} />;
+      case "browse-sessions": return <BrowseSessionsPage />;
+      case "explore-jobs": return <ExploreJobsPage theme={theme} />;
       case "performance": return <PerformancePage theme={theme} />;
-      case "achievements": return <AchievementsPage theme={theme} />;
       case "schedule": return <SchedulePage theme={theme} />;
       case "messages": return <MessagesPage theme={theme} />;
       case "notifications": return <NotificationsPage theme={theme} />;
