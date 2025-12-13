@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   MapPin,
   Briefcase,
@@ -11,6 +11,8 @@ import {
   UserCheck,
   Building2,
 } from "lucide-react";
+
+import UploadCV from "@/app/components/MenteePages/MenteeCV/upload/UploadMode";
 
 /* ================= TYPES ================= */
 
@@ -32,13 +34,13 @@ type Job = {
 /* ================= PAGE ================= */
 
 export default function ApplyJobPage() {
-  /* ================= ROUTER & PARAMS ================= */
   const { companyId, jobId } = useParams() as {
     companyId: string;
     jobId: string;
   };
 
   const router = useRouter();
+  const fetchedOnce = useRef(false);
 
   /* ================= STATES ================= */
   const [job, setJob] = useState<Job | null>(null);
@@ -46,83 +48,28 @@ export default function ApplyJobPage() {
 
   const [isDark, setIsDark] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [profileLoading, setProfileLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // applicant fields (auto-filled)
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [cvFile, setCvFile] = useState<File | null>(null);
+
+  const [analysisId, setAnalysisId] = useState<string | null>(null);
+  const [cvOpen, setCvOpen] = useState(false);
 
   /* ================= THEME ================= */
   useEffect(() => {
-    const updateTheme = () => {
+    const updateTheme = () =>
       setIsDark(document.documentElement.classList.contains("dark"));
-    };
 
     updateTheme();
-
-    const observer = new MutationObserver(updateTheme);
-    observer.observe(document.documentElement, {
+    const obs = new MutationObserver(updateTheme);
+    obs.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
     });
 
-    return () => observer.disconnect();
-  }, []);
-
-  /* ================= RESOLVE MENTEE ID (SMART) ================= */
-  useEffect(() => {
-    let mounted = true;
-
-    const loadMenteeId = async () => {
-      try {
-        // 1️⃣ sessionStorage
-        const rawUser =
-          typeof window !== "undefined"
-            ? sessionStorage.getItem("user")
-            : null;
-
-        if (rawUser) {
-          const u = JSON.parse(rawUser);
-          const mid = u?.menteeId || u?.mentee?._id;
-          if (mid && mounted) {
-            setMenteeId(mid);
-            return;
-          }
-        }
-
-        // 2️⃣ fallback API
-        const token = sessionStorage.getItem("token");
-        if (!token) return;
-
-        const r = await fetch("/api/auth/session", {
-          headers: { Authorization: `Bearer ${token}` },
-          cache: "no-store",
-        });
-
-        const j = await r.json();
-
-        if (j?.ok && j?.user) {
-          const mid = j.menteeId || j.user?.menteeId;
-          if (mid && mounted) {
-            setMenteeId(mid);
-
-            // cache it
-            const mergedUser = { ...j.user, menteeId: mid };
-            sessionStorage.setItem("user", JSON.stringify(mergedUser));
-          }
-        }
-      } catch (e) {
-        console.warn("Failed to resolve menteeId", e);
-      }
-    };
-
-    loadMenteeId();
-    return () => {
-      mounted = false;
-    };
+    return () => obs.disconnect();
   }, []);
 
   /* ================= FETCH JOB ================= */
@@ -130,58 +77,85 @@ export default function ApplyJobPage() {
     if (!companyId || !jobId) return;
 
     fetch(`/api/company/${companyId}/jobs/${jobId}`)
-      .then((res) => res.json())
-      .then((data) => setJob(data.job))
-      .catch(() => setError("Failed to load job details."));
+      .then((r) => r.json())
+      .then((d) => setJob(d.job))
+      .catch(() => setError("Failed to load job details"));
   }, [companyId, jobId]);
 
-  /* ================= FETCH MENTEE PROFILE ================= */
+  /* ================= FETCH SESSION ================= */
   useEffect(() => {
-    if (!menteeId) return;
+    if (fetchedOnce.current) return;
 
-    setProfileLoading(true);
+    const token =
+      typeof window !== "undefined"
+        ? sessionStorage.getItem("token")
+        : null;
+    if (!token) return;
 
-    fetch(`/api/mentees/${menteeId}/profile`, {
-      cache: "no-store",
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.user) {
-          setFullName(data.user.full_name || "");
-          setEmail(data.user.email || "");
-          setPhone(
-            data.user.phoneNumber ||
-              data.mentee?.phone ||
-              ""
-          );
+    const safeSet = (
+      current: string,
+      setter: (v: string) => void,
+      incoming?: string | null
+    ) => {
+      if (!incoming) return;
+      if (!current || !current.trim()) setter(incoming);
+    };
+
+    (async () => {
+      try {
+        const res = await fetch("/api/auth/session", {
+          headers: { Authorization: `Bearer ${token}` },
+          cache: "no-store",
+        });
+
+        const data = await res.json();
+
+        const mid =
+          data?.mentee?._id ||
+          data?.user?.mentee?._id ||
+          data?.user?.menteeId ||
+          data?.menteeId ||
+          null;
+
+        if (mid) {
+          setMenteeId(mid);
+          sessionStorage.setItem("menteeId", mid);
         }
-        setProfileLoading(false);
-      })
-      .catch((err) => {
-        console.warn("Failed to load mentee profile", err);
-        setProfileLoading(false);
-      });
-  }, [menteeId]);
+
+        const u = data?.user;
+        if (u) {
+          safeSet(fullName, setFullName, u.full_name);
+          safeSet(email, setEmail, u.email);
+          safeSet(phone, setPhone, u.phoneNumber);
+        }
+      } catch {
+        /* ignore */
+      } finally {
+        fetchedOnce.current = true;
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* ================= SUBMIT ================= */
-  const handleSubmit = async () => {
+  async function handleSubmit() {
+    if (loading) return;
     setError("");
+
+    if (!menteeId) {
+      setError("Mentee not detected. Please login again.");
+      return;
+    }
 
     if (!fullName || !email || !phone) {
       setError("Please fill all required fields.");
       return;
     }
 
-    if (!cvFile) {
-      setError("Please upload your CV.");
+    if (job?.enableCVAnalysis && !analysisId) {
+      setError("Please upload your CV first.");
       return;
     }
-
-    const fd = new FormData();
-    fd.append("fullName", fullName);
-    fd.append("email", email);
-    fd.append("phone", phone);
-    fd.append("cv", cvFile);
 
     setLoading(true);
 
@@ -189,7 +163,11 @@ export default function ApplyJobPage() {
       `/api/company/${companyId}/jobs/${jobId}/apply`,
       {
         method: "POST",
-        body: fd,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          menteeId,
+          analysisId: job.enableCVAnalysis ? analysisId : null,
+        }),
       }
     );
 
@@ -198,11 +176,11 @@ export default function ApplyJobPage() {
     if (res.ok) {
       router.push("/mentee/jobs?applied=true");
     } else {
-      setError("Failed to submit application.");
+      const j = await res.json();
+      setError(j?.message || "Failed to submit application");
     }
-  };
+  }
 
-  /* ================= EARLY RETURN ================= */
   if (!job) return <div className="p-8">Loading…</div>;
 
   /* ================= UI ================= */
@@ -214,9 +192,8 @@ export default function ApplyJobPage() {
     >
       <div className="max-w-6xl grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-8">
 
-        {/* ================= LEFT ================= */}
+        {/* LEFT */}
         <div className="space-y-6">
-
           {/* JOB CARD */}
           <aside
             className={`rounded-xl p-5 border ${
@@ -234,7 +211,6 @@ export default function ApplyJobPage() {
                   <Building2 className="w-5 h-5 opacity-70" />
                 </div>
               )}
-
               <div>
                 <p className="font-semibold text-sm">{job.title}</p>
                 <p className="text-xs opacity-70">{job.companyId.name}</p>
@@ -248,13 +224,15 @@ export default function ApplyJobPage() {
               {job.deadline && (
                 <Row
                   icon={<Clock size={14} />}
-                  text={`Deadline: ${new Date(job.deadline).toLocaleDateString()}`}
+                  text={`Deadline: ${new Date(
+                    job.deadline
+                  ).toLocaleDateString()}`}
                 />
               )}
             </div>
           </aside>
 
-          {/* PROCESS */}
+          {/* APPLICATION PROCESS */}
           <div
             className={`rounded-xl p-5 border ${
               isDark ? "bg-white/5 border-white/10" : "bg-white border-gray-200"
@@ -262,7 +240,7 @@ export default function ApplyJobPage() {
           >
             <h2 className="font-semibold mb-4">Application Process</h2>
 
-            <div className="space-y-3">
+            <div className="space-y-3 text-sm">
               {job.enableCVAnalysis && (
                 <ProcessStep
                   icon={<Brain size={14} />}
@@ -298,7 +276,7 @@ export default function ApplyJobPage() {
           </div>
         </div>
 
-        {/* ================= RIGHT ================= */}
+        {/* RIGHT */}
         <section className="lg:sticky lg:top-24 h-fit">
           <div
             className={`rounded-xl p-6 border space-y-4 ${
@@ -306,66 +284,59 @@ export default function ApplyJobPage() {
             }`}
           >
             <h2 className="font-semibold">Confirm Your Information</h2>
-            <p className="text-xs opacity-60">
-              Loaded automatically from your profile.
-            </p>
 
             <Input label="Full Name *" value={fullName} onChange={setFullName} />
             <Input label="Email *" value={email} onChange={setEmail} />
             <Input label="Phone *" value={phone} onChange={setPhone} />
 
-            {/* CV */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Upload CV <span className="text-red-500">*</span>
-              </label>
-
-              <div
-                className={`flex items-center justify-between gap-4 px-4 py-3 rounded-lg border
-                  ${
+            {job.enableCVAnalysis ? (
+              <div className="space-y-2">
+                <button
+                  type="button"
+                  onClick={() => setCvOpen((v) => !v)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border ${
                     isDark
                       ? "bg-[#0f172a] border-white/10"
                       : "bg-gray-50 border-gray-300"
                   }`}
-              >
-                <span className="text-sm opacity-80">
-                  {cvFile ? cvFile.name : "No file selected (PDF only)"}
-                </span>
-
-                <label
-                  className={`px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer
-                    ${
-                      isDark
-                        ? "bg-teal-400 text-black"
-                        : "bg-teal-600 text-white"
-                    }`}
                 >
-                  Choose File
-                  <input
-                    type="file"
-                    accept="application/pdf"
-                    className="hidden"
-                    onChange={(e) =>
-                      setCvFile(e.target.files?.[0] || null)
-                    }
+                  <span className="font-medium">
+                    {analysisId ? "✔ CV Uploaded" : "Upload & Analyze CV"}
+                  </span>
+                  <span className="text-sm opacity-70">
+                    {cvOpen ? "Hide" : "Open"}
+                  </span>
+                </button>
+
+                {cvOpen && (
+                  <UploadCV
+                    isDark={isDark}
+                    onSuccess={(res) => {
+                      setAnalysisId(res.analysisId);
+                      setCvOpen(false);
+                    }}
+                    onError={(msg) => setError(msg)}
                   />
-                </label>
+                )}
               </div>
-            </div>
+            ) : (
+              <p className="text-sm opacity-70">
+                CV upload is not required for this position.
+              </p>
+            )}
 
             {error && <p className="text-sm text-red-500">{error}</p>}
 
             <button
               onClick={handleSubmit}
-              disabled={loading}
-              className={`w-full py-2 rounded-lg font-semibold transition
-                ${
-                  loading
-                    ? "bg-gray-400"
-                    : isDark
-                    ? "bg-teal-400 text-black hover:bg-teal-300"
-                    : "bg-teal-600 text-white hover:bg-teal-700"
-                }`}
+              disabled={loading || (job.enableCVAnalysis && !analysisId)}
+              className={`w-full py-2 rounded-lg font-semibold transition ${
+                loading || (job.enableCVAnalysis && !analysisId)
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : isDark
+                  ? "bg-teal-400 text-black hover:bg-teal-300"
+                  : "bg-teal-600 text-white hover:bg-teal-700"
+              }`}
             >
               {loading ? "Submitting…" : "Submit Application"}
             </button>
@@ -387,9 +358,17 @@ function Row({ icon, text }: any) {
   );
 }
 
-function ProcessStep({ icon, title, desc }: any) {
+function ProcessStep({
+  icon,
+  title,
+  desc,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+}) {
   return (
-    <div className="flex gap-3 text-sm">
+    <div className="flex gap-3">
       <div className="mt-1 opacity-80">{icon}</div>
       <div>
         <p className="font-medium">{title}</p>

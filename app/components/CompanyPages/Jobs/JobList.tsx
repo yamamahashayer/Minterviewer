@@ -15,43 +15,20 @@ export default function JobList({
   onEdit,
   onClose,
   onDelete,
-  onViewApplicants,     // ⭐ لازم نستقبله
+  onViewApplicants,
 }: {
   jobs: any[];
   theme: "dark" | "light";
   onEdit: (job: any) => void;
   onClose: (id: string) => void;
   onDelete: (id: string) => void;
-  onViewApplicants: (id: string) => void;   // ⭐ لازم نعرّفه
+  onViewApplicants: (job: any) => void; // ✅ job كامل
 }) {
   const isDark = theme === "dark";
 
   return (
     <Tabs defaultValue="active" className="w-full space-y-6">
 
-      {/* INTERNAL TABS */}
-      <TabsList
-        className={`
-          flex gap-1 w-fit rounded-lg p-1
-          ${isDark ? "bg-gray-800" : "bg-gray-200"}
-        `}
-      >
-        <TabsTrigger
-          value="active"
-          className="px-4 py-2 rounded-md text-sm font-medium capitalize
-            data-[state=active]:bg-white data-[state=active]:shadow"
-        >
-          Active
-        </TabsTrigger>
-
-        <TabsTrigger
-          value="closed"
-          className="px-4 py-2 rounded-md text-sm font-medium capitalize
-            data-[state=active]:bg-white data-[state=active]:shadow"
-        >
-          Closed
-        </TabsTrigger>
-      </TabsList>
 
       {/* ACTIVE JOBS */}
       <TabsContent value="active">
@@ -69,7 +46,7 @@ export default function JobList({
                   onEdit={() => onEdit(job)}
                   onClose={() => onClose(job._id)}
                   onDelete={() => onDelete(job._id)}
-                  onViewApplicants={() => onViewApplicants(job._id)}  // ⭐ هون السر
+                  onViewApplicants={() => onViewApplicants(job)} // ✅ هون الإصلاح
                 />
               ))}
           </div>
@@ -92,13 +69,12 @@ export default function JobList({
                   onEdit={() => onEdit(job)}
                   onClose={() => onClose(job._id)}
                   onDelete={() => onDelete(job._id)}
-                  onViewApplicants={() => onViewApplicants(job._id)}  // ⭐ نفس الشي
+                  onViewApplicants={() => onViewApplicants(job)} // ✅
                 />
               ))}
           </div>
         )}
       </TabsContent>
-
     </Tabs>
   );
 }

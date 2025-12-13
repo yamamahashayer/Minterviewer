@@ -1,23 +1,36 @@
 "use client";
 
-import { Building2, Globe, MapPin, Briefcase, GraduationCap, Clock } from "lucide-react";
+import {
+  Building2,
+  MapPin,
+  Briefcase,
+  GraduationCap,
+  Clock,
+} from "lucide-react";
 
-export default function JobCard({ job, isDark, onSelect }: any) {
+type Props = {
+  job: any;
+  isDark?: boolean;
+  onSelect: (job: any) => void;
+};
+
+export default function JobCard({ job, isDark = true, onSelect }: Props) {
+  const isClosed = job.status === "closed";
+
   return (
     <div
       className={`
         rounded-xl p-6 border transition-all duration-300 flex flex-col gap-5
-        ${isDark 
-          ? "bg-white/5 border-white/10 hover:bg-white/[0.07]" 
-          : "bg-white border-gray-200 hover:bg-gray-50"}
-        hover:border-[#1CD6D0]/40 
-        hover:shadow-[0_0_20px_rgba(28,214,208,0.25)] 
-        hover:scale-[1.01]
+        ${
+          isDark
+            ? "bg-white/5 border-white/10 hover:bg-white/[0.07]"
+            : "bg-white border-gray-200 hover:bg-gray-50"
+        }
+        ${isClosed ? "opacity-60" : "hover:border-[#1CD6D0]/40 hover:shadow-[0_0_20px_rgba(28,214,208,0.25)] hover:scale-[1.01]"}
       `}
     >
-      {/* COMPANY HEADER */}
+      {/* ================= COMPANY HEADER ================= */}
       <div className="flex items-center gap-4">
-
         {job.companyId?.logo ? (
           <img
             src={job.companyId.logo}
@@ -31,12 +44,16 @@ export default function JobCard({ job, isDark, onSelect }: any) {
         )}
 
         <div>
-          <p className="font-semibold text-base">{job.companyId?.name}</p>
-          <p className="text-sm opacity-70">{job.companyId?.industry}</p>
+          <p className="font-semibold text-base">
+            {job.companyId?.name || "Company"}
+          </p>
+          {job.companyId?.industry && (
+            <p className="text-sm opacity-70">{job.companyId.industry}</p>
+          )}
         </div>
       </div>
 
-      {/* JOB TITLE */}
+      {/* ================= JOB TITLE ================= */}
       <div>
         <h2 className="text-xl font-semibold mb-1">{job.title}</h2>
         <p className="flex items-center gap-1 text-sm opacity-75">
@@ -45,9 +62,8 @@ export default function JobCard({ job, isDark, onSelect }: any) {
         </p>
       </div>
 
-      {/* META INFO */}
+      {/* ================= META INFO ================= */}
       <div className="flex flex-wrap gap-2 mt-2">
-
         {job.type && (
           <span className="px-3 py-1 text-xs rounded-full bg-white/10 border border-white/10 flex items-center gap-1">
             <Briefcase className="w-3 h-3" /> {job.type}
@@ -68,7 +84,7 @@ export default function JobCard({ job, isDark, onSelect }: any) {
         )}
       </div>
 
-      {/* SKILLS */}
+      {/* ================= SKILLS ================= */}
       {job.skills?.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-1">
           {job.skills.slice(0, 4).map((skill: string, index: number) => (
@@ -82,15 +98,26 @@ export default function JobCard({ job, isDark, onSelect }: any) {
         </div>
       )}
 
-      {/* DESCRIPTION */}
+      {/* ================= DESCRIPTION ================= */}
       <p className="text-sm opacity-90 leading-relaxed mt-2">
-        {job.description?.slice(0, 120) || "No description available"}...
+        {job.description
+          ? job.description.slice(0, 120) + "..."
+          : "No description available"}
       </p>
 
-      {/* FOOTER */}
+      {/* ================= FOOTER ================= */}
       <div className="flex justify-end">
-        <button className="mt-4 underline text-sm" onClick={onSelect}>
-          View Details
+        <button
+          disabled={isClosed}
+          onClick={() => onSelect(job)}
+          className={`mt-4 underline text-sm transition
+            ${
+              isClosed
+                ? "cursor-not-allowed opacity-50"
+                : "hover:text-[#1CD6D0]"
+            }`}
+        >
+          {isClosed ? "Job Closed" : "View Details"}
         </button>
       </div>
     </div>
