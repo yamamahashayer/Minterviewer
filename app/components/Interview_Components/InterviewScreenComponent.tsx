@@ -219,7 +219,22 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
                     })
                 });
                 const data = await response.json();
-                setQuestions(data.questions || []);
+
+                let rawQuestions = [];
+                // Handle both array (direct from prompt) and object (legacy/wrapped) formats
+                if (Array.isArray(data)) {
+                    rawQuestions = data;
+                } else {
+                    rawQuestions = data.questions || [];
+                }
+
+                // Map 'question' to 'text' if 'text' is missing (Gemini returns 'question')
+                const normalizedQuestions = rawQuestions.map((q: any) => ({
+                    ...q,
+                    text: q.text || q.question
+                }));
+
+                setQuestions(normalizedQuestions);
             } catch (error) {
                 console.error('Error generating questions:', error);
                 setQuestions([

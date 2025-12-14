@@ -1,24 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI, Type } from "@google/genai";
+import { openRouter } from "@/lib/openrouter";
 
 export async function POST(req: NextRequest) {
   try {
     const { role, interviewType, techStack, questionCount } = await req.json();
 
     console.log("Received generate-questions request:", { role, interviewType, techStack, questionCount });
-
-    const apiKey = process.env.GEMINI_API_KEY;
-    console.log("GEMINI_API_KEY present:", !!apiKey);
-
-    if (!apiKey) {
-      console.error("Missing GEMINI_API_KEY");
-      return NextResponse.json(
-        { error: "Missing GEMINI_API_KEY" },
-        { status: 500 }
-      );
-    }
-
-    const ai = new GoogleGenAI({ apiKey });
 
     const prompt = `
     You are an expert technical interviewer. Generate ${questionCount || 5} interview questions for a ${role} position.
@@ -39,36 +26,18 @@ export async function POST(req: NextRequest) {
     Return **ONLY** valid JSON.
     `;
 
-    console.log("Sending prompt to Gemini...");
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-pro",
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            questions: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  text: { type: Type.STRING },
-                  type: { type: Type.STRING, enum: ["verbal", "coding"] },
-                  isCoding: { type: Type.BOOLEAN },
-                  thinkingTime: { type: Type.INTEGER },
-                  answerTime: { type: Type.INTEGER }
-                },
-                required: ["text", "type", "isCoding", "thinkingTime", "answerTime"]
-              }
-            }
-          },
-          required: ["questions"]
-        }
-      }
+    console.log("Sending prompt to OpenRouter (Gemini)...");
+
+    const completion = await openRouter.chat.completions.create({
+      model: "google/gemini-2.0-flash-001",
+      messages: [
+        { role: "system", content: "You are a helpful assistant that outputs JSON." },
+        { role: "user", content: prompt }
+      ],
+      response_format: { type: "json_object" }
     });
 
-    const text = response.text?.trim() || "{}";
+    const text = completion.choices[0]?.message?.content?.trim() || "{}";
     console.log("Gemini response text:", text);
 
     let parsed;

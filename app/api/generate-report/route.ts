@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI, Type } from "@google/genai";
+import { openRouter } from "@/lib/openrouter";
 
 export async function POST(req: NextRequest) {
     try {
@@ -13,16 +13,7 @@ export async function POST(req: NextRequest) {
             setupData
         });
 
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            return NextResponse.json(
-                { error: "Missing GEMINI_API_KEY" },
-                { status: 500 }
-            );
-        }
-
-        const ai = new GoogleGenAI({ apiKey });
-
+        // Use built-in system prompt within the user message or as a system message
         const systemPrompt = `You are an expert interview evaluator. Analyze each answer and provide detailed feedback.
 
 SCORING GUIDELINES (0-100 scale):
@@ -41,6 +32,7 @@ For CODING questions:
 - If code is correct and efficient: 75-100 (depending on clarity and completeness)
 - If code works but not optimal: 60-75
 - If code has minor bugs: 40-60
+- If code is fundamentally wrong: 20-40
 - If code is fundamentally wrong: 20-40
 - If no meaningful code provided or just nonsense: 0-19
 
@@ -105,13 +97,8 @@ ${hasVideoData ? '- Include visualAnalysis for each question based on observed b
 - USE 0-100 SCALE FOR ALL SCORES
 - Score fairly based on actual performance (coding skill, understanding, clarity)`;
 
-        const contents = [
-            { role: "user", parts: [{ text: systemPrompt }] },
-            {
-                role: "user",
-                parts: [{ text: `Interview Context: ${JSON.stringify(setupData)}` }]
-            }
-        ];
+        // Prepare context
+        let contextMessage = `Interview Context: ${JSON.stringify(setupData)}`;
 
         // Add answers (skip images to reduce latency)
         if (Array.isArray(answers)) {
@@ -133,86 +120,22 @@ ${hasVideoData ? '- Include visualAnalysis for each question based on observed b
                 return `Q${idx + 1}: ${questionText}\nAnswer: ${answerText}\nTone: ${ans.toneData?.tone || 'N/A'}`;
             }).join('\n\n');
 
-            contents.push({
-                role: "user",
-                parts: [{ text: `INTERVIEW ANSWERS:\n\n${answersText}` }]
-            });
+            contextMessage += `\n\nINTERVIEW ANSWERS:\n\n${answersText}`;
         }
 
         // Add summary instruction
-        contents.push({
-            role: "user",
-            parts: [{ text: `Emotion: ${emotionData?.length ? 'Detected' : 'N/A'} | Tone: ${toneData?.tone || 'N/A'}\n\nGenerate the report NOW.` }]
+        contextMessage += `\n\nEmotion: ${emotionData?.length ? 'Detected' : 'N/A'} | Tone: ${toneData?.tone || 'N/A'}\n\nGenerate the report NOW in JSON format.`;
+
+        const completion = await openRouter.chat.completions.create({
+            model: "google/gemini-2.0-flash-001",
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: contextMessage }
+            ],
+            response_format: { type: "json_object" }
         });
 
-        const response = await ai.models.generateContent({
-            model: "gemini-2.0-flash",
-            contents: contents,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        overallScore: { type: Type.NUMBER },
-                        technicalScore: { type: Type.NUMBER },
-                        communicationScore: { type: Type.NUMBER },
-                        confidenceScore: { type: Type.NUMBER },
-                        feedback: { type: Type.STRING },
-                        strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        improvements: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        perQuestionFeedback: {
-                            type: Type.ARRAY,
-                            items: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    question: { type: Type.STRING },
-                                    candidateAnswer: { type: Type.STRING },
-                                    score: { type: Type.NUMBER },
-                                    feedback: { type: Type.STRING },
-                                    ...(hasVideoData ? { visualAnalysis: { type: Type.STRING } } : {}),
-                                    emotion: { type: Type.STRING },
-                                    tone: { type: Type.STRING }
-                                },
-                                required: ["question", "candidateAnswer", "score", "feedback", ...(hasVideoData ? ["visualAnalysis"] : []), "emotion", "tone"]
-                            }
-                        },
-                        recommendations: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        emotionalAnalysis: {
-                            type: Type.OBJECT,
-                            properties: {
-                                dominantEmotion: { type: Type.STRING },
-                                emotionBreakdown: {
-                                    type: Type.ARRAY,
-                                    items: {
-                                        type: Type.OBJECT,
-                                        properties: {
-                                            emotion: { type: Type.STRING },
-                                            percentage: { type: Type.NUMBER }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        toneAnalysis: { type: Type.STRING },
-                    },
-                    required: [
-                        "overallScore",
-                        "technicalScore",
-                        "communicationScore",
-                        "confidenceScore",
-                        "feedback",
-                        "strengths",
-                        "improvements",
-                        "perQuestionFeedback",
-                        "recommendations",
-                        "emotionalAnalysis",
-                        "toneAnalysis"
-                    ]
-                }
-            }
-        });
-
-        const text = response.text?.trim() || "{}";
+        const text = completion.choices[0]?.message?.content?.trim() || "{}";
 
         // Debug: Log raw Gemini response (full response for debugging)
         console.log("Gemini raw response (full):", text);

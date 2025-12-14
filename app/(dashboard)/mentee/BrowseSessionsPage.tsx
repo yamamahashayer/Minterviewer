@@ -5,6 +5,10 @@ import { motion } from "framer-motion";
 import { Search, Calendar, DollarSign, Filter, Star, Clock } from 'lucide-react';
 import { Button } from '@/app/components/ui/button';
 import { toast } from 'sonner';
+import { loadStripe } from '@stripe/stripe-js';
+
+// Make sure to add your publishable key to .env.local
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 interface TimeSlot {
     _id: string;
@@ -34,6 +38,7 @@ interface TimeSlot {
 export default function BrowseSessionsPage() {
     const [slots, setSlots] = useState<TimeSlot[]>([]);
     const [loading, setLoading] = useState(true);
+    const [bookingId, setBookingId] = useState<string | null>(null);
 
     // Filters
     const [topic, setTopic] = useState('');
@@ -68,6 +73,48 @@ export default function BrowseSessionsPage() {
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         fetchSessions();
+    };
+
+    const handleBookSession = async (slot: TimeSlot) => {
+        setBookingId(slot._id);
+        try {
+            const stripe = await stripePromise;
+            if (!stripe) throw new Error('Stripe failed to initialize.');
+
+            const response = await fetch('/api/stripe/create-checkout-session', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    sessionId: slot._id,
+                    mentorId: slot.mentor._id,
+                    price: slot.session.price, // Assuming price is in cents
+                    title: slot.session.title,
+                    mentorName: slot.mentor.name,
+                    mentorPhoto: slot.mentor.photo,
+                }),
+            });
+
+            const { sessionId, error } = await response.json();
+
+            if (error) {
+                throw new Error(error);
+            }
+
+            const result = await (stripe as any).redirectToCheckout({
+                sessionId,
+            });
+
+            if (result.error) {
+                throw new Error(result.error.message);
+            }
+        } catch (error: any) {
+            console.error('Error booking session:', error);
+            toast.error(error.message || 'Failed to book session');
+        } finally {
+            setBookingId(null);
+        }
     };
 
     const formatDate = (dateString: string) => {
@@ -247,8 +294,13 @@ export default function BrowseSessionsPage() {
                                         <div className="text-xl font-bold text-[var(--accent-cyan)]">
                                             ${(slot.session?.price / 100).toFixed(2) || "0.00"}
                                         </div>
-                                        <Button size="sm" className="mt-1 bg-[var(--foreground)] text-[var(--background)] hover:opacity-90">
-                                            Book Now
+                                        <Button
+                                            size="sm"
+                                            className="mt-1 bg-[var(--foreground)] text-[var(--background)] hover:opacity-90"
+                                            onClick={() => handleBookSession(slot)}
+                                            disabled={bookingId === slot._id}
+                                        >
+                                            {bookingId === slot._id ? 'Processing...' : 'Book Now'}
                                         </Button>
                                     </div>
                                 </div>

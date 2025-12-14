@@ -82,12 +82,22 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
             const valueToUpdate = typeof processedData.value === 'string' ? processedData.value : processedData.value.toString();
             updateSetupData(valueToUpdate, step);
 
+            // Prepare the final data payload locally to avoid using stale state from closure
+            const dataPayload = { ...setupData };
+            // Manually apply the current step's update to the payload
+            switch (step) {
+                case 0: dataPayload.role = valueToUpdate; break;
+                case 1: dataPayload.interviewType = valueToUpdate; break;
+                case 2: dataPayload.techStack = valueToUpdate; break;
+                case 3: dataPayload.questionCount = parseInt(valueToUpdate, 10) || 5; break;
+            }
+
             setTimeout(() => {
                 if (step < questions.length - 1) {
                     setStep(step + 1);
                     setTranscript('');
                 } else {
-                    onComplete(setupData);
+                    onComplete(dataPayload);
                 }
             }, 1500);
         } else {

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { openRouter } from "@/lib/openrouter";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const IMG_API_KEY = process.env.OPENROUTER_API_KEY; // Ensure this is checked if needed separately or use the client
 
 export async function POST(request: NextRequest) {
     try {
-        // Validate API key
-        if (!GEMINI_API_KEY) {
+        if (!process.env.OPENROUTER_API_KEY) {
             return NextResponse.json(
-                { error: 'GEMINI_API_KEY environment variable is not set' },
+                { error: 'OPENROUTER_API_KEY environment variable is not set' },
                 { status: 500 }
             );
         }
@@ -25,84 +25,53 @@ export async function POST(request: NextRequest) {
 
         // Convert blob to base64
         const bytes = await image.arrayBuffer();
-        const base64Image = Buffer.from(bytes).toString('base64');
+        const buffer = Buffer.from(bytes);
+        const base64Image = buffer.toString('base64');
+        const mimeType = image.type || 'image/jpeg';
+        const dataUrl = `data:${mimeType};base64,${base64Image}`;
 
-        // Call Gemini Vision API with timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20 second timeout
-
-        const response = await fetch(
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-goog-api-key': GEMINI_API_KEY,
-                },
-                body: JSON.stringify({
-                    contents: [
-                        {
-                            parts: [
-                                {
-                                    text: `Analyze this interview candidate's facial expression and emotions. Quick analysis only.
+        const prompt = `Analyze this interview candidate's facial expression and emotions. Quick analysis only.
                                     
 Respond with JSON:
 - emotion: Primary emotion (confident, nervous, neutral, focused, etc.)
 - confidence: 0-100 score
 - tone: positive/neutral/negative
 
-Return ONLY JSON, no text.`
-                                },
-                                {
-                                    inlineData: {
-                                        mimeType: 'image/jpeg',
-                                        data: base64Image,
-                                    },
-                                },
-                            ],
-                        },
-                    ],
-                    generationConfig: {
-                        temperature: 0.5,
-                        topP: 0.9,
-                        maxOutputTokens: 100,
-                    },
-                }),
-                signal: controller.signal
-            }
-        );
+Return ONLY JSON, no text.`;
 
-        clearTimeout(timeoutId);
+        const completion = await openRouter.chat.completions.create({
+            model: "google/gemini-2.0-flash-001",
+            messages: [
+                {
+                    role: "user",
+                    content: [
+                        { type: "text", text: prompt },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: dataUrl
+                            }
+                        }
+                    ]
+                }
+            ],
+            response_format: { type: "json_object" }
+        });
 
-        if (!response.ok) {
-            const error = await response.text();
-            console.error('Gemini API error:', error);
-            return NextResponse.json(
-                { error: 'Failed to analyze emotion', details: error },
-                { status: response.status }
-            );
-        }
+        const text = completion.choices[0]?.message?.content?.trim() || "{}";
 
-        const data = await response.json();
-
-        // Extract the response text
-        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-        if (!responseText) {
-            return NextResponse.json(
-                { error: 'No response from Gemini API' },
-                { status: 500 }
-            );
-        }
-
-        // Parse JSON response from Gemini
+        // Parse JSON response
         let emotionData;
         try {
             // Try to extract JSON from the response (in case there's extra text)
-            const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-            emotionData = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(responseText);
+            // Sometimes models return ```json ... ```
+            let cleanText = text;
+            const jsonMatch = text.match(/\{[\s\S]*\}/);
+            if (jsonMatch) cleanText = jsonMatch[0];
+
+            emotionData = JSON.parse(cleanText);
         } catch {
-            console.error('Failed to parse emotion data:', responseText);
+            console.error('Failed to parse emotion data:', text);
             return NextResponse.json(
                 {
                     emotion: 'neutral',
@@ -110,7 +79,7 @@ Return ONLY JSON, no text.`
                     tone: 'neutral',
                     description: 'Unable to analyze',
                     nonverbals: 'Frame analysis unavailable',
-                    rawResponse: responseText
+                    rawResponse: text
                 }
             );
         }
