@@ -12,6 +12,7 @@ const MentorSchema = new mongoose.Schema(
     // === BASIC INFO ===
     yearsOfExperience: { type: Number, default: 0 },
     hourlyRate: { type: Number, default: 0 },
+    stripeAccountId: { type: String, default: "" }, // Stripe Connect Account ID
 
     // === SPECIALIZATION ===
     focusAreas: { type: [String], default: [] },

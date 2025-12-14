@@ -98,6 +98,65 @@ export default function ProfileTab({
             <Save className="w-4 h-4 mr-2" /> Save Changes
           </Button>
         </div>
+
+        <Separator className="my-6" />
+
+        {/* Stripe Connect Section */}
+        <div>
+          <h3 className="text-[var(--foreground)] mb-4">Payment Settings</h3>
+          <div className="flex items-center justify-between p-4 border border-[var(--border)] rounded-lg bg-[var(--background-muted)]">
+            <div>
+              <h4 className="font-medium text-[var(--foreground)]">Stripe Connect</h4>
+              <p className="text-sm text-[var(--foreground-muted)]">
+                {mentor?.stripeAccountId
+                  ? "Your Stripe account is connected. You can receive payments."
+                  : "Connect your Stripe account to start receiving payments for your sessions."}
+              </p>
+            </div>
+            {mentor?.stripeAccountId ? (
+              <Button variant="outline" className="text-green-500 border-green-500 hover:bg-green-500/10 cursor-default">
+                Connected
+              </Button>
+            ) : (
+              <Button
+                onClick={async () => {
+                  try {
+                    if (typeof window === 'undefined') {
+                      console.error('Stripe Connect: window is undefined');
+                      return;
+                    }
+
+                    const token = sessionStorage.getItem('token');
+                    console.log('Stripe Connect: token length =', token?.length);
+
+                    if (!token) {
+                      console.error('No auth token found for Stripe Connect');
+                      return;
+                    }
+
+                    const res = await fetch('/api/stripe/connect', {
+                      method: 'POST',
+                      headers: {
+                        Authorization: `Bearer ${token}`,
+                      },
+                    });
+                    const data = await res.json();
+                    if (data.url) {
+                      window.location.href = data.url;
+                    } else {
+                      console.error('Failed to get Connect URL', data.error);
+                    }
+                  } catch (err) {
+                    console.error('Error connecting Stripe:', err);
+                  }
+                }}
+                className="bg-[#635BFF] hover:bg-[#534be0] text-white"
+              >
+                Connect Stripe
+              </Button>
+            )}
+          </div>
+        </div>
       </SettingCard>
     </motion.div>
   );
