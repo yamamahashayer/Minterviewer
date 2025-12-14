@@ -6,10 +6,17 @@ const aiInterviewSchema = new mongoose.Schema(
     mentee: { type: mongoose.Schema.Types.ObjectId, ref: 'Mentee', required: true, index: true },
     coverImage: String,
     finalized: { type: Boolean, default: false },
-    questions: String,
     role: String,
     techstack: String,
-    type: String, 
+    type: String,
+    // Interview Results
+    overallScore: { type: Number, min: 0, max: 100 },
+    technicalScore: { type: Number, min: 0, max: 100 },
+    communicationScore: { type: Number, min: 0, max: 100 },
+    confidenceScore: { type: Number, min: 0, max: 100 },
+    duration: { type: Number }, // Duration in seconds
+    strengths: [{ type: String }],
+    improvements: [{ type: String }],
   },
   { timestamps: { createdAt: 'createdAt', updatedAt: true } }
 );

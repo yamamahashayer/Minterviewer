@@ -19,6 +19,8 @@ type ApiUser = {
   full_name: string;
   mentorId?: string;
   menteeId?: string;
+  companyId?: string;
+  isVerified?: boolean;
 };
 
 type ApiResponse = {
@@ -52,6 +54,7 @@ export default function LoginPage() {
 
       if (!res.ok) {
         setError(data?.message ?? 'Login failed');
+        setLoading(false);
         return;
       }
 
@@ -60,19 +63,26 @@ export default function LoginPage() {
         sessionStorage.setItem('token', data.token);
       }
 
-      // Save USER Object including mentorId/menteeId
+      // Save USER Object including companyId & isVerified
       if (data.user) {
-        sessionStorage.setItem('user', JSON.stringify({
-          id: data.user.id,
-          email: data.user.email,
-          full_name: data.user.full_name,
-          role: data.user.role,
-          mentorId: data.user.mentorId || null,
-          menteeId: data.user.menteeId || null
-        }));
+        sessionStorage.setItem(
+          'user',
+          JSON.stringify({
+            id: data.user.id,
+            email: data.user.email,
+            full_name: data.user.full_name,
+            role: data.user.role,
+
+            menteeId: data.user.menteeId || null,
+            mentorId: data.user.mentorId || null,
+            companyId: data.user.companyId || null,
+
+            isVerified: data.user.isVerified ?? null,
+          })
+        );
       }
 
-      // ✔️ Navigate after success
+      // Redirect based on role
       router.push(data.redirectUrl || '/');
 
     } catch (e) {
@@ -84,7 +94,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-[#0a192f] via-[#112240] to-[#0d3d56] flex items-center justify-center p-4">
-    
+
       <NeuralNetworkBackground />
 
       <div className="relative z-10 w-full max-w-md">
@@ -97,9 +107,7 @@ export default function LoginPage() {
                 <Brain className="w-8 h-8 text-[#0a192f]" />
               </div>
             </div>
-            <h1 className="text-white text-3xl tracking-tight">
-              Minterviewer
-            </h1>
+            <h1 className="text-white text-3xl tracking-tight">Minterviewer</h1>
           </div>
         </div>
 
@@ -153,7 +161,9 @@ export default function LoginPage() {
 
             <div className="relative">
               <Separator className="bg-gray-700" />
-              <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-400 bg-[#0a192f] px-2 text-sm">or</span>
+              <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-gray-400 bg-[#0a192f] px-2 text-sm">
+                or
+              </span>
             </div>
 
           </CardContent>
@@ -161,10 +171,11 @@ export default function LoginPage() {
           <CardFooter className="justify-center">
             <p className="text-gray-400 text-sm">
               Don’t have an account?
-              <Link href="/signup" className="text-[#00FFB2] ml-1">Sign up</Link>
+              <Link href="/signup" className="text-[#00FFB2] ml-1">
+                Sign up
+              </Link>
             </p>
           </CardFooter>
-
         </Card>
 
       </div>

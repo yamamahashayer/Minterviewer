@@ -12,6 +12,7 @@ const MentorSchema = new mongoose.Schema(
     // === BASIC INFO ===
     yearsOfExperience: { type: Number, default: 0 },
     hourlyRate: { type: Number, default: 0 },
+    stripeAccountId: { type: String, default: "" }, // Stripe Connect Account ID
 
     // === SPECIALIZATION ===
     focusAreas: { type: [String], default: [] },
@@ -46,6 +47,22 @@ const MentorSchema = new mongoose.Schema(
     reviewsCount: { type: Number, default: 0 },
     sessionsCount: { type: Number, default: 0 },
     menteesCount: { type: Number, default: 0 },
+
+    // === SESSION OFFERINGS ===
+    sessionOfferings: {
+      type: [
+        {
+          title: { type: String, required: true },
+          topic: { type: String, required: true },
+          sessionType: { type: String, required: true },
+          duration: { type: Number, required: true, default: 60 }, // minutes
+          price: { type: Number, required: true }, // USD cents
+          description: { type: String, default: "" },
+          active: { type: Boolean, default: true }
+        }
+      ],
+      default: []
+    },
 
     profileCompletion: { type: Number, default: 0 },
   },

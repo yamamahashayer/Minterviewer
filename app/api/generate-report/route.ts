@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI, Type } from "@google/genai";
+import { openRouter } from "@/lib/openrouter";
 
 export async function POST(req: NextRequest) {
     try {
-        const { answers, emotionData, toneData, setupData } = await req.json();
+        const { answers, emotionData, toneData, setupData, hasVideoData } = await req.json();
 
         // Debug: Log incoming data
         console.log("Incoming interview data:", {
@@ -13,16 +13,7 @@ export async function POST(req: NextRequest) {
             setupData
         });
 
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            return NextResponse.json(
-                { error: "Missing GEMINI_API_KEY" },
-                { status: 500 }
-            );
-        }
-
-        const ai = new GoogleGenAI({ apiKey });
-
+        // Use built-in system prompt within the user message or as a system message
         const systemPrompt = `You are an expert interview evaluator. Analyze each answer and provide detailed feedback.
 
 SCORING GUIDELINES (0-100 scale):
@@ -32,19 +23,25 @@ SCORING GUIDELINES (0-100 scale):
 - 60-69: Acceptable - Mostly correct with some explanations or clarity issues
 - 50-59: Below Average - Shows understanding but has significant gaps or unclear explanations
 - 40-49: Poor - Incomplete answer with notable errors or misunderstandings
-- Below 40: Very Poor - Incorrect or incomplete answer with major gaps
+- 20-39: Very Poor - Minimal attempt, major errors, or mostly incorrect understanding
+- 0-19: No Answer/Nonsense - Non-answer (e.g., "uh, mmm, okay"), completely wrong, or no meaningful content
+
+IMPORTANT: Be STRICT with scoring. If the answer provides NO meaningful content, NO relevant information, or is just filler words/hesitation (e.g., "Oh yeah. Uh, mmm. Okay, this one."), score it 0-10. Such responses demonstrate zero knowledge and should receive the lowest possible scores.
 
 For CODING questions:
 - If code is correct and efficient: 75-100 (depending on clarity and completeness)
 - If code works but not optimal: 60-75
 - If code has minor bugs: 40-60
-- If code is fundamentally wrong: Below 40
+- If code is fundamentally wrong: 20-40
+- If code is fundamentally wrong: 20-40
+- If no meaningful code provided or just nonsense: 0-19
 
 For CONCEPTUAL questions:
 - If answer is comprehensive and well-explained: 75-100
 - If answer covers main points with good clarity: 60-75
 - If answer is partially correct or unclear: 45-60
-- If answer is mostly incorrect: Below 45
+- If answer is mostly incorrect: 20-45
+- If no meaningful answer or just filler words/hesitation: 0-19
 
 IMPORTANT SCORING RULES:
 1. Score each question based on correctness, clarity, and completeness
@@ -52,12 +49,14 @@ IMPORTANT SCORING RULES:
 3. Average scores should fall in 50-85 range for typical interviews
 4. Excellent code solutions should score 80+
 5. Calculate overall score as average of all question scores (normalized to 0-100)
+6. BE STRICT: Non-answers (just "uh", "mmm", hesitation) MUST score 0-10, NOT 40+
+7. Only give 40+ if the answer shows at least SOME understanding or attempt at the question
 
 MANDATORY REQUIREMENTS:
 1. EVERY QUESTION must have a non-empty feedback field with exactly 2-3 sentences
 2. The feedback must include: what was good, what needs improvement, specific action items
 3. For toneAnalysis: KEEP IT BRIEF - maximum 3-4 sentences total, not more
-4. For visualAnalysis in each question: Include 1-2 sentences about body language, confidence level, engagement
+${hasVideoData ? '4. For visualAnalysis in each question: Include 1-2 sentences about body language, confidence level, engagement' : '4. DO NOT include visualAnalysis fields - camera was not used during this interview'}
 5. Return ONLY valid JSON - no markdown, no extra text, ONLY JSON
 
 Example feedback format:
@@ -81,7 +80,7 @@ Full structure required:
       "candidateAnswer": "<their answer>",
       "score": <number 0-100>,
       "feedback": "<MANDATORY 2-3 sentence evaluation>",
-      "visualAnalysis": "<1-2 sentence observation about body language, confidence, engagement>",
+${hasVideoData ? '      "visualAnalysis": "<1-2 sentence observation about body language, confidence, engagement>",' : ''}
       "emotion": "<emotion>",
       "tone": "<tone>"
     }
@@ -94,17 +93,12 @@ Full structure required:
 CRITICAL:
 - Do not skip any feedback field
 - Keep toneAnalysis SHORT (3-4 sentences, not 200+ words)
-- Include visualAnalysis for each question based on observed body language and engagement
+${hasVideoData ? '- Include visualAnalysis for each question based on observed body language and engagement' : '- DO NOT include visualAnalysis fields'}
 - USE 0-100 SCALE FOR ALL SCORES
 - Score fairly based on actual performance (coding skill, understanding, clarity)`;
 
-        const contents = [
-            { role: "user", parts: [{ text: systemPrompt }] },
-            {
-                role: "user",
-                parts: [{ text: `Interview Context: ${JSON.stringify(setupData)}` }]
-            }
-        ];
+        // Prepare context
+        let contextMessage = `Interview Context: ${JSON.stringify(setupData)}`;
 
         // Add answers (skip images to reduce latency)
         if (Array.isArray(answers)) {
@@ -126,86 +120,22 @@ CRITICAL:
                 return `Q${idx + 1}: ${questionText}\nAnswer: ${answerText}\nTone: ${ans.toneData?.tone || 'N/A'}`;
             }).join('\n\n');
 
-            contents.push({
-                role: "user",
-                parts: [{ text: `INTERVIEW ANSWERS:\n\n${answersText}` }]
-            });
+            contextMessage += `\n\nINTERVIEW ANSWERS:\n\n${answersText}`;
         }
 
         // Add summary instruction
-        contents.push({
-            role: "user",
-            parts: [{ text: `Emotion: ${emotionData?.length ? 'Detected' : 'N/A'} | Tone: ${toneData?.tone || 'N/A'}\n\nGenerate the report NOW.` }]
+        contextMessage += `\n\nEmotion: ${emotionData?.length ? 'Detected' : 'N/A'} | Tone: ${toneData?.tone || 'N/A'}\n\nGenerate the report NOW in JSON format.`;
+
+        const completion = await openRouter.chat.completions.create({
+            model: "google/gemini-2.0-flash-001",
+            messages: [
+                { role: "system", content: systemPrompt },
+                { role: "user", content: contextMessage }
+            ],
+            response_format: { type: "json_object" }
         });
 
-        const response = await ai.models.generateContent({
-            model: "gemini-2.0-flash",
-            contents: contents,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: Type.OBJECT,
-                    properties: {
-                        overallScore: { type: Type.NUMBER },
-                        technicalScore: { type: Type.NUMBER },
-                        communicationScore: { type: Type.NUMBER },
-                        confidenceScore: { type: Type.NUMBER },
-                        feedback: { type: Type.STRING },
-                        strengths: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        improvements: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        perQuestionFeedback: {
-                            type: Type.ARRAY,
-                            items: {
-                                type: Type.OBJECT,
-                                properties: {
-                                    question: { type: Type.STRING },
-                                    candidateAnswer: { type: Type.STRING },
-                                    score: { type: Type.NUMBER },
-                                    feedback: { type: Type.STRING },
-                                    visualAnalysis: { type: Type.STRING },
-                                    emotion: { type: Type.STRING },
-                                    tone: { type: Type.STRING }
-                                },
-                                required: ["question", "candidateAnswer", "score", "feedback", "visualAnalysis", "emotion", "tone"]
-                            }
-                        },
-                        recommendations: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        emotionalAnalysis: {
-                            type: Type.OBJECT,
-                            properties: {
-                                dominantEmotion: { type: Type.STRING },
-                                emotionBreakdown: {
-                                    type: Type.ARRAY,
-                                    items: {
-                                        type: Type.OBJECT,
-                                        properties: {
-                                            emotion: { type: Type.STRING },
-                                            percentage: { type: Type.NUMBER }
-                                        }
-                                    }
-                                }
-                            }
-                        },
-                        toneAnalysis: { type: Type.STRING },
-                    },
-                    required: [
-                        "overallScore",
-                        "technicalScore",
-                        "communicationScore",
-                        "confidenceScore",
-                        "feedback",
-                        "strengths",
-                        "improvements",
-                        "perQuestionFeedback",
-                        "recommendations",
-                        "emotionalAnalysis",
-                        "toneAnalysis"
-                    ]
-                }
-            }
-        });
-
-        const text = response.text?.trim() || "{}";
+        const text = completion.choices[0]?.message?.content?.trim() || "{}";
 
         // Debug: Log raw Gemini response (full response for debugging)
         console.log("Gemini raw response (full):", text);

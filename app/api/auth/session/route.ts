@@ -5,6 +5,7 @@ import dbConnect from "@/lib/mongodb";
 
 import Mentee from "@/models/Mentee";
 import Mentor from "@/models/Mentor";
+import Company from "@/models/Company"; // ✨ مضافة هون
 import User from "@/models/User";
 
 export const dynamic = "force-dynamic";
@@ -35,6 +36,7 @@ export async function GET(req: Request) {
         user: null,
         mentee: null,
         mentor: null,
+        company: null, // ✨ added
       });
     }
 
@@ -63,12 +65,10 @@ export async function GET(req: Request) {
     const userObjId = new mongoose.Types.ObjectId(userId);
 
     const user = await User.findById(userObjId)
-      .select(
-        `
+      .select(`
         full_name email phoneNumber Country linkedin_url github 
         profile_photo role short_bio area_of_expertise
-        `
-      )
+      `)
       .lean();
 
     /* ========================= Mentee ========================= */
@@ -76,12 +76,20 @@ export async function GET(req: Request) {
       .select("_id")
       .lean();
 
-    /* ========================= Mentor FULL DATA ========================= */
+    /* ========================= Mentor ========================= */
     const mentor = await Mentor.findOne({ user: userObjId })
       .select(`
         _id yearsOfExperience hourlyRate focusAreas availabilityType 
         languages sessionTypes certifications achievements rating 
         reviewsCount sessionsCount menteesCount
+      `)
+      .lean();
+
+    /* ========================= Company ========================= */
+    const company = await Company.findOne({ user: userObjId }) // ✨ المهم
+      .select(`
+        _id name logo workEmail industry website location 
+        isVerified hiringStatus
       `)
       .lean();
 
@@ -92,6 +100,7 @@ export async function GET(req: Request) {
       user,
       mentee,
       mentor,
+      company, // ✨ رجّعنا الشركة
     });
   } catch (err: any) {
     console.error("⚠ session error:", err);

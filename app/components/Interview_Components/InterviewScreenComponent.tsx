@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, MicOff, MessageSquare, Video, VideoOff, Code } from 'lucide-react';
+import { Mic, MicOff, MessageSquare, Video, VideoOff, Code, Clock } from 'lucide-react';
 import { useTextToSpeech } from '../../hooks/useTextToSpeech';
 import { useSpeechToText } from '../../hooks/useSpeechToText';
 
@@ -16,6 +16,8 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
     const [code, setCode] = useState('');
     const [showCodeEditor, setShowCodeEditor] = useState(false);
     const [hasSpokenInitial, setHasSpokenInitial] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(0);
+    const [interviewPhase, setInterviewPhase] = useState<'thinking' | 'answering'>('thinking');
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
     const audioChunksRef = useRef<Blob[]>([]);
@@ -157,14 +159,47 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
         }
     }, [questions, hasSpokenInitial, speak]);
 
-    // Handle question change
+    // Handle question change and timer
     useEffect(() => {
         if (questions.length > 0 && currentQuestion < questions.length) {
             const isCoding = questions[currentQuestion]?.isCoding || false;
             setShowCodeEditor(isCoding);
             setCode('');
+
+            // Set initial thinking timer
+            const thinking = questions[currentQuestion]?.thinkingTime || 30;
+            setTimeLeft(thinking);
+            setInterviewPhase('thinking');
+            setIsRecording(false);
         }
     }, [currentQuestion, questions]);
+
+    // Timer countdown and phase switch
+    useEffect(() => {
+        if (timeLeft > 0 && !loading) {
+            const timer = setInterval(() => {
+                setTimeLeft((prev) => {
+                    if (prev <= 1) {
+                        clearInterval(timer);
+
+                        // Switch to answering phase if in thinking phase
+                        if (interviewPhase === 'thinking') {
+                            setInterviewPhase('answering');
+                            startRecording();
+                            const answerTime = questions[currentQuestion]?.answerTime || 60;
+                            return answerTime;
+                        } else {
+                            // End of answering phase
+                            stopRecording();
+                            return 0;
+                        }
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+            return () => clearInterval(timer);
+        }
+    }, [timeLeft, loading, interviewPhase, currentQuestion, questions]);
 
     // Generate interview questions
     useEffect(() => {
@@ -184,7 +219,22 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
                     })
                 });
                 const data = await response.json();
-                setQuestions(data.questions || []);
+
+                let rawQuestions = [];
+                // Handle both array (direct from prompt) and object (legacy/wrapped) formats
+                if (Array.isArray(data)) {
+                    rawQuestions = data;
+                } else {
+                    rawQuestions = data.questions || [];
+                }
+
+                // Map 'question' to 'text' if 'text' is missing (Gemini returns 'question')
+                const normalizedQuestions = rawQuestions.map((q: any) => ({
+                    ...q,
+                    text: q.text || q.question
+                }));
+
+                setQuestions(normalizedQuestions);
             } catch (error) {
                 console.error('Error generating questions:', error);
                 setQuestions([
@@ -226,6 +276,14 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
         }
     };
 
+    // Skip thinking phase and start answering immediately
+    const skipToAnswering = () => {
+        setInterviewPhase('answering');
+        const answerTime = questions[currentQuestion]?.answerTime || 60;
+        setTimeLeft(answerTime);
+        startRecording();
+    };
+
     // Stop recording
     const stopRecording = () => {
         if (mediaRecorderRef.current) {
@@ -264,6 +322,8 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
                         answers: formattedAnswers,
                         emotionData,
                         questions,
+                        setupData,
+                        hasVideoData: videoEnabled && emotionData.length > 0,
                         timestamp: new Date().toISOString()
                     });
                 }
@@ -294,6 +354,8 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
                     answers: formattedAnswers,
                     emotionData,
                     questions,
+                    setupData,
+                    hasVideoData: videoEnabled && emotionData.length > 0,
                     timestamp: new Date().toISOString()
                 });
             }
@@ -315,7 +377,7 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-6">
+        <div className="min-h-screen bg-white dark:bg-[#0A0F1E] p-6">
             <div className="max-w-7xl mx-auto">
                 {/* Header with Progress */}
                 <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/20">
@@ -400,15 +462,33 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
                     {/* Main Content - Question & Answer */}
                     <div className={videoEnabled ? 'lg:col-span-3' : 'lg:col-span-4'}>
                         {/* Question Card */}
-                        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 mb-6">
+                        <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-gray-200 dark:border-white/20 mb-6 shadow-sm dark:shadow-none">
                             <div className="flex items-start space-x-4 mb-6">
                                 <div className="w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
                                     <MessageSquare className="w-7 h-7 text-white" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-2xl text-white leading-relaxed font-medium">
-                                        {questions[currentQuestion]?.text || 'Question loading...'}
-                                    </p>
+                                    <div className="flex justify-between items-start mb-2">
+                                        <p className="text-2xl text-gray-900 dark:text-white leading-relaxed font-medium">
+                                            {questions[currentQuestion]?.text || 'Question loading...'}
+                                        </p>
+                                        <div className={`flex items-center space-x-2 px-4 py-2 rounded-full ${interviewPhase === 'thinking'
+                                            ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400'
+                                            : timeLeft < 10
+                                                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                                                : 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+                                            }`}>
+                                            <Clock className="w-5 h-5" />
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-xs font-semibold uppercase tracking-wider">
+                                                    {interviewPhase === 'thinking' ? 'Thinking' : 'Recording'}
+                                                </span>
+                                                <span className="font-mono font-bold text-lg leading-none">
+                                                    {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -454,37 +534,48 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
                             ) : (
                                 /* Voice Recording */
                                 <div className="flex flex-col items-center justify-center py-12 space-y-6">
-                                    <button
-                                        onClick={isRecording ? stopRecording : startRecording}
-                                        className={`relative group transition-all duration-300 ${isRecording
-                                            ? 'bg-red-500 hover:bg-red-600 scale-110'
-                                            : 'bg-purple-500 hover:bg-purple-600 hover:scale-105'
-                                            } text-white rounded-full p-16 shadow-2xl`}
-                                    >
-                                        {isRecording ? (
-                                            <>
-                                                <MicOff className="w-20 h-20" />
-                                                <div className="absolute inset-0 rounded-full animate-ping bg-red-500/50"></div>
-                                            </>
-                                        ) : (
-                                            <Mic className="w-20 h-20" />
+                                    {/* Controls */}
+                                    <div className="flex justify-center space-x-6">
+                                        {interviewPhase === 'thinking' && (
+                                            <button
+                                                onClick={skipToAnswering}
+                                                className="flex items-center space-x-2 px-8 py-4 bg-purple-600 hover:bg-purple-700 text-white rounded-full font-semibold transition-all shadow-lg hover:shadow-purple-500/25"
+                                            >
+                                                <Mic className="w-5 h-5" />
+                                                <span>Start Answer Now</span>
+                                            </button>
                                         )}
-                                    </button>
-                                    <div className="text-center">
-                                        <p className="text-white text-2xl font-semibold mb-2">
-                                            {isRecording ? 'Recording Your Answer...' : 'Ready to Answer?'}
-                                        </p>
-                                        <p className="text-white/70 text-lg">
-                                            {isRecording ? 'Click the button when you\'re done' : 'Click the microphone to start recording'}
-                                        </p>
+
+                                        {interviewPhase === 'answering' && (
+                                            <button
+                                                onClick={isRecording ? stopRecording : startRecording}
+                                                className={`flex items-center space-x-2 px-8 py-4 rounded-full font-semibold transition-all shadow-lg ${isRecording
+                                                    ? 'bg-red-500 hover:bg-red-600 text-white hover:shadow-red-500/25'
+                                                    : 'bg-purple-600 hover:bg-purple-700 text-white hover:shadow-purple-500/25'
+                                                    }`}
+                                            >
+                                                {isRecording ? (
+                                                    <>
+                                                        <MicOff className="w-5 h-5" />
+                                                        <span>Stop Recording</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Mic className="w-5 h-5" />
+                                                        <span>Start Recording</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             )}
+
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 

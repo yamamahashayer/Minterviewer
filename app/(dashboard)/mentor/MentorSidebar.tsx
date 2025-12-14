@@ -8,6 +8,7 @@ import {
   User,
   Users,
   Calendar,
+  CalendarCheck,
   Star,
   MessageSquare,
   DollarSign,
@@ -48,6 +49,7 @@ export default function MentorSidebar({
     { id: "mentees", label: "My Mentees", icon: Users },
     { id: "sessions", label: "Sessions", icon: Calendar },
     { id: "availability", label: "Availability", icon: Clock },
+    { id: "booking-management", label: "Booking Management", icon: CalendarCheck },
     { id: "cv-review", label: "CV Review", icon: FileText },
     { id: "feedbacks", label: "Feedbacks", icon: Star },
     { id: "earnings", label: "Earnings", icon: DollarSign },
@@ -59,22 +61,19 @@ export default function MentorSidebar({
 
   return (
     <aside
-      className={`h-full transition-all duration-300 flex flex-col ${
-        isOpen ? "w-[280px]" : "w-[80px]"
-      } ${
-        isDark
+      className={`h-full transition-all duration-300 flex flex-col ${isOpen ? "w-[280px]" : "w-[80px]"
+        } ${isDark
           ? "bg-gradient-to-b from-[#0f172b] to-[#0a0f1e] border-r border-[rgba(94,234,212,0.1)]"
           : "bg-white border-r border-[#ddd6fe] shadow-lg"
-      }`}
+        }`}
       style={{ overflowY: "auto", overflowX: "visible" }}
     >
       {/* Header image */}
       <div
-        className={`border-b ${
-          isDark
-            ? "border-[rgba(94,234,212,0.1)] bg-[#0b1020]"
-            : "border-[#ddd6fe] bg-white"
-        }`}
+        className={`border-b ${isDark
+          ? "border-[rgba(94,234,212,0.1)] bg-[#0b1020]"
+          : "border-[#ddd6fe] bg-white"
+          }`}
       >
         <img
           src="/Covering.png"
@@ -88,18 +87,16 @@ export default function MentorSidebar({
         <div className="p-4">
           <div className="relative">
             <Search
-              className={`absolute left-3 top-1/2 -translate-y-1/2 ${
-                isDark ? "text-[#6a7282]" : "text-[#7c3aed]"
-              }`}
+              className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? "text-[#6a7282]" : "text-[#7c3aed]"
+                }`}
               size={16}
             />
             <input
               placeholder="Search..."
-              className={`w-full ${
-                isDark
-                  ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.1)] text-white placeholder:text-[#6a7282]"
-                  : "bg-[#f5f3ff] border-[#ddd6fe] text-[#2e1065] placeholder:text-[#7c3aed]"
-              } border rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none`}
+              className={`w-full ${isDark
+                ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.1)] text-white placeholder:text-[#6a7282]"
+                : "bg-[#f5f3ff] border-[#ddd6fe] text-[#2e1065] placeholder:text-[#7c3aed]"
+                } border rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none`}
             />
           </div>
         </div>
@@ -123,12 +120,11 @@ export default function MentorSidebar({
                     if (window.innerWidth < 1024) onCloseMobile();
                   }}
                   className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all
-                    ${
-                      active
-                        ? isDark
-                          ? "bg-[rgba(94,234,212,0.12)] text-teal-300 ring-1 ring-teal-400/40 shadow-[0_0_20px_rgba(94,234,212,0.15)]"
-                          : "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 ring-1 ring-purple-300 shadow-lg"
-                        : isDark
+                    ${active
+                      ? isDark
+                        ? "bg-[rgba(94,234,212,0.12)] text-teal-300 ring-1 ring-teal-400/40 shadow-[0_0_20px_rgba(94,234,212,0.15)]"
+                        : "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 ring-1 ring-purple-300 shadow-lg"
+                      : isDark
                         ? "text-[#a8b0bf] hover:bg-white/5 hover:text-white"
                         : "text-[#7c3aed] hover:bg-[#ede9fe] hover:text-[#5b21b6]"
                     }
@@ -149,12 +145,11 @@ export default function MentorSidebar({
                   <Link
                     href={href}
                     className={`relative w-full flex items-center justify-center px-3 py-3 rounded-xl transition-all
-                      ${
-                        active
-                          ? isDark
-                            ? "bg-[rgba(94,234,212,0.12)] text-teal-300 ring-1 ring-teal-400/40"
-                            : "bg-purple-100 text-purple-700 ring-1 ring-purple-300"
-                          : isDark
+                      ${active
+                        ? isDark
+                          ? "bg-[rgba(94,234,212,0.12)] text-teal-300 ring-1 ring-teal-400/40"
+                          : "bg-purple-100 text-purple-700 ring-1 ring-purple-300"
+                        : isDark
                           ? "text-[#a8b0bf] hover:bg-white/5 hover:text-white"
                           : "text-[#7c3aed] hover:bg-[#ede9fe] hover:text-[#5b21b6]"
                       }
@@ -169,10 +164,9 @@ export default function MentorSidebar({
                   sideOffset={12}
                   align="center"
                   className={`rounded-xl px-3 py-2 text-xs font-medium backdrop-blur-xl border shadow-2xl
-                    ${
-                      isDark
-                        ? "bg-[#0b1223]/90 text-teal-100 border-teal-400/20"
-                        : "bg-white/95 text-[#2e1065] border-purple-300"
+                    ${isDark
+                      ? "bg-[#0b1223]/90 text-teal-100 border-teal-400/20"
+                      : "bg-white/95 text-[#2e1065] border-purple-300"
                     }
                   `}
                 >

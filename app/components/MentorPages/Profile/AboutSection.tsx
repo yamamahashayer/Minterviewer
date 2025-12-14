@@ -48,21 +48,6 @@ export default function AboutSection({
 
           <div className="space-y-2 text-sm ml-7">
 
-            {/* Headline */}
-            {isEditing ? (
-              <InputField
-                value={data.headline}
-                onChange={(v) => onFieldChange("headline", v)}
-                placeholder="Headline..."
-                isDark={isDark}
-              />
-            ) : (
-              data.headline && (
-                <p className={isDark ? "text-gray-200" : "text-[var(--foreground)]"}>
-                  {data.headline}
-                </p>
-              )
-            )}
 
             {/* Bio */}
             {isEditing ? (

@@ -1,11 +1,5 @@
-import { GoogleGenAI } from "@google/genai";
+import { openRouter } from "@/lib/openrouter";
 import { buildSummaryPrompt } from "../prompts/summaryPrompt";
-
-const getAi = () => {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("❌ Missing GEMINI_API_KEY");
-  return new GoogleGenAI({ apiKey });
-};
 
 export async function generateSummarySuggestions({
   menteeId,
@@ -20,24 +14,27 @@ export async function generateSummarySuggestions({
   targetRole?: string;
   jobDescription?: string;
 }) {
-  const ai = getAi();
   const prompt = buildSummaryPrompt({ cvType, cvData, targetRole, jobDescription });
 
-  console.log("🚀 Sending SUMMARY request to Gemini…");
+  console.log("🚀 Sending SUMMARY request to OpenRouter (Gemini)...");
 
   let lastError: any = null;
 
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      const resp = await ai.models.generateContent({
-        model: "gemini-2.5-pro",  
-        contents: [{ role: "user", parts: [{ text: prompt }] }],
-        config: {
-          responseMimeType: "application/json",
-        },
+      const completion = await openRouter.chat.completions.create({
+        model: "google/gemini-2.0-flash-001",
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful assistant that outputs JSON."
+          },
+          { role: "user", content: prompt }
+        ],
+        response_format: { type: "json_object" },
       });
 
-      const text = resp.text?.trim() || "{}";
+      const text = completion.choices[0]?.message?.content?.trim() || "{}";
       console.log("🤖 Raw Summary Response:", text.slice(0, 400));
 
       const json = JSON.parse(text);
@@ -48,13 +45,13 @@ export async function generateSummarySuggestions({
       };
     } catch (err: any) {
       lastError = err;
-      const msg = err?.error?.message || err?.message || "Unknown error";
+      const msg = err?.message || "Unknown error";
 
       if (
-        (msg.includes("overloaded") || msg.includes("UNAVAILABLE") || err?.error?.code === 503) &&
+        (msg.includes("overloaded") || msg.includes("timeout") || err?.status === 503) &&
         attempt < 3
       ) {
-        console.warn(`⚠️ Gemini overloaded (summary attempt ${attempt}) → retrying in 5s…`);
+        console.warn(`⚠️ OpenRouter overloaded (summary attempt ${attempt}) → retrying in 5s…`);
         await new Promise((r) => setTimeout(r, 5000));
         continue;
       }

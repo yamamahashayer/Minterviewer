@@ -82,12 +82,22 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
             const valueToUpdate = typeof processedData.value === 'string' ? processedData.value : processedData.value.toString();
             updateSetupData(valueToUpdate, step);
 
+            // Prepare the final data payload locally to avoid using stale state from closure
+            const dataPayload = { ...setupData };
+            // Manually apply the current step's update to the payload
+            switch (step) {
+                case 0: dataPayload.role = valueToUpdate; break;
+                case 1: dataPayload.interviewType = valueToUpdate; break;
+                case 2: dataPayload.techStack = valueToUpdate; break;
+                case 3: dataPayload.questionCount = parseInt(valueToUpdate, 10) || 5; break;
+            }
+
             setTimeout(() => {
                 if (step < questions.length - 1) {
                     setStep(step + 1);
                     setTranscript('');
                 } else {
-                    onComplete(setupData);
+                    onComplete(dataPayload);
                 }
             }, 1500);
         } else {
@@ -128,7 +138,116 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
                 };
 
             case 2: // Tech stack
-                const techKeywords = ['react', 'node', 'python', 'java', 'javascript', 'typescript', 'angular', 'vue'];
+                const techKeywords = [
+                    'react',
+                    'node',
+                    'python',
+                    'java',
+                    'javascript',
+                    'typescript',
+                    'angular',
+                    'vue',
+
+                    // Core CS skills
+                    'oop',
+                    'object_oriented_programming',
+                    'problem_solving',
+                    'data_structures',
+                    'algorithms',
+
+                    // Frontend
+                    'nextjs',
+                    'nuxt',
+                    'svelte',
+                    'solidjs',
+                    'react_native',
+                    'flutter',
+                    , 'android',
+                    'ios',
+                    'html',
+                    'css',
+                    'tailwindcss',
+                    'sass',
+                    'webpack',
+                    'vite',
+                    'graphql',
+                    'rest_api',
+                    'apollo',
+
+                    // Backend
+                    'nestjs',
+                    'spring_boot',
+                    'django',
+                    'flask',
+                    'express',
+                    'ruby_on_rails',
+                    'laravel',
+                    'fastapi',
+                    'dotnet',
+
+                    // Languages
+                    'kotlin',
+                    'swift',
+                    'go',
+                    'rust',
+                    'c',
+                    'cpp',
+                    'csharp',
+                    'php',
+                    'r',
+                    'scala',
+
+                    // Databases
+                    'postgresql',
+                    'mysql',
+                    'mongodb',
+                    'redis',
+                    'elasticsearch',
+                    'cassandra',
+                    'neo4j',
+                    'supabase',
+                    'firebase',
+
+                    // Cloud and DevOps
+                    'aws',
+                    'azure',
+                    'gcp',
+                    'docker',
+                    'kubernetes',
+                    'terraform',
+                    'ansible',
+                    'linux',
+                    'ci_cd',
+
+                    // AI & ML
+                    'pytorch',
+                    'tensorflow',
+                    'scikit_learn',
+                    'huggingface',
+                    'langchain',
+
+                    // Web3 / Blockchain
+                    'solidity',
+                    'ethersjs',
+                    'web3js',
+
+                    // Testing
+                    'jest',
+                    'cypress',
+                    'pytest',
+
+                    // Tools
+                    'git',
+                    'figma',
+
+                    'Anything that is relevant',
+                    'any technology',
+                    'any programming language',
+                    'any',
+                    "everything related",
+                    'general',
+
+                ];
                 const hasTech = techKeywords.some(tech => lowerResponse.includes(tech));
                 if (!hasTech) {
                     return {
@@ -230,25 +349,25 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
 
             {/* Question Display */}
             <div className="text-center mb-8">
-                <div className="bg-slate-800/50 rounded-2xl p-6 max-w-2xl">
-                    <p className="text-xl text-white leading-relaxed">{questions[step]}</p>
+                <div className="bg-white dark:bg-slate-800/50 rounded-2xl p-6 max-w-2xl shadow-sm dark:shadow-none border border-gray-200 dark:border-transparent">
+                    <p className="text-xl text-gray-900 dark:text-white leading-relaxed">{questions[step]}</p>
                 </div>
             </div>
 
             {/* Progress Indicator */}
-            <div className="flex space-x-2 mb-6">
+            <div className="flex space-x-2 mb-8">
                 {questions.map((_, idx) => (
                     <div
                         key={idx}
-                        className={`h-2 w-16 rounded-full transition-all duration-300 ${idx === step ? 'bg-purple-500' : idx < step ? 'bg-green-500' : 'bg-slate-600'}`}
+                        className={`h-2 w-16 rounded-full transition-all duration-300 ${idx === step ? 'bg-purple-500' : idx < step ? 'bg-green-500' : 'bg-gray-200 dark:bg-slate-600'}`}
                     />
                 ))}
             </div>
 
             {/* Transcript Display */}
             {transcript && (
-                <div className="bg-green-500/20 border border-green-500/50 rounded-xl p-4 mb-6 max-w-2xl w-full">
-                    <p className="text-green-300 text-center">&quot;{transcript}&quot;</p>
+                <div className="bg-green-50 dark:bg-green-500/20 border border-green-200 dark:border-green-500/50 rounded-xl p-4 mb-6 max-w-2xl w-full">
+                    <p className="text-green-800 dark:text-green-300 text-center">&quot;{transcript}&quot;</p>
                 </div>
             )}
 
@@ -269,7 +388,7 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
                     <Mic className="w-12 h-12" />
                 )}
             </button>
-            <p className="text-white/70 mt-4 text-sm">
+            <p className="text-gray-600 dark:text-white/70 mt-4 text-sm">
                 {isListening ? 'Listening... Click to stop' : 'Click to speak your answer'}
             </p>
         </div>

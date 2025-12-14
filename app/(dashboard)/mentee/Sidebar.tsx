@@ -5,7 +5,8 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import {
   Home, User, Target, Calendar, MessageSquare, Settings, FileText, Bell,
-  Users, TrendingUp, Award, Search, LogOut
+  Users, TrendingUp, Award, Search, LogOut,
+  Briefcase
 } from "lucide-react";
 import {
   Tooltip,
@@ -35,10 +36,10 @@ export default function Sidebar({
     { id: "profile", label: "My Profile", icon: User },
     { id: "interview-practice", label: "Interview Practice", icon: Target },
     { id: "cv-review", label: "CV Review", icon: FileText },
-    { id: "mentors", label: "Mentors", icon: Users },
+    { id: "browse-sessions", label: "Find Mentor", icon: Search },
+    { id: "explore-jobs", label: "Explore Jobs", icon: Briefcase },
     { id: "schedule", label: "Schedule", icon: Calendar },
     { id: "performance", label: "Performance", icon: TrendingUp },
-    { id: "achievements", label: "Achievements", icon: Award },
     { id: "messages", label: "Messages", icon: MessageSquare, badge: 3 },
     { id: "notifications", label: "Notifications", icon: Bell, badge: notificationsCount },
     { id: "reports", label: "Reports", icon: FileText },
@@ -47,42 +48,38 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`h-full transition-all duration-300 flex flex-col ${
-        isOpen ? "w-[280px]" : "w-[80px]"
-      } ${
-        isDark
+      className={`h-full transition-all duration-300 flex flex-col ${isOpen ? "w-[280px]" : "w-[80px]"
+        } ${isDark
           ? "bg-gradient-to-b from-[#0f172b] to-[#0a0f1e] border-r border-[rgba(94,234,212,0.1)]"
           : "bg-white border-r border-[#ddd6fe] shadow-lg"
-      }`}
+        }`}
       style={{ overflowY: "auto", overflowX: "visible", position: "relative" }}
     >
-        {/* Header */}
-        <div
-          className={`border-b ${
-            isDark
-              ? "border-[rgba(94,234,212,0.1)] bg-[#0b1020]"
-              : "border-[#ddd6fe] bg-white"
+      {/* Header */}
+      <div
+        className={`border-b ${isDark
+            ? "border-[rgba(94,234,212,0.1)] bg-[#0b1020]"
+            : "border-[#ddd6fe] bg-white"
           } flex-shrink-0`}
-        >
-          <img 
+      >
+        <img
           src="/Covering.png"
           alt="Minterviewer Cover"
           className="w-full h-24 object-contain"
         />
-        </div>
-        
-       {/* Search (شكل فقط) */}
+      </div>
+
+      {/* Search (شكل فقط) */}
       {isOpen && (
         <div className="p-4">
           <div className="relative">
             <Search className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? "text-[#6a7282]" : "text-[#7c3aed]"}`} size={16} />
             <input
               placeholder="Search..."
-              className={`w-full ${
-                isDark
+              className={`w-full ${isDark
                   ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.1)] text-white placeholder:text-[#6a7282] focus:border-[rgba(94,234,212,0.3)]"
                   : "bg-[#f5f3ff] border-[#ddd6fe] text-[#2e1065] placeholder:text-[#7c3aed] focus:border-[#7c3aed]"
-              } border rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none transition-colors`}
+                } border rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none transition-colors`}
             />
           </div>
         </div>
@@ -158,22 +155,22 @@ export default function Sidebar({
                   </Link>
                 </TooltipTrigger>
 
-                    <TooltipContent
-                    side="right"
-                    align="center"
-                    sideOffset={12}
-                    className={`
+                <TooltipContent
+                  side="right"
+                  align="center"
+                  sideOffset={12}
+                  className={`
                       rounded-xl px-3 py-2 text-xs font-medium whitespace-nowrap
                       backdrop-blur-xl border shadow-2xl
                       data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-left-1
                       data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-left-1
                       ${isDark
-                        ? "bg-[#0b1223]/90 text-teal-100 border-teal-400/20 shadow-[0_8px_25px_rgba(0,255,200,0.25)]"
-                        : "bg-white/95 text-[#2e1065] border-purple-300 shadow-[0_8px_25px_rgba(168,85,247,0.25)]"}
+                      ? "bg-[#0b1223]/90 text-teal-100 border-teal-400/20 shadow-[0_8px_25px_rgba(0,255,200,0.25)]"
+                      : "bg-white/95 text-[#2e1065] border-purple-300 shadow-[0_8px_25px_rgba(168,85,247,0.25)]"}
                     `}
-                      >
-                    <span>{item.label}</span>
-                    </TooltipContent>
+                >
+                  <span>{item.label}</span>
+                </TooltipContent>
 
 
               </Tooltip>
