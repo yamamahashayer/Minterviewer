@@ -33,6 +33,15 @@ export default function UploadCV({ isDark = true, onBack, onSuccess, onError }: 
   const [isProcessing, setIsProcessing] = useState(false); // 🔹 حماية من التكرار
 
 useEffect(() => {
+  // 1️⃣ أسرع طريق
+  const cached = sessionStorage.getItem("menteeId");
+  if (cached) {
+    setMenteeId(cached);
+    console.log("⚡ menteeId from sessionStorage:", cached);
+    return;
+  }
+
+  // 2️⃣ fallback: session API
   const token = sessionStorage.getItem("token");
   if (!token) return;
 
@@ -55,13 +64,12 @@ useEffect(() => {
       if (mid) {
         sessionStorage.setItem("menteeId", mid);
         setMenteeId(mid);
-        console.log("🧩 menteeId loaded:", mid);
+        console.log("🧩 menteeId fetched:", mid);
       } else {
-        console.warn("⚠️ No menteeId found in session response:", data);
+        console.warn("⚠️ No menteeId in session");
       }
-
     } catch (err) {
-      console.error("⚠️ Failed to fetch session:", err);
+      console.error("⚠️ session fetch failed:", err);
     }
   })();
 }, []);

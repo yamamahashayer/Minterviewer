@@ -4,7 +4,7 @@ import connectDB from "@/lib/mongodb";
 import Job from "@/models/Job";
 import Mentee from "@/models/Mentee";
 import CvAnalysis from "@/models/CvAnalysis";
-import "@/models/User"; // ⭐ تسجيل User schema
+import "@/models/User"; // تسجيل User schema
 
 export const dynamic = "force-dynamic";
 
@@ -67,6 +67,9 @@ export async function GET(req, ctx) {
     /* ================= 5) BUILD RESPONSE ================= */
     const applicants = job.applicants.map((app) => {
       const mentee = menteeMap.get(app.menteeId.toString());
+      const analysis = app.analysisId
+        ? analysisMap.get(app.analysisId.toString()) || null
+        : null;
 
       return {
         _id: app._id,
@@ -83,10 +86,18 @@ export async function GET(req, ctx) {
             }
           : null,
 
-        analysis: app.analysisId
-          ? analysisMap.get(app.analysisId.toString()) || null
+        // ⭐⭐ القيم اللي الواجهة بتقرأها ⭐⭐
+        cvScore: analysis?.score ?? null,
+        finalScore: analysis?.score ?? null,
+        recommendation: analysis
+          ? analysis.score >= 80
+            ? "Strong Fit"
+            : analysis.score >= 60
+            ? "Potential"
+            : "Reject"
           : null,
 
+        interviewScore: null, // جاهزة لاحقًا
         evaluation: app.evaluation || null,
       };
     });

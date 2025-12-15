@@ -309,15 +309,16 @@ export default function ApplyJobPage() {
                 </button>
 
                 {cvOpen && (
-                  <UploadCV
-                    isDark={isDark}
-                    onSuccess={(res) => {
-                      setAnalysisId(res.analysisId);
-                      setCvOpen(false);
-                    }}
-                    onError={(msg) => setError(msg)}
-                  />
-                )}
+                <UploadCV
+                  isDark={isDark}
+                  onSuccess={(res) => {
+                    setAnalysisId(res.savedId); // ⭐ التعديل هنا
+                    setCvOpen(false);
+                  }}
+                  onError={(msg) => setError(msg)}
+                />
+              )}
+
               </div>
             ) : (
               <p className="text-sm opacity-70">
