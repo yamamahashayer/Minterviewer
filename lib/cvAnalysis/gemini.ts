@@ -4,9 +4,16 @@ import type { CvAnalysis, RoleSpec } from "./schema";
 
 export async function analyzeWithGemini(
   affindaJson: any,
-  role?: RoleSpec
+  options?: {
+    role?: RoleSpec;
+    userNotes?: string;
+  }
 ): Promise<CvAnalysis> {
-  const prompt = buildCvPrompt(affindaJson, role);
+  const prompt = buildCvPrompt(
+    affindaJson,
+    options?.role,
+    options?.userNotes
+  );
 
   console.log("🚀 Sending CV analysis request to OpenRouter (Gemini)...");
 

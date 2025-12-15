@@ -1,68 +1,119 @@
 // lib/cvAnalysis/prompt.ts
 
-export function buildCvPrompt(affindaJson: any, role?: any) {
-  const rolePart = role
-    ? `Target Role: ${role.title}\nRequired Keywords: ${role.mustHaveKeywords.join(", ")}\nNice to Have: ${role.niceToHaveKeywords?.join(", ") || "None"}`
-    : "No specific target role provided.";
+type RoleLike = {
+  title: string;
+  mustHaveKeywords: string[];
+  niceToHaveKeywords?: string[];
+};
 
+export function buildCvPrompt(
+  affindaJson: any,
+  role?: RoleLike,
+  userNotes?: string
+) {
+  /* ================= ROLE CONTEXT ================= */
+  const rolePart = role
+    ? `
+🎯 TARGET ROLE CONTEXT:
+- Job Title: ${role.title}
+- Required Keywords: ${role.mustHaveKeywords.join(", ")}
+- Nice to Have Keywords: ${role.niceToHaveKeywords?.join(", ") || "None"}
+`
+    : `
+🎯 TARGET ROLE CONTEXT:
+No specific target role was provided.
+If the user mentions a role in notes, you MUST prioritize it.
+`;
+
+  /* ================= USER NOTES ================= */
+  const notesPart = userNotes
+    ? `
+📝 USER NOTES (IMPORTANT CONTEXT):
+The user may include:
+- A target job title or position
+- Industry or career field
+- Specific focus (ATS optimization, missing skills, junior role, etc.)
+- Personal concerns or priorities
+
+You MUST:
+- Detect if a job title or position is mentioned.
+- Treat it as the primary target role if no role object is provided.
+- Adjust ATS analysis, keyword coverage, and recommendations accordingly.
+- Use the notes ONLY as guidance.
+- Do NOT invent experience or skills not present in the CV.
+- Do NOT change the output JSON structure.
+
+User Notes:
+"${userNotes}"
+`
+    : `
+📝 USER NOTES:
+No additional user notes were provided.
+`;
+
+  /* ================= FINAL PROMPT ================= */
   return `
 You are a professional resume analyzer and ATS optimization system.
-Your job is to analyze the resume JSON provided below and return a complete structured JSON analysis.
+Your task is to analyze the resume JSON below and return a COMPLETE structured JSON analysis.
 
-🎯 STRICT RULES:
+🚨 STRICT RULES:
 - Always return ALL fields listed below.
-- If you have no data for a field, return an empty value (0, "", [], or {}).
-- Do not skip any field.
-- Respond ONLY with valid JSON (no text outside JSON).
+- If a field has no data, return an empty value (0, "", [], or {}).
+- Do NOT skip any field.
+- Do NOT add extra fields.
+- Respond ONLY with valid JSON (no markdown, no explanations).
 
-Return JSON in this exact schema:
+Return JSON in this EXACT schema:
 
 {
-  "score": number,                    // Overall CV quality (0–100)
-  "atsScore": number,                 // ATS compatibility score (0–100)
-  "strengths": [string],              // Key strong points
-  "weaknesses": [string],             // Weak points or missing items
-  "improvements": [string],           // Actionable recommendations
-  "redFlags": [string],               // Potential issues or inconsistencies
-  "recommendedJobTitles": [string],   // Job titles that fit this resume
-  "keywordCoverage": {                // ATS keyword match details
+  "score": number,                    
+  "atsScore": number,                 
+  "strengths": [string],              
+  "weaknesses": [string],             
+  "improvements": [string],           
+  "redFlags": [string],               
+  "recommendedJobTitles": [string],   
+  "keywordCoverage": {                
     "matched": [string],
     "missing": [string]
   },
-  "categories": {                     // Category-wise detailed feedback
+  "categories": {                     
     "formatting": {
       "title": "Formatting & Structure",
-      "score": number (0–10),
+      "score": number,
       "insights": [string]
     },
     "content": {
       "title": "Content Quality",
-      "score": number (0–10),
+      "score": number,
       "insights": [string]
     },
     "keywords": {
       "title": "Keywords & ATS",
-      "score": number (0–10),
+      "score": number,
       "insights": [string]
     },
     "experience": {
       "title": "Experience & Impact",
-      "score": number (0–10),
+      "score": number,
       "insights": [string]
     }
   }
 }
 
-💡 Evaluation guidelines:
-- "score" represents the overall strength of the resume.
-- "atsScore" should reflect formatting, keyword coverage, and readability by ATS systems.
-- "keywordCoverage" should list found/missing important role keywords.
-- Category "scores" should reflect how strong each area is (0–10).
-- Use clear and specific language in all insight items.
+💡 EVALUATION GUIDELINES:
+- "score": overall CV quality (0–100).
+- "atsScore": ATS compatibility (0–100).
+- "recommendedJobTitles": MUST align with detected role or user notes.
+- "keywordCoverage": reflect ATS relevance for the target role.
+- Category scores range from 0–10.
+- Insights must be specific, practical, and clear.
 
 ${rolePart}
 
-Resume JSON:
+${notesPart}
+
+📄 RESUME JSON:
 ${JSON.stringify(affindaJson, null, 2)}
 `;
 }

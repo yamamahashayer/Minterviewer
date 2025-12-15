@@ -20,28 +20,63 @@ const KeywordCoverageSchema = new mongoose.Schema(
 
 const CvAnalysisSchema = new mongoose.Schema(
   {
-    mentee: { type: mongoose.Schema.Types.ObjectId, ref: "Mentee", index: true },
-    resume: { type: mongoose.Schema.Types.ObjectId, ref: "Resume", index: true },
+    mentee: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Mentee",
+      index: true,
+      required: true,
+    },
+
+    resume: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Resume",
+      index: true,
+      required: true,
+    },
+
+    /* ================= Scores ================= */
     score: { type: Number, default: 0 },
     atsScore: { type: Number, default: 0 },
-    strengths: [String],
-    weaknesses: [String],
-    improvements: [String],
-    redFlags: [String],
-    recommendedJobTitles: [String],
-    keywordCoverage: KeywordCoverageSchema,
+
+    /* ================= Analysis ================= */
+    strengths: { type: [String], default: [] },
+    weaknesses: { type: [String], default: [] },
+    improvements: { type: [String], default: [] },
+    redFlags: { type: [String], default: [] },
+
+    recommendedJobTitles: { type: [String], default: [] },
+
+    keywordCoverage: {
+      type: KeywordCoverageSchema,
+      default: () => ({ matched: [], missing: [] }),
+    },
+
     categories: {
-      formatting: CategorySchema,
-      content: CategorySchema,
-      keywords: CategorySchema,
-      experience: CategorySchema,
+      formatting: { type: CategorySchema, required: true },
+      content: { type: CategorySchema, required: true },
+      keywords: { type: CategorySchema, required: true },
+      experience: { type: CategorySchema, required: true },
+    },
+
+    /* ================= NEW ================= */
+    userNotes: {
+      type: String,
+      default: null,
+      maxlength: 1000, // حماية بسيطة
+    },
+
+    // 🔮 اختياري للمستقبل
+    detectedTargetRole: {
+      type: String,
+      default: null,
     },
   },
-  { timestamps: true }
+  {
+    timestamps: true,
+  }
 );
 
 const CvAnalysis =
-  mongoose.models.CvAnalysis ||
-  mongoose.model("CvAnalysis", CvAnalysisSchema);
+  mongoose.models.CvAnalysis || mongoose.model("CvAnalysis", CvAnalysisSchema);
 
 export default CvAnalysis;
