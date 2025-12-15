@@ -4,7 +4,7 @@ import connectDB from "@/lib/mongodb";
 import Job from "@/models/Job";
 import Mentee from "@/models/Mentee";
 import CvAnalysis from "@/models/CvAnalysis";
-import "@/models/User"; // ⭐ تسجيل User schema
+import "@/models/User";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +25,7 @@ export async function GET(req, ctx) {
     const { companyId, jobId } = await unwrapParams(ctx);
     console.log("📌 Params:", { companyId, jobId });
 
-    /* ================= 1) FETCH JOB ================= */
+    /* ================= FETCH JOB ================= */
     const job = await Job.findOne({ _id: jobId, companyId }).lean();
 
     if (!job) {
@@ -35,16 +35,14 @@ export async function GET(req, ctx) {
       );
     }
 
-    /* ================= 2) COLLECT IDS ================= */
+    /* ================= IDS ================= */
     const menteeIds = job.applicants.map((a) => a.menteeId);
     const analysisIds = job.applicants
       .map((a) => a.analysisId)
       .filter(Boolean);
 
-    /* ================= 3) FETCH MENTEES + USERS ================= */
-    const mentees = await Mentee.find({
-      _id: { $in: menteeIds },
-    })
+    /* ================= MENTEES ================= */
+    const mentees = await Mentee.find({ _id: { $in: menteeIds } })
       .populate({
         path: "user",
         select: "full_name email phoneNumber Country",
@@ -55,7 +53,7 @@ export async function GET(req, ctx) {
       _id: { $in: analysisIds },
     }).lean();
 
-    /* ================= 4) BUILD LOOKUP MAPS ================= */
+    /* ================= MAPS ================= */
     const menteeMap = new Map(
       mentees.map((m) => [m._id.toString(), m])
     );
@@ -64,9 +62,12 @@ export async function GET(req, ctx) {
       analyses.map((a) => [a._id.toString(), a])
     );
 
-    /* ================= 5) BUILD RESPONSE ================= */
+    /* ================= RESPONSE ================= */
     const applicants = job.applicants.map((app) => {
       const mentee = menteeMap.get(app.menteeId.toString());
+      const analysis = app.analysisId
+        ? analysisMap.get(app.analysisId.toString())
+        : null;
 
       return {
         _id: app._id,
@@ -83,20 +84,15 @@ export async function GET(req, ctx) {
             }
           : null,
 
-        analysis: app.analysisId
-          ? analysisMap.get(app.analysisId.toString()) || null
-          : null,
+        cvScore: analysis?.score ?? null,
+        atsScore: analysis?.atsScore ?? null,
+        interviewScore: null,
 
-        evaluation: app.evaluation || null,
+        analysisId: app.analysisId || null,
       };
     });
 
-    console.log("✅ Applicants count:", applicants.length);
-
-    return NextResponse.json({
-      ok: true,
-      applicants,
-    });
+    return NextResponse.json({ ok: true, applicants });
   } catch (err) {
     console.error("🔥 Applicants GET Error:", err);
     return NextResponse.json(
