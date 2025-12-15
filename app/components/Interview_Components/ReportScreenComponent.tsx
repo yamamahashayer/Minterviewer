@@ -286,7 +286,10 @@ const ReportScreenComponent = ({ interviewData, onRestart }: { interviewData: an
                     try {
                         await fetch('/api/save-interview-result', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token') || '') : ''}`
+                            },
                             body: JSON.stringify({
                                 interviewId: interviewData.setupData.interviewId,
                                 overallScore: data.overallScore,

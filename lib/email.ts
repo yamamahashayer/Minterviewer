@@ -160,4 +160,152 @@ If you didn't request this, ignore this email.
       error: error instanceof Error ? error.message : 'Unknown error',
     };
   }
+
+}
+
+
+export async function sendBookingConfirmationEmail(
+  to: string,
+  userName: string,
+  sessionTitle: string,
+  date: string,
+  time: string,
+  meetingLink: string,
+  role: 'mentor' | 'mentee',
+  startTimeIso: Date,
+  durationMinutes: number
+) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    console.error('❌ SMTP credentials not configured!');
+    return { success: false, error: 'Email service not configured' };
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+  const subject = `Booking Confirmed: ${sessionTitle}`;
+  const instructions = role === 'mentor'
+    ? 'You have a new session booking. Please be ready at the scheduled time.'
+    : 'Your session has been successfully booked. Please join using the link below at the scheduled time.';
+
+  // --- Calendar Logic ---
+  const start = new Date(startTimeIso);
+  const end = new Date(start.getTime() + durationMinutes * 60000);
+
+  const formatAppsDate = (d: Date) => d.toISOString().replace(/-|:|\.\d+/g, '');
+
+  // Google Calendar Link
+  const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(sessionTitle)}&dates=${formatAppsDate(start)}/${formatAppsDate(end)}&details=${encodeURIComponent('Join Meeting: ' + meetingLink)}&location=${encodeURIComponent(meetingLink)}`;
+
+  // ICS Content
+  const icsContent = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Minterviewer//Booking//EN',
+    'METHOD:REQUEST',
+    'BEGIN:VEVENT',
+    `UID:minterviewer-${start.getTime()}-${to.replace(/[^\w]/g, '')}`, // improved UID uniqueness
+    `DTSTAMP:${formatAppsDate(new Date())}`,
+    `DTSTART:${formatAppsDate(start)}`,
+    `DTEND:${formatAppsDate(end)}`,
+    `SUMMARY:${sessionTitle}`,
+    `DESCRIPTION:Join Meeting: ${meetingLink}`,
+    `LOCATION:${meetingLink}`,
+    'STATUS:CONFIRMED',
+    'END:VEVENT',
+    'END:VCALENDAR'
+  ].join('\r\n');
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f3f4f6; }
+          .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+          .header { background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: white; padding: 30px; text-align: center; }
+          .header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+          .content { padding: 40px 30px; }
+          .details-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0; }
+          .detail-row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; }
+          .detail-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+          .detail-label { font-weight: 600; color: #64748b; }
+          .detail-value { font-weight: 500; color: #1e293b; color:black; } 
+          .button-container { text-align: center; margin: 30px 0; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+          .button { display: inline-block; background: #7c3aed; color: white !important; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px; transition: background 0.3s; min-width: 200px; }
+          .button:hover { background: #6d28d9; }
+          .button.secondary { background: #fff; color: #7c3aed !important; border: 2px solid #7c3aed; }
+          .button.secondary:hover { background: #f3f4f6; }
+          .footer { background: #f9fafb; padding: 20px; text-align: center; color: #6b7280; font-size: 13px; border-top: 1px solid #e5e7eb; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>📅 Booking Confirmed</h1>
+          </div>
+          <div class="content">
+            <p>Hi <strong>${userName}</strong>,</p>
+            <p>${instructions}</p>
+            
+            <div class="details-box">
+              <div class="detail-row">
+                <span class="detail-label">Session</span>
+                <span class="detail-value">${sessionTitle}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Date</span>
+                <span class="detail-value">${date}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Time</span>
+                <span class="detail-value">${time}</span>
+              </div>
+            </div>
+
+            <div class="button-container">
+              <a href="${meetingLink}" class="button">Join Meeting</a>
+              <a href="${gCalUrl}" class="button secondary">Add to Google Calendar</a>
+              <p style="margin-top: 10px; font-size: 13px; color: #64748b;">
+                <strong>Note:</strong> If asked, please log in with Google/Jitsi to start the meeting as a moderator.
+              </p>
+            </div>
+
+            <p style="text-align: center; color: #6b7280; font-size: 14px;">Or copy this link:</p>
+            <div style="background: #f1f5f9; padding: 12px; border-radius: 6px; word-break: break-all; color: #4f46e5; text-align: center; font-family: monospace;">${meetingLink}</div>
+          </div>
+          <div class="footer">
+            <p><strong>Minterviewer</strong></p>
+            <p>Need to reschedule? cancel before an hour of the start time.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"Minterviewer" <${process.env.SMTP_USER}>`,
+      to,
+      subject,
+      html,
+      icalEvent: {
+        filename: 'invitation.ics',
+        method: 'REQUEST',
+        content: icsContent
+      }
+    });
+    console.log(`✅ Booking email sent to ${to}`);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error(`❌ Failed to send booking email to ${to}:`, error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
 }

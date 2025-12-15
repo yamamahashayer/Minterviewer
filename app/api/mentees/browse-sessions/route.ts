@@ -114,6 +114,7 @@ export async function GET(req: NextRequest) {
                 notes: 1,
                 mentor: {
                     _id: "$mentorDocs._id",
+                    userId: "$userDocs._id", // Added for chat integration
                     name: "$userDocs.full_name",
                     photo: "$userDocs.profile_photo",
                     role: "$userDocs.role",

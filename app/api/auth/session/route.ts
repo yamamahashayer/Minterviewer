@@ -79,7 +79,7 @@ export async function GET(req: Request) {
     /* ========================= Mentor ========================= */
     const mentor = await Mentor.findOne({ user: userObjId })
       .select(`
-        _id yearsOfExperience hourlyRate focusAreas availabilityType 
+        _id yearsOfExperience hourlyRate stripeAccountId focusAreas availabilityType 
         languages sessionTypes certifications achievements rating 
         reviewsCount sessionsCount menteesCount
       `)

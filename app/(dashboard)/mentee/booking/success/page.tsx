@@ -11,6 +11,22 @@ export default function BookingSuccessPage() {
     const searchParams = useSearchParams();
     const sessionId = searchParams.get('session_id');
 
+    useEffect(() => {
+        if (sessionId) {
+            // Trigger confirmation logic (updates DB, sends email if not already done)
+            fetch('/api/stripe/confirm-booking', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: sessionId }),
+            })
+                .then(res => res.json())
+                .then(data => {
+                    console.log('Booking confirmation result:', data);
+                })
+                .catch(err => console.error('Confirmation failed:', err));
+        }
+    }, [sessionId]);
+
     return (
         <div className="min-h-screen flex items-center justify-center p-4">
             <motion.div
@@ -28,7 +44,7 @@ export default function BookingSuccessPage() {
                 </p>
 
                 <div className="space-y-3">
-                    <Link href="/mentee/sessions">
+                    <Link href="/mentee?tab=schedule">
                         <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white">
                             View My Sessions
                             <ArrowRight className="w-4 h-4 ml-2" />

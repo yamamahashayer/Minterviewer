@@ -17,8 +17,12 @@ import { db } from "@/lib/firebase";
 import { MessageSquare } from "lucide-react";
 import type { IConversation, IMessage } from "./helpers";
 
+import { useSearchParams } from "next/navigation";
+
 export default function MessagesPage({ theme = "light" }) {
   const isDark = theme === "dark";
+  const searchParams = useSearchParams();
+  const chatWithId = searchParams.get("chatWith");
 
   const [conversations, setConversations] = useState<IConversation[]>([]);
   const [selectedConvo, setSelectedConvo] = useState<IConversation | null>(null);
@@ -41,6 +45,40 @@ export default function MessagesPage({ theme = "light" }) {
       setCurrentUserId(u._id || u.id);
     }
   }, []);
+
+  // AUTO-START CHAT FROM URL
+  useEffect(() => {
+    async function startChat() {
+      if (!currentUserId || !chatWithId) return;
+
+      console.log("Auto-starting chat with:", chatWithId);
+      try {
+        const res = await fetch("/api/chat/conversation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user1: currentUserId,
+            user2: chatWithId
+          })
+        });
+        const json = await res.json();
+        if (json.ok && json.conversation) {
+          const convo = json.conversation;
+          // We need to refresh list to see it in sidebar
+          loadConversations();
+          // Open it
+          openConversation(convo);
+        }
+      } catch (err) {
+        console.error("Failed to auto-start chat", err);
+      }
+    }
+
+    if (currentUserId && chatWithId) {
+      // Debounce slightly or just run
+      startChat();
+    }
+  }, [currentUserId, chatWithId]);
 
   // SCROLL HANDLER
   const handleScroll = () => {
@@ -193,7 +231,7 @@ export default function MessagesPage({ theme = "light" }) {
     shouldAutoScrollRef.current = true;
   }
 
-  
+
   return (
     <div className="grid grid-cols-3 gap-6 p-4">
       <MessagesList

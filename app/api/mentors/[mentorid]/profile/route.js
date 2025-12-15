@@ -79,6 +79,7 @@ export async function GET(req, context) {
       // MENTOR fields
       yearsOfExperience: mentor.yearsOfExperience,
       hourlyRate: mentor.hourlyRate,
+      stripeAccountId: mentor.stripeAccountId || "",
       focusAreas: mentor.focusAreas || [], // ARRAY ✔️
       availabilityType: mentor.availabilityType,
       languages: mentor.languages || [], // ARRAY ✔️
@@ -168,6 +169,9 @@ export async function PUT(req, context) {
 
     if (profile.hourlyRate != null)
       mentorSet.hourlyRate = Number(profile.hourlyRate);
+
+    if (profile.stripeAccountId !== undefined)
+      mentorSet.stripeAccountId = profile.stripeAccountId;
 
     if (Array.isArray(profile.focusAreas))
       mentorSet.focusAreas = profile.focusAreas; // ARRAY ✔️
