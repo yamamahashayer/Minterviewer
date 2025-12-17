@@ -40,7 +40,11 @@ const timeSlotSchema = new mongoose.Schema(
         session: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Session'
-        } // Reference to session if booked
+        }, // Reference to session if booked
+        mentee: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        } // Reference to the user who booked this slot
     },
     { timestamps: true }
 );

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Save, Mail, Phone } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
@@ -17,6 +18,63 @@ export default function ProfileTab({
   user: any;
   mentor: any;
 }) {
+  const [stripeAccountId, setStripeAccountId] = useState(mentor?.stripeAccountId || "");
+  const [savingStripe, setSavingStripe] = useState(false);
+  const [stripeStatus, setStripeStatus] = useState<string | null>(null);
+
+  const handleSaveStripeAccount = async () => {
+    try {
+      setSavingStripe(true);
+      setStripeStatus(null);
+
+      if (typeof window === "undefined") {
+        console.error("Stripe manual save: window is undefined");
+        return;
+      }
+
+      const token = sessionStorage.getItem("token");
+      if (!token) {
+        console.error("No auth token found for saving Stripe Account ID");
+        setStripeStatus("Auth token is missing.");
+        return;
+      }
+
+      if (!mentor?._id) {
+        console.error("No mentor id available for saving Stripe Account ID");
+        setStripeStatus("Mentor ID not found.");
+        return;
+      }
+
+      const res = await fetch(`/api/mentors/${mentor._id}/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          profile: {
+            stripeAccountId: stripeAccountId.trim(),
+          },
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || data?.ok === false) {
+        console.error("Failed to save Stripe Account ID", data);
+        setStripeStatus(data?.message || "Failed to save Stripe Account ID.");
+        return;
+      }
+
+      setStripeStatus("Stripe Account ID saved successfully.");
+    } catch (err) {
+      console.error("Error saving Stripe Account ID:", err);
+      setStripeStatus("Error while saving Stripe Account ID.");
+    } finally {
+      setSavingStripe(false);
+    }
+  };
+
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
       <SettingCard theme={theme}>
@@ -104,57 +162,32 @@ export default function ProfileTab({
         {/* Stripe Connect Section */}
         <div>
           <h3 className="text-[var(--foreground)] mb-4">Payment Settings</h3>
-          <div className="flex items-center justify-between p-4 border border-[var(--border)] rounded-lg bg-[var(--background-muted)]">
+          <div className="space-y-3 p-4 border border-[var(--border)] rounded-lg bg-[var(--background-muted)]">
             <div>
-              <h4 className="font-medium text-[var(--foreground)]">Stripe Connect</h4>
-              <p className="text-sm text-[var(--foreground-muted)]">
-                {mentor?.stripeAccountId
-                  ? "Your Stripe account is connected. You can receive payments."
-                  : "Connect your Stripe account to start receiving payments for your sessions."}
+              <h4 className="font-medium text-[var(--foreground)]">Stripe Account ID</h4>
+              <Input
+                value={stripeAccountId}
+                onChange={(e) => setStripeAccountId(e.target.value)}
+                placeholder="acct_..."
+              />
+              <p className="mt-1 text-xs text-[var(--foreground-muted)]">
+                Paste your Stripe account ID from your Stripe dashboard (e.g. acct_1234...).
               </p>
             </div>
-            {mentor?.stripeAccountId ? (
-              <Button variant="outline" className="text-green-500 border-green-500 hover:bg-green-500/10 cursor-default">
-                Connected
-              </Button>
-            ) : (
+            <div className="flex items-center justify-between gap-4">
               <Button
-                onClick={async () => {
-                  try {
-                    if (typeof window === 'undefined') {
-                      console.error('Stripe Connect: window is undefined');
-                      return;
-                    }
-
-                    const token = sessionStorage.getItem('token');
-                    console.log('Stripe Connect: token length =', token?.length);
-
-                    if (!token) {
-                      console.error('No auth token found for Stripe Connect');
-                      return;
-                    }
-
-                    const res = await fetch('/api/stripe/connect', {
-                      method: 'POST',
-                      headers: {
-                        Authorization: `Bearer ${token}`,
-                      },
-                    });
-                    const data = await res.json();
-                    if (data.url) {
-                      window.location.href = data.url;
-                    } else {
-                      console.error('Failed to get Connect URL', data.error);
-                    }
-                  } catch (err) {
-                    console.error('Error connecting Stripe:', err);
-                  }
-                }}
+                onClick={handleSaveStripeAccount}
+                disabled={savingStripe}
                 className="bg-[#635BFF] hover:bg-[#534be0] text-white"
               >
-                Connect Stripe
+                {savingStripe ? "Saving..." : "Save Stripe Account"}
               </Button>
-            )}
+              {stripeStatus && (
+                <p className="text-xs text-[var(--foreground-muted)]">
+                  {stripeStatus}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </SettingCard>

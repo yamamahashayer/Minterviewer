@@ -83,7 +83,7 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
             updateSetupData(valueToUpdate, step);
 
             // Prepare the final data payload locally to avoid using stale state from closure
-            const dataPayload = { ...setupData };
+            const dataPayload: any = { ...setupData };
             // Manually apply the current step's update to the payload
             switch (step) {
                 case 0: dataPayload.role = valueToUpdate; break;
@@ -92,11 +92,40 @@ const SetupScreenComponent = ({ onComplete }: { onComplete: (data: any) => void 
                 case 3: dataPayload.questionCount = parseInt(valueToUpdate, 10) || 5; break;
             }
 
-            setTimeout(() => {
+            setTimeout(async () => {
                 if (step < questions.length - 1) {
                     setStep(step + 1);
                     setTranscript('');
                 } else {
+                    // Create interview in DB before completing setup
+                    try {
+                        const token = localStorage.getItem('token');
+                        const response = await fetch('/api/create-interview', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${typeof window !== 'undefined' ? (sessionStorage.getItem('token') || localStorage.getItem('token') || '') : ''}`
+                            },
+                            body: JSON.stringify({
+                                role: dataPayload.role,
+                                techstack: dataPayload.techStack,
+                                type: dataPayload.interviewType
+                            })
+                        });
+
+                        if (response.ok) {
+                            const result = await response.json();
+                            if (result.success && result.interviewId) {
+                                dataPayload.interviewId = result.interviewId;
+                                console.log('Interview created with ID:', result.interviewId);
+                            }
+                        } else {
+                            console.error('Failed to create interview:', await response.text());
+                        }
+                    } catch (error) {
+                        console.error('Error creating interview:', error);
+                    }
+
                     onComplete(dataPayload);
                 }
             }, 1500);

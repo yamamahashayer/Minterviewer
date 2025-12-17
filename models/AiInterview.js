@@ -21,4 +21,4 @@ const aiInterviewSchema = new mongoose.Schema(
   { timestamps: { createdAt: 'createdAt', updatedAt: true } }
 );
 
-export default mongoose.model('AiInterview', aiInterviewSchema);
+export default mongoose.models.AiInterview || mongoose.model('AiInterview', aiInterviewSchema, 'aiinterviews');

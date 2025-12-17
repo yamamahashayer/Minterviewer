@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { 
+import { useState, useEffect } from "react";
+import {
   Calendar as CalendarIcon,
   Clock,
   Plus,
@@ -23,23 +23,26 @@ import {
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { Calendar } from "../../components/ui/calendar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../../components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "../../components/ui/dialog";
+import { toast } from "sonner";
 import { Input } from "../../components/ui/input";
 import { Label } from "../../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { Textarea } from "../../components/ui/textarea";
 
 interface ScheduleEvent {
-  id: number;
+  id: number | string;
   title: string;
   type: "technical" | "behavioral" | "system-design" | "coding" | "mock";
   date: string;
   time: string;
   duration: string;
   interviewer?: string;
+  interviewerId?: string; // Added for feedback
   description: string;
   status: "upcoming" | "completed" | "cancelled";
   reminder: boolean;
+  meetingLink?: string;
 }
 
 export default function SchedulePage({ theme = "dark" }: { theme?: "dark" | "light" }) {
@@ -49,79 +52,95 @@ export default function SchedulePage({ theme = "dark" }: { theme?: "dark" | "lig
   const [filterType, setFilterType] = useState<string>("all");
   const [currentView, setCurrentView] = useState<"month" | "week" | "day">("month");
 
-  const [events, setEvents] = useState<ScheduleEvent[]>([
-    {
-      id: 1,
-      title: "Technical Interview Practice",
-      type: "technical",
-      date: "2025-10-12",
-      time: "10:00 AM",
-      duration: "60 min",
-      interviewer: "AI Coach Sarah",
-      description: "Focus on data structures and algorithms",
-      status: "upcoming",
-      reminder: true
-    },
-    {
-      id: 2,
-      title: "System Design Session",
-      type: "system-design",
-      date: "2025-10-12",
-      time: "2:00 PM",
-      duration: "90 min",
-      interviewer: "AI Coach Mike",
-      description: "Design a scalable e-commerce platform",
-      status: "upcoming",
-      reminder: true
-    },
-    {
-      id: 3,
-      title: "Behavioral Interview Prep",
-      type: "behavioral",
-      date: "2025-10-13",
-      time: "11:00 AM",
-      duration: "45 min",
-      interviewer: "AI Coach Emma",
-      description: "STAR method practice with common questions",
-      status: "upcoming",
-      reminder: false
-    },
-    {
-      id: 4,
-      title: "Mock Technical Interview",
-      type: "mock",
-      date: "2025-10-14",
-      time: "3:00 PM",
-      duration: "120 min",
-      interviewer: "Senior Engineer AI",
-      description: "Full mock interview simulation",
-      status: "upcoming",
-      reminder: true
-    },
-    {
-      id: 5,
-      title: "Coding Challenge",
-      type: "coding",
-      date: "2025-10-15",
-      time: "9:00 AM",
-      duration: "75 min",
-      description: "Advanced algorithm problems",
-      status: "upcoming",
-      reminder: true
-    },
-    {
-      id: 6,
-      title: "System Design Interview",
-      type: "system-design",
-      date: "2025-10-10",
-      time: "1:00 PM",
-      duration: "90 min",
-      interviewer: "AI Coach Sarah",
-      description: "Designed a ride-sharing system",
-      status: "completed",
-      reminder: false
-    },
-  ]);
+  const [events, setEvents] = useState<ScheduleEvent[]>([]);
+
+  // Feedback State
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
+  const [selectedSessionForReview, setSelectedSessionForReview] = useState<ScheduleEvent | null>(null);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewText, setReviewText] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  const handleOpenReview = (event: ScheduleEvent) => {
+    setSelectedSessionForReview(event);
+    setReviewRating(0);
+    setReviewText('');
+    setIsReviewOpen(true);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!selectedSessionForReview) return;
+    if (reviewRating === 0) {
+      toast.error("Please select a rating");
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    try {
+      const userStr = sessionStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+
+      if (!user) {
+        toast.error("User not found");
+        return;
+      }
+
+      const payload = {
+        sessionId: selectedSessionForReview.id, // Ensure this maps to TimeSlot ID
+        fromUserId: user._id || user.id,
+        toUserId: selectedSessionForReview.interviewerId || 'mentor_placeholder', // Need mentor ID from event
+        rating: reviewRating,
+        feedback: reviewText,
+        tags: []
+      };
+
+      // Note: event.interviewer is name, we need ID. 
+      // Assuming event object might need update or we handle gracefully if ID missing.
+      // For now, let's proceed. 
+
+      const res = await fetch('/api/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        toast.success("Review submitted successfully!");
+        setIsReviewOpen(false);
+      } else {
+        const json = await res.json();
+        toast.error(json.error || "Failed to submit review");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const userStr = sessionStorage.getItem('user');
+        if (!userStr) return;
+
+        const user = JSON.parse(userStr);
+        const menteeId = user._id || user.id;
+
+        const res = await fetch(`/api/mentee/sessions?menteeId=${menteeId}`);
+        const data = await res.json();
+
+        if (data.success) {
+          setEvents(data.events);
+        }
+      } catch (error) {
+        console.error("Failed to fetch sessions:", error);
+      }
+    };
+
+    fetchSessions();
+  }, []);
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -157,7 +176,7 @@ export default function SchedulePage({ theme = "dark" }: { theme?: "dark" | "lig
   };
 
   const upcomingEvents = events
-    .filter(e => e.status === "upcoming")
+    // .filter(e => e.status === "upcoming") // SHOW ALL for debugging
     .filter(e => filterType === "all" || e.type === filterType)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -167,12 +186,51 @@ export default function SchedulePage({ theme = "dark" }: { theme?: "dark" | "lig
     return eventDate.toDateString() === today.toDateString() && e.status === "upcoming";
   });
 
+  // Calculate Stats
+  const now = new Date();
+
+  // This Week
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - now.getDay());
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+  const thisWeekCount = events.filter(e => {
+    const d = new Date(e.date);
+    return d >= startOfWeek && d <= endOfWeek;
+  }).length;
+
+  // This Month
+  const thisMonthCount = events.filter(e => {
+    const d = new Date(e.date);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).length;
+
+  // Completed
+  const completedCount = events.filter(e =>
+    e.status === 'completed' || new Date(e.date) < now
+  ).length;
+
+  // Hours
+  const totalMinutes = events.reduce((acc, curr) => {
+    // duration format expected "60 min" or just number if API changed? 
+    // API sends "60 min". parseInt handles "60 min" -> 60.
+    return acc + (parseInt(curr.duration) || 0);
+  }, 0);
+  const totalHours = (totalMinutes / 60).toFixed(1) + 'h';
+
   const stats = [
-    { label: "This Week", value: "5", icon: CalendarIcon, color: "text-teal-300" },
-    { label: "This Month", value: "18", icon: Target, color: "text-emerald-400" },
-    { label: "Completed", value: "42", icon: Check, color: "text-violet-400" },
-    { label: "Hours Scheduled", value: "12.5h", icon: Clock, color: "text-amber-400" },
+    { label: "This Week", value: thisWeekCount.toString(), icon: CalendarIcon, color: "text-teal-300" },
+    { label: "This Month", value: thisMonthCount.toString(), icon: Target, color: "text-emerald-400" },
+    { label: "Completed", value: completedCount.toString(), icon: Check, color: "text-violet-400" },
+    { label: "Hours Scheduled", value: totalHours, icon: Clock, color: "text-amber-400" },
+    { label: "Hours Scheduled", value: totalHours, icon: Clock, color: "text-amber-400" },
   ];
+
+  const canLeaveReview = (event: ScheduleEvent) => {
+    const isCompleted = event.status === 'completed' || new Date(event.date) < new Date();
+    return isCompleted;
+  };
 
   return (
     <div className={`min-h-screen p-8 ${isDark ? "bg-gradient-to-b from-[#0a0f1e] to-[#000000]" : "bg-[#f5f3ff]"}`}>
@@ -180,7 +238,7 @@ export default function SchedulePage({ theme = "dark" }: { theme?: "dark" | "lig
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 className={isDark ? "text-white" : "text-[#2e1065]"} style={{marginBottom: "0.5rem", fontWeight: 700}}>Interview Schedule 📅</h1>
+            <h1 className={isDark ? "text-white" : "text-[#2e1065]"} style={{ marginBottom: "0.5rem", fontWeight: 700 }}>Interview Schedule 📅</h1>
             <p className={isDark ? "text-[#99a1af]" : "text-[#6b21a8]"}>Manage and plan your interview practice sessions</p>
           </div>
           <div className="flex gap-3">
@@ -287,6 +345,48 @@ export default function SchedulePage({ theme = "dark" }: { theme?: "dark" | "lig
         <div className={`h-1 w-[200px] rounded-full mt-4 ${isDark ? "bg-gradient-to-r from-[#5eead4] to-transparent shadow-[0px_0px_10px_0px_rgba(94,234,212,0.5)]" : "bg-gradient-to-r from-[#7c3aed] via-[#a855f7] to-transparent shadow-[0px_0px_15px_0px_rgba(124,58,237,0.4)]"}`} />
       </div>
 
+      {/* Feedback Dialog */}
+      <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+        <DialogContent className={isDark ? "bg-[#0f172b] border-[rgba(94,234,212,0.3)] text-white" : "bg-white border-[#ddd6fe] text-[#2e1065]"}>
+          <DialogHeader>
+            <DialogTitle>Rate your session with {selectedSessionForReview?.interviewer}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex flex-col items-center gap-2">
+              <label className="text-sm opacity-70">How was the mentor?</label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button key={star} onClick={() => setReviewRating(star)} className="focus:outline-none transition-transform hover:scale-110">
+                    <Star
+                      className={`w-8 h-8 ${star <= reviewRating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`}
+                    />
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Review</Label>
+              <Textarea
+                placeholder="How did the mentor help you?..."
+                className={isDark ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.3)]" : "bg-white border-[#ddd6fe]"}
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setIsReviewOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleSubmitReview}
+              disabled={isSubmittingReview || reviewRating === 0}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              {isSubmittingReview ? 'Submitting...' : 'Submit Review'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((stat, index) => {
@@ -360,6 +460,14 @@ export default function SchedulePage({ theme = "dark" }: { theme?: "dark" | "lig
             selected={date}
             onSelect={setDate}
             className="rounded-lg border-0"
+            modifiers={{
+              booked: (date) => events.some(e => new Date(e.date).toDateString() === date.toDateString())
+            }}
+            modifiersClassNames={{
+              booked: isDark
+                ? "bg-[rgba(94,234,212,0.2)] text-teal-300 font-bold border border-[rgba(94,234,212,0.3)]"
+                : "bg-purple-100 text-purple-700 font-bold border border-purple-200"
+            }}
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
               month: "space-y-4",
@@ -373,26 +481,22 @@ export default function SchedulePage({ theme = "dark" }: { theme?: "dark" | "lig
               head_row: "flex",
               head_cell: `${isDark ? "text-[#99a1af]" : "text-[#7c3aed]"} rounded-md w-9 text-xs font-semibold`,
               row: "flex w-full mt-2",
-              cell: `text-center text-sm p-0 relative ${
-                isDark 
-                  ? "[&:has([aria-selected])]:bg-[rgba(94,234,212,0.1)]"
-                  : "[&:has([aria-selected])]:bg-purple-100"
-              } first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20`,
-              day: `h-9 w-9 p-0 rounded-md transition-colors ${
-                isDark
-                  ? "text-white hover:bg-[rgba(94,234,212,0.2)]"
-                  : "text-[#4c1d95] hover:bg-purple-100 font-medium"
-              }`,
-              day_selected: `${
-                isDark
-                  ? "bg-[rgba(94,234,212,0.3)] text-white hover:bg-[rgba(94,234,212,0.4)]"
-                  : "bg-gradient-to-br from-[#7c3aed] to-[#a855f7] text-white hover:from-[#6d28d9] hover:to-[#9333ea] font-semibold shadow-md"
-              }`,
-              day_today: `${
-                isDark
-                  ? "bg-[rgba(255,255,255,0.1)] text-teal-300"
-                  : "bg-pink-100 text-[#831843] border-2 border-pink-400 font-semibold"
-              }`,
+              cell: `text-center text-sm p-0 relative ${isDark
+                ? "[&:has([aria-selected])]:bg-[rgba(94,234,212,0.1)]"
+                : "[&:has([aria-selected])]:bg-purple-100"
+                } first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20`,
+              day: `h-9 w-9 p-0 rounded-md transition-colors ${isDark
+                ? "text-white hover:bg-[rgba(94,234,212,0.2)]"
+                : "text-[#4c1d95] hover:bg-purple-100 font-medium"
+                }`,
+              day_selected: `${isDark
+                ? "bg-[rgba(94,234,212,0.3)] text-white hover:bg-[rgba(94,234,212,0.4)]"
+                : "bg-gradient-to-br from-[#7c3aed] to-[#a855f7] text-white hover:from-[#6d28d9] hover:to-[#9333ea] font-semibold shadow-md"
+                }`,
+              day_today: `${isDark
+                ? "bg-[rgba(255,255,255,0.1)] text-teal-300"
+                : "bg-pink-100 text-[#831843] border-2 border-pink-400 font-semibold"
+                }`,
               day_outside: `${isDark ? "text-[#6a7282]" : "text-purple-300"} opacity-50`,
               day_disabled: `${isDark ? "text-[#6a7282]" : "text-purple-300"} opacity-50`,
               day_hidden: "invisible",
@@ -410,13 +514,12 @@ export default function SchedulePage({ theme = "dark" }: { theme?: "dark" | "lig
               { type: "mock", label: "Mock Interview" },
             ].map((item) => (
               <div key={item.type} className="flex items-center gap-2">
-                <div className={`w-3 h-3 rounded-full ${
-                  item.type === "technical" ? (isDark ? "bg-teal-400" : "bg-[#7c3aed]") :
+                <div className={`w-3 h-3 rounded-full ${item.type === "technical" ? (isDark ? "bg-teal-400" : "bg-[#7c3aed]") :
                   item.type === "behavioral" ? (isDark ? "bg-violet-400" : "bg-[#ec4899]") :
-                  item.type === "system-design" ? (isDark ? "bg-emerald-400" : "bg-emerald-500") :
-                  item.type === "coding" ? (isDark ? "bg-amber-400" : "bg-amber-500") :
-                  (isDark ? "bg-rose-400" : "bg-rose-500")
-                }`} />
+                    item.type === "system-design" ? (isDark ? "bg-emerald-400" : "bg-emerald-500") :
+                      item.type === "coding" ? (isDark ? "bg-amber-400" : "bg-amber-500") :
+                        (isDark ? "bg-rose-400" : "bg-rose-500")
+                  }`} />
                 <span className={`${isDark ? "text-[#99a1af]" : "text-[#5b21b6]"} text-xs font-semibold`}>{item.label}</span>
               </div>
             ))}
@@ -500,13 +603,34 @@ export default function SchedulePage({ theme = "dark" }: { theme?: "dark" | "lig
                   </div>
 
                   <div className="mt-4 flex gap-2">
-                    <button className={`flex-1 inline-flex items-center justify-center gap-2 rounded-md px-4 h-9 ${isDark ? "bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600" : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 font-semibold shadow-md"} text-white transition-colors`}>
-                      <Video size={14} />
-                      Join Session
-                    </button>
+                    {event.meetingLink ? (
+                      <a
+                        href={event.meetingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`flex-1 inline-flex items-center justify-center gap-2 rounded-md px-4 h-9 ${isDark ? "bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600" : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 font-semibold shadow-md"} text-white transition-colors`}
+                      >
+                        <Video size={14} />
+                        Join Session
+                      </a>
+                    ) : (
+                      <button disabled className={`flex-1 inline-flex items-center justify-center gap-2 rounded-md px-4 h-9 ${isDark ? "bg-gray-700 text-gray-400" : "bg-gray-200 text-gray-400"} cursor-not-allowed`}>
+                        <Video size={14} />
+                        Not Started
+                      </button>
+                    )}
                     <button className={`inline-flex items-center justify-center rounded-md px-4 h-9 ${isDark ? "bg-[rgba(94,234,212,0.2)] hover:bg-[rgba(94,234,212,0.3)] text-teal-300 border border-[rgba(94,234,212,0.3)]" : "bg-white hover:bg-purple-50 text-purple-700 border-2 border-[#ddd6fe] hover:border-[#a855f7] font-medium"} transition-colors`}>
                       View Details
                     </button>
+                    {canLeaveReview(event) && (
+                      <button
+                        onClick={() => handleOpenReview(event)}
+                        className={`inline-flex items-center justify-center rounded-md px-4 h-9 ${isDark ? "bg-[rgba(236,72,153,0.2)] hover:bg-[rgba(236,72,153,0.3)] text-pink-300 border border-[rgba(236,72,153,0.3)]" : "bg-white hover:bg-pink-50 text-pink-700 border-2 border-pink-200 hover:border-pink-300 font-medium"} transition-colors`}
+                      >
+                        <Star className="w-4 h-4 mr-2" />
+                        Review
+                      </button>
+                    )}
                   </div>
                 </div>
               );

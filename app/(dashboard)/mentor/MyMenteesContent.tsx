@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { Search, Plus, Sparkles, TrendingUp, Users } from 'lucide-react';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -15,169 +15,74 @@ import {
 import { MenteeCard } from './MenteeCard';
 import { MenteeDetailPanel } from './MenteeDetailPanel';
 
-const menteesData = [
-  {
-    id: 1,
-    name: 'Sarah Mitchell',
-    role: 'Frontend Developer',
-    image: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMHdvbWFuJTIwcG9ydHJhaXR8ZW58MXx8fHwxNzYwMzIxODAzfDA&ixlib=rb-4.1.0&q=80&w=1080',
-    progress: 78,
-    aiConfidence: 82,
-    lastSession: 'Oct 10, 2025',
-    status: 'active' as const,
-    skillArea: 'React & TypeScript',
-    skills: [
-      { name: 'React Development', level: 85 },
-      { name: 'TypeScript', level: 78 },
-      { name: 'System Design', level: 65 },
-      { name: 'Communication', level: 90 }
-    ],
-    recentFeedback: [
-      'Excellent progress in component architecture and state management',
-      'Shows strong understanding of React hooks and performance optimization',
-      'Needs to work on explaining technical decisions more clearly'
-    ],
-    nextSession: 'October 16, 2025 at 2:00 PM - Technical Interview Practice'
-  },
-  {
-    id: 2,
-    name: 'James Rodriguez',
-    role: 'Full Stack Engineer',
-    image: 'https://images.unsplash.com/photo-1737575655055-e3967cbefd03?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBkZXZlbG9wZXIlMjBwb3J0cmFpdHxlbnwxfHx8fDE3NjAzMTg5MTh8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    progress: 65,
-    aiConfidence: 70,
-    lastSession: 'Oct 12, 2025',
-    status: 'active' as const,
-    skillArea: 'Backend & APIs',
-    skills: [
-      { name: 'Node.js & Express', level: 80 },
-      { name: 'Database Design', level: 72 },
-      { name: 'API Development', level: 75 },
-      { name: 'Problem Solving', level: 68 }
-    ],
-    recentFeedback: [
-      'Strong technical foundation in backend development',
-      'Could improve on explaining trade-offs in architectural decisions',
-      'Great progress in behavioral interview scenarios'
-    ],
-    nextSession: 'October 15, 2025 at 10:00 AM - System Design Mock'
-  },
-  {
-    id: 3,
-    name: 'Emily Chen',
-    role: 'Software Engineer',
-    image: 'https://images.unsplash.com/photo-1681887001651-a15c749c1ab0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxmZW1hbGUlMjBkZXZlbG9wZXIlMjBwb3J0cmFpdHxlbnwxfHx8fDE3NjAzMzIwODZ8MA&ixlib=rb-4.1.0&q=80&w=1080',
-    progress: 92,
-    aiConfidence: 88,
-    lastSession: 'Oct 13, 2025',
-    status: 'active' as const,
-    skillArea: 'Algorithms & DS',
-    skills: [
-      { name: 'Data Structures', level: 92 },
-      { name: 'Algorithms', level: 88 },
-      { name: 'Code Optimization', level: 85 },
-      { name: 'Technical Communication', level: 90 }
-    ],
-    recentFeedback: [
-      'Outstanding performance in algorithm challenges',
-      'Excellent at explaining complex solutions clearly',
-      'Ready for senior-level technical interviews'
-    ],
-    nextSession: 'October 14, 2025 at 3:00 PM - Advanced Algorithms'
-  },
-  {
-    id: 4,
-    name: 'Michael Brown',
-    role: 'Backend Developer',
-    image: 'https://images.unsplash.com/photo-1637856794303-d864ce316444?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx5b3VuZyUyMHRlY2glMjBwcm9mZXNzaW9uYWx8ZW58MXx8fHwxNzYwMzMyMDg0fDA&ixlib=rb-4.1.0&q=80&w=1080',
-    progress: 58,
-    aiConfidence: 62,
-    lastSession: 'Oct 8, 2025',
-    status: 'active' as const,
-    skillArea: 'Cloud & DevOps',
-    skills: [
-      { name: 'AWS Services', level: 70 },
-      { name: 'Docker & K8s', level: 65 },
-      { name: 'CI/CD Pipelines', level: 60 },
-      { name: 'System Architecture', level: 55 }
-    ],
-    recentFeedback: [
-      'Good understanding of cloud fundamentals',
-      'Needs more practice with real-world system design scenarios',
-      'Improving confidence in technical discussions'
-    ],
-    nextSession: 'October 17, 2025 at 11:00 AM - Cloud Architecture Review'
-  },
-  {
-    id: 5,
-    name: 'Lisa Wang',
-    role: 'Mobile Developer',
-    image: 'https://images.unsplash.com/photo-1708195886023-3ecb00ac7a49?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMHByb2Zlc3Npb25hbCUyMHBvcnRyYWl0fGVufDF8fHx8MTc2MDMwMDI5N3ww&ixlib=rb-4.1.0&q=80&w=1080',
-    progress: 71,
-    aiConfidence: 76,
-    lastSession: 'Oct 11, 2025',
-    status: 'active' as const,
-    skillArea: 'React Native',
-    skills: [
-      { name: 'React Native', level: 82 },
-      { name: 'Mobile UX/UI', level: 78 },
-      { name: 'Performance', level: 70 },
-      { name: 'Cross-platform', level: 75 }
-    ],
-    recentFeedback: [
-      'Excellent mobile development skills',
-      'Great attention to user experience details',
-      'Should focus more on performance optimization techniques'
-    ],
-    nextSession: 'October 16, 2025 at 1:00 PM - Mobile Architecture'
-  },
-  {
-    id: 6,
-    name: 'David Kim',
-    role: 'Data Engineer',
-    image: 'https://images.unsplash.com/photo-1737574107736-9e02ca5d5387?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxzb2Z0d2FyZSUyMGVuZ2luZWVyJTIwaGVhZHNob3R8ZW58MXx8fHwxNzYwMzMyMDg1fDA&ixlib=rb-4.1.0&q=80&w=1080',
-    progress: 45,
-    aiConfidence: 52,
-    lastSession: 'Oct 5, 2025',
-    status: 'inactive' as const,
-    skillArea: 'Data Pipelines',
-    skills: [
-      { name: 'Python & SQL', level: 65 },
-      { name: 'Data Modeling', level: 58 },
-      { name: 'ETL Processes', level: 50 },
-      { name: 'Big Data Tools', level: 45 }
-    ],
-    recentFeedback: [
-      'Solid foundation in data fundamentals',
-      'Needs more hands-on practice with real datasets',
-      'Showing improvement in SQL optimization'
-    ],
-    nextSession: 'Not scheduled - Follow up needed'
-  }
-];
+// Assuming there's a way to get the current user ID
+// If using custom hook, import here. For now, we will simulate or get from sessionStorage
+// import { useAuth } from '@/lib/hooks/useAuth'; 
 
 export const MyMenteesContent = () => {
-  const [selectedMentee, setSelectedMentee] = useState<typeof menteesData[0] | null>(null);
+  const [menteesData, setMenteesData] = useState<any[]>([]); // Initialize empty
+  const [loading, setLoading] = useState(true);
+
+  const [selectedMentee, setSelectedMentee] = useState<any | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [skillFilter, setSkillFilter] = useState('all');
   const [sortBy, setSortBy] = useState('progress');
 
+  // Fetch Mentees
+  useEffect(() => {
+    async function fetchMentees() {
+      try {
+        setLoading(true);
+        // Getting userID from session storage for now as fallback
+        const userData = sessionStorage.getItem("user");
+        if (!userData) {
+          console.warn("No user logged in");
+          setLoading(false);
+          return;
+        }
+        const user = JSON.parse(userData);
+
+        const res = await fetch(`/api/mentor/mentees?userId=${user.id}`);
+        const json = await res.json();
+
+        if (json.ok) {
+          setMenteesData(json.mentees || []);
+        } else {
+          console.error("Failed to fetch mentees:", json.error);
+        }
+      } catch (err) {
+        console.error("Error loading mentees:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchMentees();
+  }, []);
+
   const filteredMentees = menteesData
     .filter((mentee) => {
       const matchesSearch = mentee.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            mentee.skillArea.toLowerCase().includes(searchQuery.toLowerCase());
+        (mentee.skillArea && mentee.skillArea.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesStatus = statusFilter === 'all' || mentee.status === statusFilter;
-      const matchesSkill = skillFilter === 'all' || mentee.skillArea.includes(skillFilter);
-      
+      // const matchesSkill = skillFilter === 'all' || (mentee.skillArea && mentee.skillArea.includes(skillFilter));
+      // Simplified skill matching for now as dynamic data structure might vary
+      const matchesSkill = skillFilter === 'all' || true;
+
       return matchesSearch && matchesStatus && matchesSkill;
     })
     .sort((a, b) => {
-      if (sortBy === 'progress') return b.progress - a.progress;
-      if (sortBy === 'confidence') return b.aiConfidence - a.aiConfidence;
+      // Add safe guards for missing properties
+      if (sortBy === 'progress') return (b.progress || 0) - (a.progress || 0);
+      if (sortBy === 'confidence') return (b.aiConfidence || 0) - (a.aiConfidence || 0);
       if (sortBy === 'name') return a.name.localeCompare(b.name);
       return 0;
     });
+
+  if (loading) {
+    return <div className="p-8 text-center text-gray-400">Loading mentees...</div>;
+  }
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -196,7 +101,7 @@ export const MyMenteesContent = () => {
           <div className="lg:col-span-1 relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <Input
-              placeholder="Search by name or skill..."
+              placeholder="Search by name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10"
@@ -215,19 +120,14 @@ export const MyMenteesContent = () => {
             </SelectContent>
           </Select>
 
-          {/* Skill Area Filter */}
+          {/* Skill Area Filter - Placeholder for now until we have real skills data */}
           <Select value={skillFilter} onValueChange={setSkillFilter}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Skill Area" />
             </SelectTrigger>
             <SelectContent className="bg-gray-800 border-gray-700">
               <SelectItem value="all">All Skills</SelectItem>
-              <SelectItem value="React">React</SelectItem>
-              <SelectItem value="Backend">Backend</SelectItem>
-              <SelectItem value="Algorithms">Algorithms</SelectItem>
-              <SelectItem value="Cloud">Cloud</SelectItem>
-              <SelectItem value="Native">Mobile</SelectItem>
-              <SelectItem value="Data">Data</SelectItem>
+              {/* Populate dynamically if available */}
             </SelectContent>
           </Select>
 
@@ -283,7 +183,7 @@ export const MyMenteesContent = () => {
             <div>
               <p className="text-[var(--foreground-muted)] text-sm">Avg Progress</p>
               <p className="text-[var(--foreground)] text-xl">
-                {Math.round(menteesData.reduce((sum, m) => sum + m.progress, 0) / menteesData.length)}%
+                {menteesData.length > 0 ? Math.round(menteesData.reduce((sum, m) => sum + (m.progress || 0), 0) / menteesData.length) : 0}%
               </p>
             </div>
           </div>
@@ -297,7 +197,7 @@ export const MyMenteesContent = () => {
             <div>
               <p className="text-[var(--foreground-muted)] text-sm">Avg AI Score</p>
               <p className="text-[var(--foreground)] text-xl">
-                {Math.round(menteesData.reduce((sum, m) => sum + m.aiConfidence, 0) / menteesData.length)}%
+                {menteesData.length > 0 ? Math.round(menteesData.reduce((sum, m) => sum + (m.aiConfidence || 0), 0) / menteesData.length) : 0}%
               </p>
             </div>
           </div>
@@ -331,7 +231,7 @@ export const MyMenteesContent = () => {
         </motion.div>
       )}
 
-      {/* AI Insights Section */}
+      {/* AI Insights Section (Static for now, could be dynamic later) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -363,60 +263,8 @@ export const MyMenteesContent = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-white/5 rounded-lg p-6 border border-gray-700/50"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-500/20 to-teal-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-6 h-6 text-green-400" />
-                </div>
-                <div>
-                  <h4 className="text-[var(--foreground)] mb-2">Weekly Improvement</h4>
-                  <p className="text-[var(--foreground-muted)] text-sm">
-                    3 mentees improved their communication skills by <span style={{ color: 'var(--success)' }}>12%</span> this week
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 }}
-              className="bg-white/5 rounded-lg p-6 border border-gray-700/50"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-cyan-500/20 to-blue-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Users className="w-6 h-6 text-cyan-400" />
-                </div>
-                <div>
-                  <h4 className="text-[var(--foreground)] mb-2">Recommended Focus</h4>
-                  <p className="text-[var(--foreground-muted)] text-sm">
-                    Schedule more <span style={{ color: 'var(--accent-cyan)' }}>Technical problem-solving sessions</span> for optimal progress
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          </div>
+          <div className="text-sm text-gray-400 italic">Insights require more session data to activate.</div>
         </div>
-      </motion.div>
-
-      {/* Floating Add Button */}
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.6, type: 'spring' }}
-        className="fixed bottom-8 right-8 z-30"
-      >
-        <Button
-          className="w-16 h-16 rounded-full bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 shadow-[0_0_40px_rgba(6,182,212,0.6)] text-white hover:shadow-[0_0_60px_rgba(6,182,212,0.8)] transition-all"
-        >
-          <Plus className="w-8 h-8" />
-        </Button>
       </motion.div>
 
       {/* Detail Panel */}
@@ -427,3 +275,4 @@ export const MyMenteesContent = () => {
     </div>
   );
 };
+

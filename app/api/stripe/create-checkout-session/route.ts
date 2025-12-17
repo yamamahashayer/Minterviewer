@@ -7,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: Request) {
     try {
-        const { sessionId, mentorId, price, title, mentorName, mentorPhoto } = await req.json();
+        const { sessionId, mentorId, menteeId, price, title, mentorName, mentorPhoto } = await req.json();
 
         if (!sessionId || !mentorId || !price) {
             return NextResponse.json(
@@ -30,14 +30,15 @@ export async function POST(req: Request) {
         await dbConnect();
         const mentor = await Mentor.findById(mentorId);
 
-        if (!mentor || !mentor.stripeAccountId) {
+        if (!mentor) {
             return NextResponse.json(
-                { error: 'Mentor has not connected their Stripe account yet.' },
-                { status: 400 }
+                { error: 'Mentor not found' },
+                { status: 404 }
             );
         }
 
-        const checkoutSession = await stripe.checkout.sessions.create({
+        // Create checkout session with transfer if mentor has Stripe account
+        const sessionConfig: any = {
             payment_method_types: ['card'],
             line_items: [
                 {
@@ -56,20 +57,49 @@ export async function POST(req: Request) {
             mode: 'payment',
             success_url: `${process.env.NEXT_PUBLIC_APP_URL}/mentee/booking/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/mentee/booking/cancel`,
-            payment_intent_data: {
-                transfer_data: {
-                    destination: mentor.stripeAccountId,
-                },
-                // Optional: Application fee
-                // application_fee_amount: Math.round(price * 0.1), // 10% fee
-            },
             metadata: {
                 sessionId,
                 mentorId,
+                menteeId,
+                mentorName,
+                title,
             },
-        });
+        };
 
-        return NextResponse.json({ sessionId: checkoutSession.id });
+        // Add transfer_data if mentor has Stripe account
+        if (mentor.stripeAccountId) {
+            sessionConfig.payment_intent_data = {
+                transfer_data: {
+                    destination: mentor.stripeAccountId,
+                },
+            };
+        }
+
+        try {
+            const checkoutSession = await stripe.checkout.sessions.create(sessionConfig);
+            return NextResponse.json({
+                sessionId: checkoutSession.id,
+                url: checkoutSession.url
+            });
+        } catch (transferError: any) {
+            // If transfer fails due to capabilities, fallback to platform account
+            if (transferError.message?.includes('capabilities') || transferError.message?.includes('destination')) {
+                console.warn('Transfer failed, using platform account:', transferError.message);
+
+                // Remove transfer_data and retry
+                delete sessionConfig.payment_intent_data;
+                const fallbackSession = await stripe.checkout.sessions.create(sessionConfig);
+                return NextResponse.json({
+                    sessionId: fallbackSession.id,
+                    url: fallbackSession.url,
+                    warning: 'Payment will be processed by platform account instead of mentor account'
+                });
+            }
+            return NextResponse.json(
+                { error: transferError.message || 'Failed to create payment session' },
+                { status: 500 }
+            );
+        }
     } catch (error: any) {
         console.error('Error creating checkout session:', error);
         return NextResponse.json(
