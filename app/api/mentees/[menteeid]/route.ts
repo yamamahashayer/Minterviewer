@@ -26,9 +26,10 @@ export async function GET(req: Request, ctx: any) {
 
     const mentee = await Mentee.findById(menteeId)
       .populate({
-        path: "user",
-        select: "full_name Country profile_photo short_bio",
-      })
+      path: "user",
+      select: "full_name email phoneNumber Country profile_photo short_bio",
+    })
+
       .lean();
 
     if (!mentee) {
@@ -38,23 +39,24 @@ export async function GET(req: Request, ctx: any) {
       );
     }
 
-    return NextResponse.json({
-      profile: {
-        name: mentee.user?.full_name,
-        title: "Mentee",
-        bio: mentee.user?.short_bio,
-        location: mentee.user?.Country,
-        profile_photo: mentee.user?.profile_photo,
-        active: mentee.active,
-      },
-      skills: mentee.skills ?? [],
-      stats: {
-        interviews: mentee.total_interviews,
-        score: mentee.overall_score,
-        points: mentee.points_earned,
-      },
-      joinedDate: mentee.joined_date,
-    });
+     return NextResponse.json({
+  profile: {
+    userId: mentee.user?._id,          // ✅ مهم للـ chat
+    name: mentee.user?.full_name,
+    title: "Mentee",
+    bio: mentee.user?.short_bio,
+    location: mentee.user?.Country,
+    profile_photo: mentee.user?.profile_photo,
+    email: mentee.user?.email,         // ✅
+    phone: mentee.user?.phoneNumber,   // ✅
+    active: mentee.active,
+    joinedDate: mentee.joined_date,    // خليها جوه profile
+  },
+  skills: mentee.skills ?? [],
+});
+
+
+
   } catch (err) {
     console.error("❌ GET mentee error:", err);
     return NextResponse.json(

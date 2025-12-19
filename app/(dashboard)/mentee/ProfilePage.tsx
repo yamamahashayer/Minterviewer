@@ -2,15 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { CheckCircle2, TrendingUp, Clock, Trophy } from "lucide-react";
+import { CheckCircle2, TrendingUp, Clock } from "lucide-react";
 
 import Header from "@/app/components/MenteePages/Profile/Header";
 import StatsSection from "@/app/components/MenteePages/Profile/StatsSection";
 import SkillsSection from "@/app/components/MenteePages/Profile/SkillsSection";
 import ActivitySection from "@/app/components/MenteePages/Profile/ActivitySection";
-
 import MenteeBackgroundSection from "@/app/components/Background/MenteeBackgroundSection";
-
 
 type Theme = "dark" | "light";
 
@@ -25,7 +23,6 @@ type ApiUser = {
 type ApiMentee = {
   overall_score: number;
   total_interviews: number;
-  points_earned: number;
   joined_date?: string;
   active: boolean;
   phone?: string;
@@ -63,31 +60,25 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
 
   const [editedProfile, setEditedProfile] = useState(profile);
   const [isEditing, setIsEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
 
-  const [stats, setStats] = useState([
-    { label: "Total Interviews", value: "0", icon: CheckCircle2 },
-    { label: "Average Score", value: "—", icon: TrendingUp },
-    { label: "Time Invested", value: "—", icon: Clock },
-    { label: "Achievements", value: "0", icon: Trophy },
-  ]);
+  const [stats, setStats] = useState<
+    { label: string; value: string; icon: any }[]
+  >([]);
 
-  const [activities, setActivities] = useState([]);
+  const [activities, setActivities] = useState<any[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
-const EDITABLE_KEYS = ["name", "bio", "phone", "location", "profile_photo"] as const;
 
-function diff(next: Record<string, any>, prev: Record<string, any>) {
-  const changed: Record<string, any> = {};
-  for (const key of EDITABLE_KEYS) {
-    if (next[key] !== prev[key]) changed[key] = next[key];
+  const EDITABLE_KEYS = ["name", "bio", "phone", "location", "profile_photo"] as const;
+
+  function diff(next: Record<string, any>, prev: Record<string, any>) {
+    const changed: Record<string, any> = {};
+    for (const key of EDITABLE_KEYS) {
+      if (next[key] !== prev[key]) changed[key] = next[key];
+    }
+    return changed;
   }
-  return changed;
-}
 
-  // ---------------------------
-  // 1) Resolve userId from session or URL
-  // ---------------------------
+  /* ================= USER ID ================= */
   useEffect(() => {
     const fromUrl = params?.userId;
     if (fromUrl) {
@@ -101,20 +92,15 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
 
       const u = JSON.parse(raw);
       const id = u?.id || u?._id;
+      if (!id) return router.replace("/login");
 
-      if (!id) {
-        router.replace("/login");
-        return;
-      }
       setUserId(id);
     } catch {
       router.replace("/login");
     }
   }, []);
 
-  // ---------------------------
-  // 2) Get menteeId from session user object
-  // ---------------------------
+  /* ================= MENTEE ID ================= */
   useEffect(() => {
     if (menteeId) return;
     try {
@@ -127,16 +113,13 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
     } catch {}
   }, []);
 
-  // ---------------------------
-  // 3) Load profile from API
-  // ---------------------------
+  /* ================= LOAD PROFILE ================= */
   useEffect(() => {
     if (!menteeId) return;
 
     (async () => {
       try {
         setLoading(true);
-
         const token = sessionStorage.getItem("token");
 
         const r = await fetch(`/api/mentees/${menteeId}/profile`, {
@@ -146,7 +129,8 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
 
         if (!r.ok) throw new Error(await r.text());
 
-        const { user, mentee }: { user: ApiUser; mentee: ApiMentee } = await r.json();
+        const { user, mentee }: { user: ApiUser; mentee: ApiMentee } =
+          await r.json();
 
         const joined = mentee?.joined_date
           ? new Date(mentee.joined_date).toLocaleString("en-US", {
@@ -172,27 +156,31 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
         setProfile(mapped);
         setEditedProfile(mapped);
 
-        // Stats
-        const total = mentee?.total_interviews ?? 0;
-        const avg = mentee?.overall_score ?? 0;
-        const time = mentee?.time_invested_minutes;
+        const timeInvested =
+          typeof mentee?.time_invested_minutes === "number"
+            ? `${Math.floor(mentee.time_invested_minutes / 60)}h ${
+                mentee.time_invested_minutes % 60
+              }m`
+            : "—";
 
         setStats([
-          { label: "Total Interviews", value: String(total), icon: CheckCircle2 },
+          {
+            label: "Total Interviews",
+            value: String(mentee?.total_interviews ?? 0),
+            icon: CheckCircle2,
+          },
           {
             label: "Average Score",
-            value: avg > 0 ? `${avg.toFixed(1)}/10` : "—",
+            value: mentee?.overall_score
+              ? `${mentee.overall_score.toFixed(1)}/10`
+              : "—",
             icon: TrendingUp,
           },
           {
             label: "Time Invested",
-            value:
-              typeof time === "number"
-                ? `${Math.floor(time / 60)}h ${time % 60}m`
-                : "—",
+            value: timeInvested,
             icon: Clock,
           },
-          { label: "Achievements", value: "4", icon: Trophy },
         ]);
 
         setErr(null);
@@ -204,24 +192,15 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
     })();
   }, [menteeId]);
 
-  // Watch changes
-  useEffect(() => {
-    setHasChanges(Object.keys(diff(editedProfile, profile)).length > 0);
-  }, [editedProfile, profile]);
-
-  // ---------------------------
-  // 4) Load Recent Activity
-  // ---------------------------
+  /* ================= ACTIVITY ================= */
   useEffect(() => {
     if (!menteeId) return;
 
     (async () => {
       try {
         setActivitiesLoading(true);
-
         const r = await fetch(`/api/mentees/${menteeId}/activities?limit=8`);
         const j = await r.json();
-
         setActivities(j?.items || []);
       } finally {
         setActivitiesLoading(false);
@@ -229,23 +208,14 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
     })();
   }, [menteeId]);
 
-  // ---------------------------
-  // SAVE Handler
-  // ---------------------------
+  /* ================= SAVE ================= */
   const handleSave = async () => {
     if (!menteeId) return;
-
     const changed = diff(editedProfile, profile);
-    if (Object.keys(changed).length === 0) {
-      setIsEditing(false);
-      return;
-    }
+    if (!Object.keys(changed).length) return setIsEditing(false);
 
     try {
-      setSaving(true);
-
       const token = sessionStorage.getItem("token");
-
       const r = await fetch(`/api/mentees/${menteeId}/profile`, {
         method: "PUT",
         headers: {
@@ -255,16 +225,13 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
         body: JSON.stringify({ profile: changed }),
       });
 
-      if (!r.ok) throw new Error(await r.text());
-
+      if (!r.ok) throw new Error();
       const updated = { ...profile, ...changed };
       setProfile(updated);
       setEditedProfile(updated);
       setIsEditing(false);
     } catch {
       alert("Save failed");
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -273,67 +240,62 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
     setIsEditing(false);
   };
 
-  // ---------------------------
-  // UI Rendering
-  // ---------------------------
+  /* ================= UI ================= */
   if (loading)
     return (
-      <div className="min-h-screen flex items-center justify-center text-lg">
-        Loading...
+      <div
+        className={`min-h-screen flex items-center justify-center ${
+          isDark ? "text-white" : "text-gray-800"
+        }`}
+      >
+        Loading…
       </div>
     );
 
   if (err)
-    return <div className="text-red-500 p-8">Failed to load profile: {err}</div>;
+    return (
+      <div className={`p-8 ${isDark ? "text-red-400" : "text-red-600"}`}>
+        Failed to load profile: {err}
+      </div>
+    );
 
   return (
-  <div
-    className={`min-h-screen ${isDark ? "bg-[#0a0f1e]" : "bg-[#f5f3ff]"}`}
-  >
-    <div className="w-full flex justify-center">
-      <div className="w-full max-w-6xl px-4 py-8">
+    <div className={`min-h-screen ${isDark ? "bg-[#0a0f1e]" : "bg-[#f5f3ff]"}`}>
+      <div className="flex justify-center">
+        <div className="w-full max-w-6xl px-4 py-8">
+          {/* Header */}
+          <Header
+            profile={profile}
+            editedProfile={editedProfile}
+            setEditedProfile={setEditedProfile}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+            isDark={isDark}
+            onSave={handleSave}
+            onCancel={handleCancel}
+          />
 
-        {/* Header */}
-        <Header
-        profile={profile}
-        editedProfile={editedProfile}
-        setEditedProfile={setEditedProfile}
-        isEditing={isEditing}
-        setIsEditing={setIsEditing}
-        isDark
-        onSave={handleSave}
-        onCancel={handleCancel}
-      />
+          {/* Stats */}
+          <StatsSection stats={stats} isDark={isDark} />
 
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+            <div className="lg:col-span-2 space-y-6">
+              <SkillsSection profile={profile} isDark={isDark} />
 
-        {/* Stats */}
-        <StatsSection stats={stats} isDark={isDark} />
+              <MenteeBackgroundSection
+                menteeId={menteeId}
+                theme={isDark ? "dark" : "light"}
+              />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-          
-          {/* Left Side */}
-          <div className="lg:col-span-2 space-y-6">
-            <SkillsSection profile={profile} isDark={isDark} />
-
-            <MenteeBackgroundSection
-              menteeId={menteeId}
-              theme={isDark ? "dark" : "light"}
-            />
-
-            <ActivitySection
-              activities={activities}
-              loading={activitiesLoading}
-              isDark={isDark}
-            />
+              <ActivitySection
+                activities={activities}
+                loading={activitiesLoading}
+                isDark={isDark}
+              />
+            </div>
           </div>
-
-          
-
         </div>
-
       </div>
     </div>
-  </div>
-);
-
+  );
 }

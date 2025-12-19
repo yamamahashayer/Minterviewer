@@ -2,6 +2,9 @@
 
 import Header from "../MenteePages/Profile/Header";
 import SkillsSection from "../MenteePages/Profile/SkillsSection";
+import { MessageCircle } from "lucide-react";
+import { Button } from "@/app/components/ui/button";
+
 import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 
@@ -27,42 +30,42 @@ export default function PublicMenteeProfile({
 
   if (!data) return <div className="p-6">Loading…</div>;
 
-  return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* 🔙 BACK */}
-{onBack && (
-  <div className="mb-4">
-    <button
-      onClick={onBack}
-      className={`
-        flex items-center gap-2 text-sm font-medium
-        transition-colors
-        ${
-          isDark
-            ? "text-teal-300 hover:text-teal-200"
-            : "text-purple-700 hover:text-purple-900"
-        }
-      `}
-    >
-      <span className="text-lg">←</span>
-      <span>Back to candidates</span>
-    </button>
+return (
+  <div className="max-w-6xl mx-auto p-6 space-y-6">
+
+    {/* 🔙 BACK */}
+    {onBack && (
+      <div className="mb-4">
+        <button
+          onClick={onBack}
+          className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+            isDark
+              ? "text-teal-300 hover:text-teal-200"
+              : "text-purple-700 hover:text-purple-900"
+          }`}
+        >
+          <span className="text-lg">←</span>
+          <span>Back to candidates</span>
+        </button>
+      </div>
+    )}
+
+    {/* Header */}
+    <Header
+      profile={data.profile}
+      editedProfile={data.profile}
+      isDark={isDark}
+      readOnly
+      targetUserId={data.profile.userId}
+    />
+
+    {/* Stats */}
+    {/* <StatsSection stats={stats} isDark={isDark} /> */}
+
+    {/* Skills */}
+    <SkillsSection profile={data.profile} isDark={isDark} />
+
   </div>
-)}
+);
 
-
-      <Header
-        profile={data.profile}
-        editedProfile={data.profile}
-        isEditing={false}
-        setIsEditing={() => {}}
-        isDark={isDark}
-        onSave={() => {}}
-        onCancel={() => {}}
-        readOnly
-      />
-
-      <SkillsSection profile={data.profile} isDark={isDark} />
-    </div>
-  );
 }

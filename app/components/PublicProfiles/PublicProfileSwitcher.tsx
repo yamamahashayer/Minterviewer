@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import PublicMenteeProfile from "@/app/components/PublicProfiles/PublicMenteeProfile";
 import PublicMentorProfile from "@/app/components/PublicProfiles/PublicMentorProfile";
 import PublicCompanyProfile from "@/app/components/PublicProfiles/PublicCompanyProfile";
@@ -9,13 +10,13 @@ type Theme = "dark" | "light";
 
 type Props = {
   id: string;
-  theme?: Theme;   // 👈 اختياري
+  theme?: Theme;
   onBack?: () => void;
 };
 
 export default function PublicProfileSwitcher({
   id,
-  theme = "dark", // 👈 افتراضي
+  theme = "dark",
   onBack,
 }: Props) {
   const isDark = theme === "dark";
@@ -43,13 +44,15 @@ export default function PublicProfileSwitcher({
       });
   }, [id]);
 
-  /* ================= STATES ================= */
+  /* ================= UI STATES ================= */
 
   if (loading) {
     return (
       <div
-        className={`p-8 text-center ${
-          isDark ? "text-slate-400" : "text-gray-500"
+        className={`min-h-screen flex items-center justify-center ${
+          isDark
+            ? "bg-[#0a0f1e] text-slate-400"
+            : "bg-[#f5f3ff] text-gray-500"
         }`}
       >
         Loading profile…
@@ -60,8 +63,10 @@ export default function PublicProfileSwitcher({
   if (!data?.type) {
     return (
       <div
-        className={`p-8 text-center ${
-          isDark ? "text-slate-400" : "text-gray-500"
+        className={`min-h-screen flex items-center justify-center ${
+          isDark
+            ? "bg-[#0a0f1e] text-slate-400"
+            : "bg-[#f5f3ff] text-gray-500"
         }`}
       >
         Profile not found
@@ -103,8 +108,10 @@ export default function PublicProfileSwitcher({
 
   return (
     <div
-      className={`p-8 text-center ${
-        isDark ? "text-slate-400" : "text-gray-500"
+      className={`min-h-screen flex items-center justify-center ${
+        isDark
+          ? "bg-[#0a0f1e] text-slate-400"
+          : "bg-[#f5f3ff] text-gray-500"
       }`}
     >
       Unknown profile type

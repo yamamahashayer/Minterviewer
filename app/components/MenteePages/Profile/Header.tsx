@@ -8,18 +8,20 @@ import { Button } from "@/app/components/ui/button";
 type Props = {
   profile: any;
   editedProfile: any;
+  targetUserId?: string;            // ✅ ID للي بدنا نراسله
   setEditedProfile?: (v: any) => void;
   isEditing?: boolean;
   setIsEditing?: (b: boolean) => void;
   isDark: boolean;
   onSave?: () => void;
   onCancel?: () => void;
-  readOnly?: boolean; // ⭐ NEW
+  readOnly?: boolean;
 };
 
 export default function Header({
   profile,
   editedProfile,
+  targetUserId,
   setEditedProfile,
   isEditing = false,
   setIsEditing,
@@ -32,18 +34,19 @@ export default function Header({
 
   return (
     <div
-      className={`${
-        isDark
-          ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]"
-          : "bg-white shadow-lg"
-      } border ${
-        isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"
-      } rounded-2xl p-8 mb-6 backdrop-blur-sm`}
+      className={`
+        rounded-2xl p-8 mb-6 border
+        ${
+          isDark
+            ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)] backdrop-blur-sm border-[rgba(94,234,212,0.2)]"
+            : "bg-white shadow-xl border-[#e9d5ff]"
+        }
+      `}
     >
-      {/* ============ TOP AREA ============ */}
+      {/* ================= TOP ================= */}
       <div className="flex items-start justify-between mb-6">
         <div className="flex items-start gap-6">
-          {/* ===== Avatar ===== */}
+          {/* ===== AVATAR ===== */}
           <div className="relative group">
             {!readOnly && isEditing && (
               <input
@@ -86,10 +89,10 @@ export default function Header({
                   className={`w-full h-full bg-gradient-to-br ${
                     isDark
                       ? "from-teal-300 to-emerald-400"
-                      : "from-purple-400 to-pink-500"
+                      : "from-purple-500 to-pink-500"
                   } flex items-center justify-center text-white`}
                 >
-                  <span className="text-4xl">
+                  <span className="text-4xl font-semibold">
                     {(profile?.name || "U")[0]}
                   </span>
                 </div>
@@ -103,7 +106,7 @@ export default function Header({
             </div>
           </div>
 
-          {/* ===== Main Info ===== */}
+          {/* ===== MAIN INFO ===== */}
           <div>
             {/* NAME */}
             {canEdit ? (
@@ -117,15 +120,15 @@ export default function Header({
                 }
                 className={`mb-2 ${
                   isDark
-                    ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.3)] text-white"
-                    : "bg-white border-[#ddd6fe] text-[#2e1065]"
+                    ? "bg-white/5 border-[rgba(94,234,212,0.3)] text-white"
+                    : "bg-white border-[#ddd6fe] text-gray-900"
                 }`}
               />
             ) : (
               <h2
-                className={`${
-                  isDark ? "text-white" : "text-[#2e1065]"
-                } mb-1 font-bold text-xl`}
+                className={`mb-1 font-bold text-xl ${
+                  isDark ? "text-white" : "text-gray-900"
+                }`}
               >
                 {profile.name}
               </h2>
@@ -133,62 +136,73 @@ export default function Header({
 
             {/* TITLE */}
             <p
-              className={`${
+              className={`mb-3 ${
                 isDark ? "text-teal-300" : "text-purple-600"
-              } mb-3`}
+              }`}
             >
               {profile.title}
             </p>
 
-            <Badge
-              className={
-                isDark
-                  ? "bg-[rgba(94,234,212,0.2)] text-teal-300 border-[rgba(94,234,212,0.3)]"
-                  : "bg-purple-100 text-purple-700 border-purple-300"
-              }
-            >
-              {profile.active ? "Active" : "Inactive"}
-            </Badge>
+            
           </div>
         </div>
 
-        {/* ===== EDIT / SAVE / CANCEL ===== */}
-        {!readOnly && setIsEditing && (
-          <div className="flex gap-2">
-            {!isEditing ? (
-              <Button
-                onClick={() => setIsEditing(true)}
-                className={
-                  isDark
-                    ? "bg-[rgba(94,234,212,0.2)] text-teal-300 border border-[rgba(94,234,212,0.3)]"
-                    : "bg-white text-purple-700 border border-[#ddd6fe] hover:bg-purple-50"
-                }
-              >
-                <Edit2 size={16} className="mr-2" />
-                Edit
-              </Button>
-            ) : (
-              <>
-                <Button
-                  onClick={onCancel}
-                  className="bg-gray-200 text-gray-700 hover:bg-gray-300"
-                >
-                  <X size={16} />
-                </Button>
+        {/* ===== ACTIONS ===== */}
+        <div className="flex gap-2">
+          {/* 💬 MESSAGE (Public only) */}
+          {readOnly && targetUserId && (
+            <Button
+              onClick={() =>
+                (window.location.href = `/company?tab=messages&chatWith=${targetUserId}`)
+              }
+              className={
+                isDark
+                  ? "bg-teal-600 hover:bg-teal-500 text-white"
+                  : "bg-purple-600 hover:bg-purple-500 text-white"
+              }
+            >
+              <Mail size={16} className="mr-2" />
+              Message
+            </Button>
+          )}
 
+          {/* ✏️ EDIT (Private only) */}
+          {!readOnly && setIsEditing && (
+            <>
+              {!isEditing ? (
                 <Button
-                  onClick={onSave}
-                  className="bg-green-600 text-white hover:bg-green-700"
+                  onClick={() => setIsEditing(true)}
+                  className={
+                    isDark
+                      ? "bg-[rgba(94,234,212,0.2)] text-teal-300 border border-[rgba(94,234,212,0.3)]"
+                      : "bg-white text-purple-700 border border-[#ddd6fe] hover:bg-purple-50"
+                  }
                 >
-                  <Check size={16} />
+                  <Edit2 size={16} className="mr-2" />
+                  Edit
                 </Button>
-              </>
-            )}
-          </div>
-        )}
+              ) : (
+                <>
+                  <Button
+                    onClick={onCancel}
+                    className="bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  >
+                    <X size={16} />
+                  </Button>
+                  <Button
+                    onClick={onSave}
+                    className="bg-green-600 text-white hover:bg-green-700"
+                  >
+                    <Check size={16} />
+                  </Button>
+                </>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* ============ BIO ============ */}
+      {/* ================= BIO ================= */}
       {canEdit ? (
         <Input
           value={editedProfile.bio}
@@ -197,45 +211,57 @@ export default function Header({
           }
           className={`mb-6 ${
             isDark
-              ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.3)] text-white"
-              : "bg-white border-[#ddd6fe] text-[#2e1065]"
+              ? "bg-white/5 border-[rgba(94,234,212,0.3)] text-white"
+              : "bg-white border-[#ddd6fe] text-gray-900"
           }`}
         />
       ) : (
         <p
-          className={`${
-            isDark ? "text-[#d1d5dc]" : "text-[#2e1065]"
-          } mb-6 leading-relaxed`}
+          className={`mb-6 leading-relaxed ${
+            isDark ? "text-[#d1d5dc]" : "text-gray-700"
+          }`}
         >
           {profile.bio}
         </p>
       )}
 
-      {/* ============ CONTACT INFO ============ */}
+      {/* ================= CONTACT ================= */}
       <div
         className={`grid grid-cols-2 gap-4 pt-6 border-t ${
-          isDark ? "border-[rgba(94,234,212,0.1)]" : "border-[#ddd6fe]"
+          isDark ? "border-[rgba(94,234,212,0.1)]" : "border-[#eee]"
         }`}
       >
-        <ContactField icon={<Mail size={18} />} value={profile.email} isDark={isDark} />
-        <ContactField icon={<Phone size={18} />} value={profile.phone} isDark={isDark} />
-        <ContactField icon={<MapPin size={18} />} value={profile.location} isDark={isDark} />
+        
+        {!readOnly && (
+          <>
+
         <ContactField
           icon={<Calendar size={18} />}
-          value={`Joined ${profile.joinedDate}`}
+          value={profile.joinedDate ? `Joined ${profile.joinedDate}` : "—"}
           isDark={isDark}
         />
+        </>
+         )}
+       <ContactField icon={<Mail size={18} />} value={profile.email} isDark={isDark} />
+
+
+       <ContactField icon={<Phone size={18} />} value={profile.phone} isDark={isDark} />
+
+       <ContactField icon={<MapPin size={18} />} value={profile.location} isDark={isDark} />
+
       </div>
     </div>
   );
 }
 
-/* ============ CONTACT FIELD ============ */
+/* ================= CONTACT FIELD ================= */
 function ContactField({ icon, value, isDark }: any) {
   return (
     <div className="flex items-center gap-3">
-      <span className={isDark ? "text-teal-300" : "text-purple-600"}>{icon}</span>
-      <span className={isDark ? "text-[#99a1af]" : "text-[#6b21a8]"}>
+      <span className={isDark ? "text-teal-300" : "text-purple-600"}>
+        {icon}
+      </span>
+      <span className={isDark ? "text-[#99a1af]" : "text-gray-700"}>
         {value || "—"}
       </span>
     </div>
