@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Mail, Phone, FileText } from "lucide-react";
+import { Mail, Phone, FileText, User } from "lucide-react";
 
 type Theme = "dark" | "light";
 
@@ -9,14 +9,14 @@ interface Props {
   applicants: any[];
   job: any;
   theme: Theme;
-  onBack: () => void;
+  onViewProfile: (menteeId: string) => void;
 }
 
 export default function ApplicantsList({
   applicants,
   job,
   theme,
-  onBack,
+  onViewProfile,
 }: Props) {
   const isDark = theme === "dark";
   const [sortBy, setSortBy] = useState<"cv" | "ats" | "interview">("cv");
@@ -38,7 +38,7 @@ export default function ApplicantsList({
         isDark ? "bg-[#1b2333] text-white" : "bg-white text-black"
       }`}
     >
-      {/* HEADER */}
+      {/* ================= HEADER ================= */}
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-3xl font-bold">
@@ -60,7 +60,7 @@ export default function ApplicantsList({
         </select>
       </div>
 
-      {/* TABLE */}
+      {/* ================= TABLE ================= */}
       <div className="overflow-x-auto rounded-xl border">
         <table className="w-full text-sm">
           <thead
@@ -78,7 +78,7 @@ export default function ApplicantsList({
               <Th>ATS</Th>
               <Th>Interview</Th>
               <Th>Interview Score</Th>
-              <Th className="text-center">CV Analysis</Th>
+              <Th className="text-center">Actions</Th>
             </tr>
           </thead>
 
@@ -122,21 +122,31 @@ export default function ApplicantsList({
                   <Td>{a.interviewStatus || "Not started"}</Td>
                   <Td>{a.interviewScore ?? "—"}</Td>
 
-                  {/* ✅ CV ANALYSIS BUTTON */}
-                  <Td className="text-center">
+                  {/* ================= ACTIONS ================= */}
+                  <Td className="space-y-2 text-center">
+                    {/* VIEW PROFILE */}
+                    <button
+                      onClick={() => onViewProfile(m?._id)}
+                      className="flex items-center gap-2 mx-auto px-3 py-1 text-xs rounded-lg border hover:bg-white/10"
+                    >
+                      <User size={14} />
+                      View Profile
+                    </button>
+
+                    {/* ✅ CV ANALYSIS – SAME AS BEFORE */}
                     {a.analysisId ? (
                       <button
-                        className="flex items-center gap-2 px-3 py-1 text-xs rounded-lg border hover:bg-gray-100 dark:hover:bg-white/10"
                         onClick={() =>
                           (window.location.href =
                             `/company/cv-analysis/${a.analysisId}`)
                         }
+                        className="flex items-center gap-2 mx-auto px-3 py-1 text-xs rounded-lg border hover:bg-white/10"
                       >
                         <FileText size={14} />
-                        View CV Analysis
+                        CV Analysis
                       </button>
                     ) : (
-                      <span className="opacity-40">—</span>
+                      <span className="block text-xs opacity-40">—</span>
                     )}
                   </Td>
                 </tr>
@@ -157,7 +167,7 @@ export default function ApplicantsList({
   );
 }
 
-/* HELPERS */
+/* ================= HELPERS ================= */
 
 function Th({
   children,
