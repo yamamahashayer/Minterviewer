@@ -13,15 +13,23 @@ export async function POST(req: NextRequest) {
     Interview Type: ${interviewType}
     Tech Stack: ${Array.isArray(techStack) ? techStack.join(", ") : techStack}
     
-    For each question, specify:
-    1. The question text
-    2. The type (verbal or coding)
-    3. isCoding (boolean) - true if it requires writing code
-    4. thinkingTime (integer) - suggested time in seconds to think before answering (e.g., 15-30 seconds)
-    5. answerTime (integer) - suggested time in seconds to record the answer (e.g., 60-120 seconds)
+    For each question, return a JSON object with these exact keys:
+    - "text": The question string
+    - "type": "verbal" or "coding"
+    - "isCoding": boolean
+    - "thinkingTime": integer (seconds)
+    - "answerTime": integer (seconds)
     
-    If the interview type is "technical", include a mix of conceptual and coding questions.
-    If "behavioral", focus on soft skills and past experiences.
+    Response format:
+    [
+      {
+        "text": "Question text here",
+        "type": "verbal",
+        "isCoding": false,
+        "thinkingTime": 30,
+        "answerTime": 60
+      }
+    ]
     
     Return **ONLY** valid JSON.
     `;
