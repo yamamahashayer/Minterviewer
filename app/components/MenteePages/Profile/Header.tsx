@@ -5,25 +5,30 @@ import { Input } from "@/app/components/ui/input";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 
+type Props = {
+  profile: any;
+  editedProfile: any;
+  setEditedProfile?: (v: any) => void;
+  isEditing?: boolean;
+  setIsEditing?: (b: boolean) => void;
+  isDark: boolean;
+  onSave?: () => void;
+  onCancel?: () => void;
+  readOnly?: boolean; // ⭐ NEW
+};
+
 export default function Header({
   profile,
   editedProfile,
   setEditedProfile,
-  isEditing,
+  isEditing = false,
   setIsEditing,
   isDark,
   onSave,
   onCancel,
-}: {
-  profile: any;
-  editedProfile: any;
-  setEditedProfile: (v: any) => void;
-  isEditing: boolean;
-  setIsEditing: (b: boolean) => void;
-  isDark: boolean;
-  onSave: () => void;
-  onCancel: () => void;
-}) {
+  readOnly = false,
+}: Props) {
+  const canEdit = !readOnly && isEditing && setEditedProfile;
 
   return (
     <div
@@ -40,15 +45,15 @@ export default function Header({
         <div className="flex items-start gap-6">
           {/* ===== Avatar ===== */}
           <div className="relative group">
-            {isEditing && (
+            {!readOnly && isEditing && (
               <input
                 type="file"
                 accept="image/*"
-                id="menteePhotoInput"
+                id="profilePhotoInput"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (!file) return;
+                  if (!file || !setEditedProfile) return;
 
                   const reader = new FileReader();
                   reader.onload = (ev) => {
@@ -63,14 +68,15 @@ export default function Header({
             )}
 
             <div
-              className={`relative w-24 h-24 rounded-full overflow-hidden cursor-pointer ${
-                isEditing ? "ring-2 ring-purple-400" : ""
+              className={`relative w-24 h-24 rounded-full overflow-hidden ${
+                canEdit ? "cursor-pointer ring-2 ring-purple-400" : ""
               }`}
               onClick={() => {
-                if (isEditing) document.getElementById("menteePhotoInput")?.click();
+                if (canEdit)
+                  document.getElementById("profilePhotoInput")?.click();
               }}
             >
-              {editedProfile.profile_photo ? (
+              {editedProfile?.profile_photo ? (
                 <img
                   src={editedProfile.profile_photo}
                   className="w-full h-full object-cover"
@@ -84,12 +90,12 @@ export default function Header({
                   } flex items-center justify-center text-white`}
                 >
                   <span className="text-4xl">
-                    {(profile.name || "M")[0]}
+                    {(profile?.name || "U")[0]}
                   </span>
                 </div>
               )}
 
-              {isEditing && (
+              {canEdit && (
                 <div className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
                   Change Photo
                 </div>
@@ -100,11 +106,14 @@ export default function Header({
           {/* ===== Main Info ===== */}
           <div>
             {/* NAME */}
-            {isEditing ? (
+            {canEdit ? (
               <Input
                 value={editedProfile.name}
                 onChange={(e) =>
-                  setEditedProfile({ ...editedProfile, name: e.target.value })
+                  setEditedProfile?.({
+                    ...editedProfile,
+                    name: e.target.value,
+                  })
                 }
                 className={`mb-2 ${
                   isDark
@@ -142,7 +151,9 @@ export default function Header({
             </Badge>
           </div>
         </div>
-          {/* ===== EDIT / SAVE / CANCEL ===== */}
+
+        {/* ===== EDIT / SAVE / CANCEL ===== */}
+        {!readOnly && setIsEditing && (
           <div className="flex gap-2">
             {!isEditing ? (
               <Button
@@ -158,7 +169,6 @@ export default function Header({
               </Button>
             ) : (
               <>
-                {/* CANCEL */}
                 <Button
                   onClick={onCancel}
                   className="bg-gray-200 text-gray-700 hover:bg-gray-300"
@@ -166,7 +176,6 @@ export default function Header({
                   <X size={16} />
                 </Button>
 
-                {/* SAVE */}
                 <Button
                   onClick={onSave}
                   className="bg-green-600 text-white hover:bg-green-700"
@@ -176,15 +185,15 @@ export default function Header({
               </>
             )}
           </div>
-
+        )}
       </div>
 
       {/* ============ BIO ============ */}
-      {isEditing ? (
+      {canEdit ? (
         <Input
           value={editedProfile.bio}
           onChange={(e) =>
-            setEditedProfile({ ...editedProfile, bio: e.target.value })
+            setEditedProfile?.({ ...editedProfile, bio: e.target.value })
           }
           className={`mb-6 ${
             isDark
@@ -208,77 +217,27 @@ export default function Header({
           isDark ? "border-[rgba(94,234,212,0.1)]" : "border-[#ddd6fe]"
         }`}
       >
-        {/* EMAIL */}
-        <ContactField
-          icon={<Mail size={18} />}
-          value={profile.email}
-          isDark={isDark}
-          editable={false}
-        />
-
-        {/* PHONE */}
-        <ContactField
-          icon={<Phone size={18} />}
-          value={editedProfile.phone}
-          isDark={isDark}
-          editable={isEditing}
-          onChange={(v) =>
-            setEditedProfile({ ...editedProfile, phone: v })
-          }
-        />
-
-        {/* LOCATION */}
-        <ContactField
-          icon={<MapPin size={18} />}
-          value={editedProfile.location}
-          isDark={isDark}
-          editable={isEditing}
-          onChange={(v) =>
-            setEditedProfile({ ...editedProfile, location: v })
-          }
-        />
-
-        {/* JOINED DATE */}
+        <ContactField icon={<Mail size={18} />} value={profile.email} isDark={isDark} />
+        <ContactField icon={<Phone size={18} />} value={profile.phone} isDark={isDark} />
+        <ContactField icon={<MapPin size={18} />} value={profile.location} isDark={isDark} />
         <ContactField
           icon={<Calendar size={18} />}
           value={`Joined ${profile.joinedDate}`}
           isDark={isDark}
-          editable={false}
         />
       </div>
     </div>
   );
 }
 
-/* ============ CONTACT FIELD COMPONENT ============ */
-function ContactField({
-  icon,
-  value,
-  isDark,
-  editable,
-  onChange,
-}: any) {
+/* ============ CONTACT FIELD ============ */
+function ContactField({ icon, value, isDark }: any) {
   return (
     <div className="flex items-center gap-3">
-      <span className={isDark ? "text-teal-300" : "text-purple-600"}>
-        {icon}
+      <span className={isDark ? "text-teal-300" : "text-purple-600"}>{icon}</span>
+      <span className={isDark ? "text-[#99a1af]" : "text-[#6b21a8]"}>
+        {value || "—"}
       </span>
-
-      {editable ? (
-        <Input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={
-            isDark
-              ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.3)] text-white"
-              : "bg-white border-[#ddd6fe] text-[#2e1065]"
-          }
-        />
-      ) : (
-        <span className={isDark ? "text-[#99a1af]" : "text-[#6b21a8]"}>
-          {value}
-        </span>
-      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import ApplicantsList from "@/app/components/CompanyPages/Jobs/ApplicantsList";
+import PublicMenteeProfile from "@/app/components/PublicProfiles/PublicMenteeProfile";
 
 type Theme = "dark" | "light";
 
@@ -13,6 +14,9 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
   const [openJobId, setOpenJobId] = useState<string | null>(null);
   const [applicants, setApplicants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // ⭐⭐ أهم state
+  const [selectedMenteeId, setSelectedMenteeId] = useState<string | null>(null);
 
   /* ================= FETCH JOBS ================= */
   useEffect(() => {
@@ -36,7 +40,7 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
     })();
   }, []);
 
-  /* ================= OPEN JOB + FETCH APPLICANTS ================= */
+  /* ================= OPEN JOB ================= */
   const handleOpenJob = async (job: any) => {
     if (openJobId === job._id) {
       setOpenJobId(null);
@@ -59,18 +63,38 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
     setApplicants(data.ok ? data.applicants : []);
   };
 
-  const totalApplicants = jobs.reduce(
-    (sum, j) => sum + (j.applicants?.length || 0),
-    0
-  );
+  /* ======================================================
+     🔥 FULL PROFILE MODE (يخفي كل الصفحة)
+     ====================================================== */
+  if (selectedMenteeId) {
+    return (
+      <div
+        className={`min-h-screen p-8 ${
+          isDark ? "bg-[#020617] text-white" : "bg-white text-black"
+        }`}
+      >
+        <button
+          onClick={() => setSelectedMenteeId(null)}
+          className="mb-6 text-sm underline opacity-80 hover:opacity-100"
+        >
+          ← Back to candidates
+        </button>
 
+        <PublicMenteeProfile menteeId={selectedMenteeId} />
+      </div>
+    );
+  }
+
+  /* ======================================================
+     🟢 NORMAL CANDIDATES VIEW
+     ====================================================== */
   return (
     <div
       className={`min-h-screen p-8 space-y-6 ${
         isDark ? "bg-[#020617] text-white" : "bg-[#f8fafc] text-black"
       }`}
     >
-      {/* ================= HEADER ================= */}
+      {/* HEADER */}
       <div>
         <h1 className="text-3xl font-bold">Candidates</h1>
         <p className="opacity-70 mt-1">
@@ -78,23 +102,7 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
         </p>
       </div>
 
-      {/* ================= EMPTY STATE ================= */}
-      {!loading && totalApplicants === 0 && (
-        <div
-          className={`p-6 rounded-xl border ${
-            isDark
-              ? "bg-[#020617] border-[#1e293b]"
-              : "bg-white border-gray-200"
-          }`}
-        >
-          <h2 className="font-semibold">No candidates yet</h2>
-          <p className="opacity-60 mt-1">
-            Candidates will appear once they apply.
-          </p>
-        </div>
-      )}
-
-      {/* ================= JOBS LIST ================= */}
+      {/* JOBS LIST */}
       {jobs.map((job) => {
         const isOpen = openJobId === job._id;
 
@@ -107,13 +115,10 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
                 : "bg-white border-gray-200"
             }`}
           >
-            {/* ===== JOB HEADER ===== */}
             <button
               onClick={() => handleOpenJob(job)}
-              className={`w-full flex items-center justify-between p-5 text-left transition ${
-                isDark
-                  ? "hover:bg-[#1e293b]"
-                  : "hover:bg-purple-50"
+              className={`w-full flex items-center justify-between p-5 text-left ${
+                isDark ? "hover:bg-[#1e293b]" : "hover:bg-gray-50"
               }`}
             >
               <div>
@@ -126,17 +131,13 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
               {isOpen ? <ChevronDown /> : <ChevronRight />}
             </button>
 
-            {/* ===== APPLICANTS ===== */}
             {isOpen && (
               <div className="p-6">
                 <ApplicantsList
                   applicants={applicants}
                   job={job}
                   theme={theme}
-                  onBack={() => {
-                    setOpenJobId(null);
-                    setApplicants([]);
-                  }}
+                  onViewProfile={(id) => setSelectedMenteeId(id)}
                 />
               </div>
             )}

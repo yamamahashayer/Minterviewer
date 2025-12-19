@@ -8,8 +8,7 @@ import Header from "@/app/components/MenteePages/Profile/Header";
 import StatsSection from "@/app/components/MenteePages/Profile/StatsSection";
 import SkillsSection from "@/app/components/MenteePages/Profile/SkillsSection";
 import ActivitySection from "@/app/components/MenteePages/Profile/ActivitySection";
-import AchievementsSection from "@/app/components/MenteePages/Profile/AchievementsSection";
-import EditDialog from "@/app/components/MenteePages/Profile/EditDialog";
+
 import MenteeBackgroundSection from "@/app/components/Background/MenteeBackgroundSection";
 
 
@@ -296,15 +295,16 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
 
         {/* Header */}
         <Header
-          profile={profile}
-          editedProfile={editedProfile}
-          setEditedProfile={setEditedProfile}
-          isEditing={isEditing}
-          setIsEditing={setIsEditing}
-          isDark={isDark}
-          onSave={handleSave}
-          onCancel={handleCancel}
-        />
+        profile={profile}
+        editedProfile={editedProfile}
+        setEditedProfile={setEditedProfile}
+        isEditing={isEditing}
+        setIsEditing={setIsEditing}
+        isDark
+        onSave={handleSave}
+        onCancel={handleCancel}
+      />
+
 
         {/* Stats */}
         <StatsSection stats={stats} isDark={isDark} />
@@ -327,10 +327,7 @@ function diff(next: Record<string, any>, prev: Record<string, any>) {
             />
           </div>
 
-          {/* Right Side */}
-          <div>
-            <AchievementsSection isDark={isDark} />
-          </div>
+          
 
         </div>
 
