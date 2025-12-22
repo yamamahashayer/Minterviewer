@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CheckCircle2, Clock, Brain, BarChart3, Zap } from 'lucide-react';
 import SetupScreenComponent from './SetupScreenComponent';
 import InterviewScreenComponent from './InterviewScreenComponent';
+import VideoInterviewScreen from './VideoInterviewScreen';
 import ReportScreenComponent from './ReportScreenComponent';
 
 const AIInterviewerApp = () => {
@@ -37,6 +38,19 @@ const AIInterviewerApp = () => {
         setSetupData(null);
         setInterviewData(null);
         setCurrentScreen('welcome');
+    };
+
+    const handleStartVideoInterview = () => {
+        // Start video interview directly without setup
+        const videoSetupData = {
+            interviewMode: 'video',
+            role: 'General',
+            interviewType: 'behavioral',
+            techStack: 'General',
+            questionCount: 6
+        };
+        setSetupData(videoSetupData);
+        setCurrentScreen('interview');
     };
 
     const processSteps = [
@@ -219,6 +233,11 @@ const AIInterviewerApp = () => {
 
     // Render Interview Screen
     if (currentScreen === 'interview' && setupData) {
+        // Route to video interview if user selected video mode
+        if (setupData.interviewMode === 'video') {
+            return <VideoInterviewScreen setupData={setupData} onComplete={handleInterviewComplete} />;
+        }
+        // Default to audio-only interview
         return <InterviewScreenComponent setupData={setupData} onComplete={handleInterviewComplete} />;
     }
 
@@ -258,22 +277,77 @@ const AIInterviewerApp = () => {
                         </div>
                     </div>
 
-                    {/* Start Button */}
-                    <div className="flex flex-col items-center gap-4">
-                        <button
-                            onClick={handleStartInterview}
-                            className="group relative px-10 py-5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xl font-bold rounded-2xl shadow-xl hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105"
-                        >
-                            <span className="relative z-10">Start Interview Practice</span>
-                            <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-purple-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                        </button>
+                    {/* Interview Type Selection */}
+                    <div className="flex flex-col items-center gap-6">
+                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">Choose Your Interview Type</h2>
 
-                        <button
-                            onClick={handleStartInterview}
-                            className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors underline text-sm"
-                        >
-                            See how it works first
-                        </button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl">
+                            {/* Audio Interview with Setup */}
+                            <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-8 border-2 border-gray-200 dark:border-white/20 hover:border-purple-500 dark:hover:border-purple-500 transition-all duration-300 hover:shadow-xl">
+                                <div className="text-center mb-6">
+                                    <div className="text-5xl mb-4">🎤</div>
+                                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Audio Interview</h3>
+                                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">Customized questions based on your role and tech stack</p>
+                                </div>
+                                <ul className="text-left space-y-2 mb-6 text-sm text-gray-600 dark:text-gray-300">
+                                    <li className="flex items-start">
+                                        <span className="text-green-500 mr-2">✓</span>
+                                        <span>Personalized setup questions</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                        <span className="text-green-500 mr-2">✓</span>
+                                        <span>AI-generated questions</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                        <span className="text-green-500 mr-2">✓</span>
+                                        <span>Voice-based responses</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                        <span className="text-green-500 mr-2">✓</span>
+                                        <span>Tone analysis</span>
+                                    </li>
+                                </ul>
+                                <button
+                                    onClick={handleStartInterview}
+                                    className="w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold rounded-xl shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-105"
+                                >
+                                    Start Audio Interview
+                                </button>
+                            </div>
+
+                            {/* Video Interview - Direct Start */}
+                            <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-8 border-2 border-pink-500 dark:border-pink-500 hover:border-pink-600 dark:hover:border-pink-600 transition-all duration-300 hover:shadow-xl shadow-pink-500/20">
+                                <div className="text-center mb-6">
+                                    <div className="text-5xl mb-4">🎥</div>
+                                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Video Interview</h3>
+                                    <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">Pre-recorded questions with video analysis</p>
+                                </div>
+                                <ul className="text-left space-y-2 mb-6 text-sm text-gray-600 dark:text-gray-300">
+                                    <li className="flex items-start">
+                                        <span className="text-pink-500 mr-2">✓</span>
+                                        <span>6 pre-recorded questions</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                        <span className="text-pink-500 mr-2">✓</span>
+                                        <span>Video + audio recording</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                        <span className="text-pink-500 mr-2">✓</span>
+                                        <span>Facial expression analysis</span>
+                                    </li>
+                                    <li className="flex items-start">
+                                        <span className="text-pink-500 mr-2">✓</span>
+                                        <span>No setup required - start instantly!</span>
+                                    </li>
+                                </ul>
+                                <button
+                                    onClick={handleStartVideoInterview}
+                                    className="w-full px-6 py-4 bg-gradient-to-r from-pink-500 to-pink-600 text-white font-bold rounded-xl shadow-lg hover:shadow-pink-500/50 transition-all duration-300 hover:scale-105"
+                                >
+                                    Start Video Interview
+                                </button>
+                            </div>
+                        </div>
 
                         <p className="text-gray-500 dark:text-white/60 mt-4 text-sm">
                             Nothing required • Practice anytime • Instant feedback
