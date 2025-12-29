@@ -40,6 +40,7 @@ export async function GET(req) {
         industry: company.industry,
         totalJobs,
         totalCandidates,
+        jobs,
       },
     });
   } catch (e) {

@@ -8,7 +8,7 @@ const geist = Geist({ subsets: ["latin"], display: "swap" });
 export const metadata = {
   title: "Minterviewer",
   description: "Your personal interview coach",
-  icons: { icon: "/MentorHubLogo.png" },
+  icons: { icon: "/public/MentorHubLogo.png" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
