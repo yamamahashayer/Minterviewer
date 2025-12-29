@@ -56,6 +56,7 @@ export default function ApplyJobPage() {
 
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [cvOpen, setCvOpen] = useState(false);
+  const [showInterview, setShowInterview] = useState(false);
 
   /* ================= THEME ================= */
   useEffect(() => {
@@ -157,6 +158,35 @@ export default function ApplyJobPage() {
       return;
     }
 
+    // If AI interview is required, submit application first then redirect to interview
+    if (job?.interviewType === "ai") {
+      setLoading(true);
+
+      const res = await fetch(
+        `/api/company/${companyId}/jobs/${jobId}/apply`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            menteeId,
+            analysisId: job.enableCVAnalysis ? analysisId : null,
+          }),
+        }
+      );
+
+      setLoading(false);
+
+      if (res.ok) {
+        // Application submitted successfully, now redirect to interview
+        router.push(`/mentee/JobForm/${companyId}/jobs/${jobId}/interview`);
+      } else {
+        const j = await res.json();
+        setError(j?.message || "Failed to submit application");
+      }
+      return;
+    }
+
+    // Otherwise submit application directly (non-AI interview jobs)
     setLoading(true);
 
     const res = await fetch(
@@ -186,9 +216,8 @@ export default function ApplyJobPage() {
   /* ================= UI ================= */
   return (
     <div
-      className={`min-h-screen px-8 py-10 ${
-        isDark ? "bg-[#0a0f1e] text-white" : "bg-gray-50 text-black"
-      }`}
+      className={`min-h-screen px-8 py-10 ${isDark ? "bg-[#0a0f1e] text-white" : "bg-gray-50 text-black"
+        }`}
     >
       <div className="max-w-6xl grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-8">
 
@@ -196,9 +225,8 @@ export default function ApplyJobPage() {
         <div className="space-y-6">
           {/* JOB CARD */}
           <aside
-            className={`rounded-xl p-5 border ${
-              isDark ? "bg-white/5 border-white/10" : "bg-white border-gray-200"
-            }`}
+            className={`rounded-xl p-5 border ${isDark ? "bg-white/5 border-white/10" : "bg-white border-gray-200"
+              }`}
           >
             <div className="flex items-center gap-3 mb-4">
               {job.companyId.logo ? (
@@ -234,9 +262,8 @@ export default function ApplyJobPage() {
 
           {/* APPLICATION PROCESS */}
           <div
-            className={`rounded-xl p-5 border ${
-              isDark ? "bg-white/5 border-white/10" : "bg-white border-gray-200"
-            }`}
+            className={`rounded-xl p-5 border ${isDark ? "bg-white/5 border-white/10" : "bg-white border-gray-200"
+              }`}
           >
             <h2 className="font-semibold mb-4">Application Process</h2>
 
@@ -279,9 +306,8 @@ export default function ApplyJobPage() {
         {/* RIGHT */}
         <section className="lg:sticky lg:top-24 h-fit">
           <div
-            className={`rounded-xl p-6 border space-y-4 ${
-              isDark ? "bg-white/5 border-white/10" : "bg-white border-gray-200"
-            }`}
+            className={`rounded-xl p-6 border space-y-4 ${isDark ? "bg-white/5 border-white/10" : "bg-white border-gray-200"
+              }`}
           >
             <h2 className="font-semibold">Confirm Your Information</h2>
 
@@ -294,11 +320,10 @@ export default function ApplyJobPage() {
                 <button
                   type="button"
                   onClick={() => setCvOpen((v) => !v)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border ${
-                    isDark
-                      ? "bg-[#0f172a] border-white/10"
-                      : "bg-gray-50 border-gray-300"
-                  }`}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-lg border ${isDark
+                    ? "bg-[#0f172a] border-white/10"
+                    : "bg-gray-50 border-gray-300"
+                    }`}
                 >
                   <span className="font-medium">
                     {analysisId ? "✔ CV Uploaded" : "Upload & Analyze CV"}
@@ -309,15 +334,15 @@ export default function ApplyJobPage() {
                 </button>
 
                 {cvOpen && (
-                <UploadCV
-                  isDark={isDark}
-                  onSuccess={(res) => {
-                    setAnalysisId(res.savedId); // ⭐ التعديل هنا
-                    setCvOpen(false);
-                  }}
-                  onError={(msg) => setError(msg)}
-                />
-              )}
+                  <UploadCV
+                    isDark={isDark}
+                    onSuccess={(res) => {
+                      setAnalysisId(res.savedId); // ⭐ التعديل هنا
+                      setCvOpen(false);
+                    }}
+                    onError={(msg) => setError(msg)}
+                  />
+                )}
 
               </div>
             ) : (
@@ -331,15 +356,18 @@ export default function ApplyJobPage() {
             <button
               onClick={handleSubmit}
               disabled={loading || (job.enableCVAnalysis && !analysisId)}
-              className={`w-full py-2 rounded-lg font-semibold transition ${
-                loading || (job.enableCVAnalysis && !analysisId)
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : isDark
+              className={`w-full py-2 rounded-lg font-semibold transition ${loading || (job.enableCVAnalysis && !analysisId)
+                ? "bg-gray-400 cursor-not-allowed"
+                : isDark
                   ? "bg-teal-400 text-black hover:bg-teal-300"
                   : "bg-teal-600 text-white hover:bg-teal-700"
-              }`}
+                }`}
             >
-              {loading ? "Submitting…" : "Submit Application"}
+              {loading
+                ? "Submitting…"
+                : job.interviewType === "ai"
+                  ? "Continue to Interview →"
+                  : "Submit Application"}
             </button>
           </div>
         </section>

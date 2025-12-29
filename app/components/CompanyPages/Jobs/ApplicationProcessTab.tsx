@@ -13,6 +13,9 @@ interface ApplicationProcessTabProps {
   interviewType: "none" | "ai" | "human";
   setInterviewType: (v: "none" | "ai" | "human") => void;
 
+  questionCount: number;
+  setQuestionCount: (v: number) => void;
+
   aiFocus: string[];
   setAiFocus: (v: string[]) => void;
 
@@ -29,29 +32,31 @@ interface ApplicationProcessTabProps {
   onSubmit: () => void;
 }
 
-export default function ApplicationProcessTab({
-  theme,
-  inputClass,
-  enableCVAnalysis,
-  setEnableCVAnalysis,
-  interviewType,
-  setInterviewType,
-  aiFocus,
-  setAiFocus,
-  aiQuestions,
-  setAiQuestions,
-  humanType,
-  setHumanType,
-  errors,
-  setErrors,
-  loading,
-  onSubmit,
-}: ApplicationProcessTabProps) {
+export default function ApplicationProcessTab(props: ApplicationProcessTabProps) {
+  const {
+    theme,
+    inputClass,
+    enableCVAnalysis,
+    setEnableCVAnalysis,
+    interviewType,
+    setInterviewType,
+    questionCount,
+    setQuestionCount,
+    aiFocus,
+    setAiFocus,
+    aiQuestions,
+    setAiQuestions,
+    humanType,
+    setHumanType,
+    errors,
+    setErrors,
+    loading,
+    onSubmit,
+  } = props;
   const isDark = theme === "dark";
 
-  const cardClass = `p-6 rounded-xl border shadow-sm ${
-    isDark ? "bg-[#161821] border-gray-700" : "bg-white border-gray-200"
-  } space-y-6`;
+  const cardClass = `p-6 rounded-xl border shadow-sm ${isDark ? "bg-[#161821] border-gray-700" : "bg-white border-gray-200"
+    } space-y-6`;
 
   return (
     <div className={cardClass}>
@@ -126,6 +131,27 @@ export default function ApplicationProcessTab({
           {interviewType === "ai" && (
             <div className="mt-3 ml-6 p-4 rounded-lg border bg-purple-50/10 space-y-4">
               <h4 className="font-semibold text-purple-600">AI Interview Settings</h4>
+
+              {/* Number of Questions */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex justify-between">
+                  <span>Number of Questions</span>
+                  <span className="text-purple-600 font-bold">{questionCount}</span>
+                </label>
+                <input
+                  type="range"
+                  min="3"
+                  max="10"
+                  step="1"
+                  value={questionCount}
+                  onChange={(e) => setQuestionCount(parseInt(e.target.value))}
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
+                />
+                <div className="flex justify-between text-xs text-gray-400">
+                  <span>3 Questions</span>
+                  <span>10 Questions</span>
+                </div>
+              </div>
 
               {/* Focus Areas */}
               <div className="space-y-1">

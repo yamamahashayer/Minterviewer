@@ -3,13 +3,17 @@ import mongoose, { Schema, model, models } from "mongoose";
 const ApplicantSchema = new Schema({
   menteeId: { type: Schema.Types.ObjectId, ref: "Mentee", required: true },
   analysisId: { type: Schema.Types.ObjectId, ref: "CvAnalysis" },
-  interviewId: { type: Schema.Types.ObjectId, ref: "Interview" },
+  interviewId: { type: Schema.Types.ObjectId, ref: "JobInterview" },
 
   status: {
     type: String,
-    enum: ["pending", "shortlisted", "rejected"],
+    enum: ["pending", "interview_pending", "interview_completed", "shortlisted", "rejected"],
     default: "pending",
   },
+
+  // Interview completion tracking
+  interviewStartedAt: { type: Date },
+  interviewCompletedAt: { type: Date },
 
   evaluation: {
     cvScore: Number,
@@ -50,6 +54,7 @@ const JobSchema = new Schema(
       default: "none",
     },
 
+    questionCount: { type: Number, default: 5 },
     aiFocus: [String],
     aiQuestions: String,
 

@@ -41,6 +41,7 @@ export default function CreateJobInlineForm({ onCancel, onSaved, theme }) {
   const [interviewType, setInterviewType] = useState<"none" | "ai" | "human">(
     "none"
   );
+  const [questionCount, setQuestionCount] = useState(5);
   const [aiFocus, setAiFocus] = useState<string[]>([]);
   const [aiQuestions, setAiQuestions] = useState("");
   const [humanType, setHumanType] = useState<"hr" | "mentor" | "">("");
@@ -48,15 +49,13 @@ export default function CreateJobInlineForm({ onCancel, onSaved, theme }) {
   // ERROR STATES
   const [errors, setErrors] = useState<any>({});
 
-  const inputClass = `w-full px-3 py-2 rounded-lg border outline-none ${
-    isDark
-      ? "bg-[#141414] border-gray-700 text-white placeholder-gray-400"
-      : "bg-white border-gray-300 text-black placeholder-gray-500"
-  }`;
+  const inputClass = `w-full px-3 py-2 rounded-lg border outline-none ${isDark
+    ? "bg-[#141414] border-gray-700 text-white placeholder-gray-400"
+    : "bg-white border-gray-300 text-black placeholder-gray-500"
+    }`;
 
-  const cardClass = `p-6 rounded-xl border shadow-sm ${
-    isDark ? "bg-[#161821] border-gray-700" : "bg-white border-gray-200"
-  } space-y-4`;
+  const cardClass = `p-6 rounded-xl border shadow-sm ${isDark ? "bg-[#161821] border-gray-700" : "bg-white border-gray-200"
+    } space-y-4`;
 
   // ============================
   //         VALIDATION
@@ -108,6 +107,7 @@ export default function CreateJobInlineForm({ onCancel, onSaved, theme }) {
       deadline,
       enableCVAnalysis,
       interviewType,
+      questionCount,
       aiFocus,
       aiQuestions,
       humanType,
@@ -136,9 +136,8 @@ export default function CreateJobInlineForm({ onCancel, onSaved, theme }) {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList
-          className={`mb-4 rounded-lg ${
-            isDark ? "bg-white/10" : "bg-gray-100"
-          }`}
+          className={`mb-4 rounded-lg ${isDark ? "bg-white/10" : "bg-gray-100"
+            }`}
         >
           <TabsTrigger value="basic">Basic Info</TabsTrigger>
           <TabsTrigger value="desc">Description</TabsTrigger>
@@ -371,6 +370,8 @@ export default function CreateJobInlineForm({ onCancel, onSaved, theme }) {
             setEnableCVAnalysis={setEnableCVAnalysis}
             interviewType={interviewType}
             setInterviewType={setInterviewType}
+            questionCount={questionCount}
+            setQuestionCount={setQuestionCount}
             aiFocus={aiFocus}
             setAiFocus={setAiFocus}
             aiQuestions={aiQuestions}
