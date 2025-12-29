@@ -89,8 +89,32 @@ export default function JobCard({
         </DropdownMenu>
       </div>
 
-      {/* TITLE */}
-      <h2 className="text-xl font-semibold mb-4">{job.title}</h2>
+     {/* TITLE + FEATURES */}
+        <div className="mb-5">
+          <h2 className="text-xl font-semibold mb-2">{job.title}</h2>
+
+          <div className="flex flex-wrap gap-2">
+            {job.enableCVAnalysis && (
+              <span className="px-2 py-0.5 text-xs rounded-full bg-violet-100 text-violet-700">
+                CV Analysis
+              </span>
+            )}
+
+            {job.interviewType === "ai" && (
+              <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">
+                AI Interview
+              </span>
+            )}
+
+            {job.interviewType === "human" && (
+              <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700">
+                Human Interview
+              </span>
+            )}
+          </div>
+        </div>
+
+
 
       {/* INFO GRID */}
       <div className="grid grid-cols-3 gap-4 mb-4">
