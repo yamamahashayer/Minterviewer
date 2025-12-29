@@ -52,9 +52,42 @@ export const useTextToSpeech = () => {
             await audio.play();
         } catch (err) {
             console.error('TTS Error:', err);
+            console.warn('Falling back to native browser TTS...');
+
+            // Fallback to native browser TTS
+            if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+                try {
+                    // Cancel any ongoing speech
+                    window.speechSynthesis.cancel();
+
+                    const utterance = new SpeechSynthesisUtterance(text);
+
+                    // Try to select a decent voice
+                    const voices = window.speechSynthesis.getVoices();
+                    // Prefer Google US English or Microsoft David/Zira if available
+                    const preferredVoice = voices.find(v =>
+                        v.name.includes('Google US English') ||
+                        v.name.includes('Zira') ||
+                        v.lang === 'en-US'
+                    );
+                    if (preferredVoice) utterance.voice = preferredVoice;
+
+                    utterance.onend = () => setIsSpeaking(false);
+                    utterance.onerror = (e) => {
+                        console.error('Native TTS Error:', e);
+                        setIsSpeaking(false);
+                    };
+
+                    window.speechSynthesis.speak(utterance);
+                    // Don't set isSpeaking(false) here, wait for onend
+                    return;
+                } catch (nativeErr) {
+                    console.error('Native TTS failed too:', nativeErr);
+                }
+            }
+
             setIsSpeaking(false);
-            // Log the error details so user can see what's wrong
-            console.error('Failed to use ElevenLabs TTS. Make sure ELEVENLABS_API_KEY and ELEVENLABS_VOICE_ID are set.');
+            console.error('Failed to use ElevenLabs TTS and native fallback failed.');
         }
     }, []);
 

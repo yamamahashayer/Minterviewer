@@ -92,9 +92,51 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        /* ========================= Handle Job Application ========================= */
+        if (interview.isJobApplication && interview.jobId) {
+            // Import Job model
+            const Job = (await import("@/models/Job")).default;
+
+            // Find the job
+            const job = await Job.findById(interview.jobId);
+
+            if (job) {
+                // Check if applicant already exists
+                const existingApplicantIndex = job.applicants.findIndex(
+                    (app: any) => app.menteeId.toString() === userObjId.toString()
+                );
+
+                if (existingApplicantIndex >= 0) {
+                    // Update existing applicant with interview results
+                    job.applicants[existingApplicantIndex].interviewId = interview._id;
+                    job.applicants[existingApplicantIndex].status = "interview_completed";
+                    job.applicants[existingApplicantIndex].interviewCompletedAt = new Date();
+                    job.applicants[existingApplicantIndex].evaluation = {
+                        ...job.applicants[existingApplicantIndex].evaluation,
+                        interviewScore: overallScore,
+                    };
+                } else {
+                    // Create new applicant entry
+                    job.applicants.push({
+                        menteeId: userObjId,
+                        interviewId: interview._id,
+                        status: "interview_completed",
+                        interviewCompletedAt: new Date(),
+                        evaluation: {
+                            interviewScore: overallScore,
+                        },
+                        createdAt: new Date(),
+                    });
+                }
+
+                await job.save();
+            }
+        }
+
         return NextResponse.json({
             success: true,
-            interview
+            interview,
+            applicationSubmitted: interview.isJobApplication
         });
     } catch (error) {
         console.error("Error saving interview result:", error);

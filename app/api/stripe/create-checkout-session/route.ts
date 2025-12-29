@@ -7,9 +7,16 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: Request) {
     try {
-        const { sessionId, mentorId, menteeId, price, title, mentorName, mentorPhoto } = await req.json();
+        const body = await req.json();
+        console.log('📥 Received checkout request:', body);
+
+        const { sessionId, mentorId, menteeId, price, title, mentorName, mentorPhoto } = body;
+
+        console.log('💰 Price value:', price, 'Type:', typeof price);
+        console.log('🔑 Required fields check:', { sessionId, mentorId, price });
 
         if (!sessionId || !mentorId || !price) {
+            console.error('❌ Missing required fields:', { sessionId, mentorId, price });
             return NextResponse.json(
                 { error: 'Missing required fields' },
                 { status: 400 }
@@ -24,11 +31,15 @@ export async function POST(req: Request) {
         // Actually, let's keep it simple and fetch it.
 
         // Dynamic import to avoid circular deps if any, though unlikely here
+        console.log('📦 Importing database modules...');
         const { default: dbConnect } = await import('@/lib/mongodb');
         const { default: Mentor } = await import('@/models/Mentor');
 
+        console.log('🔌 Connecting to database...');
         await dbConnect();
+        console.log('🔍 Fetching mentor with ID:', mentorId);
         const mentor = await Mentor.findById(mentorId);
+        console.log('👤 Mentor found:', mentor ? `${mentor.name} (Stripe: ${mentor.stripeAccountId || 'none'})` : 'NOT FOUND');
 
         if (!mentor) {
             return NextResponse.json(
@@ -38,6 +49,9 @@ export async function POST(req: Request) {
         }
 
         // Create checkout session with transfer if mentor has Stripe account
+        console.log('🛠️ Building session config...');
+        console.log('🌐 App URL:', process.env.NEXT_PUBLIC_APP_URL);
+
         const sessionConfig: any = {
             payment_method_types: ['card'],
             line_items: [
@@ -47,7 +61,10 @@ export async function POST(req: Request) {
                         product_data: {
                             name: `Mentorship Session: ${title}`,
                             description: `Session with ${mentorName}`,
-                            images: mentorPhoto ? [mentorPhoto] : [],
+                            // Only use valid HTTP(S) URLs, not base64 data (causes "request too large" error)
+                            images: mentorPhoto && (mentorPhoto.startsWith('http://') || mentorPhoto.startsWith('https://'))
+                                ? [mentorPhoto]
+                                : [],
                         },
                         unit_amount: Math.round(price),
                     },
@@ -66,17 +83,24 @@ export async function POST(req: Request) {
             },
         };
 
+        console.log('✅ Session config created:', JSON.stringify(sessionConfig, null, 2));
+
         // Add transfer_data if mentor has Stripe account
         if (mentor.stripeAccountId) {
+            console.log('💸 Adding transfer to mentor Stripe account:', mentor.stripeAccountId);
             sessionConfig.payment_intent_data = {
                 transfer_data: {
                     destination: mentor.stripeAccountId,
                 },
             };
+        } else {
+            console.log('⚠️ No Stripe account for mentor, using platform account');
         }
 
         try {
+            console.log('🚀 Creating Stripe checkout session...');
             const checkoutSession = await stripe.checkout.sessions.create(sessionConfig);
+            console.log('✅ Checkout session created:', checkoutSession.id);
             return NextResponse.json({
                 sessionId: checkoutSession.id,
                 url: checkoutSession.url

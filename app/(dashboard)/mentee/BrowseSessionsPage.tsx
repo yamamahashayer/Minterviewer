@@ -6,7 +6,6 @@ import { Search, Calendar, DollarSign, Filter, Star, Clock, MessageSquare } from
 import { Button } from '@/app/components/ui/button';
 import { toast } from 'sonner';
 import BookingFlow from '@/app/components/publicPages/BookingFlow/BookingFlow';
-import StripeDebug from '@/app/components/debug/StripeDebug';
 import { useRouter } from 'next/navigation';
 
 
@@ -212,7 +211,6 @@ export default function BrowseSessionsPage() {
 
     return (
         <div className="p-8 max-w-[1400px] mx-auto min-h-screen">
-            <StripeDebug />
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}

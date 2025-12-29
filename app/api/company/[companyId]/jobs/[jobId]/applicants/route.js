@@ -76,19 +76,20 @@ export async function GET(req, ctx) {
 
         mentee: mentee
           ? {
-              _id: mentee._id,
-              full_name: mentee.user?.full_name || "",
-              email: mentee.user?.email || "",
-              phoneNumber: mentee.user?.phoneNumber || "",
-              Country: mentee.user?.Country || "",
-            }
+            _id: mentee._id,
+            full_name: mentee.user?.full_name || "",
+            email: mentee.user?.email || "",
+            phoneNumber: mentee.user?.phoneNumber || "",
+            Country: mentee.user?.Country || "",
+          }
           : null,
 
         cvScore: analysis?.score ?? null,
         atsScore: analysis?.atsScore ?? null,
-        interviewScore: null,
+        interviewScore: app.evaluation?.interviewScore ?? null,
 
         analysisId: app.analysisId || null,
+        interviewId: app.interviewId || null,
       };
     });
 

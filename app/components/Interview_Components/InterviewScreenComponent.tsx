@@ -228,10 +228,10 @@ const InterviewScreenComponent = ({ setupData, onComplete }: { setupData: any, o
                     rawQuestions = data.questions || [];
                 }
 
-                // Map 'question' to 'text' if 'text' is missing (Gemini returns 'question')
+                // Map differs based on model response (text, question, or questionText)
                 const normalizedQuestions = rawQuestions.map((q: any) => ({
                     ...q,
-                    text: q.text || q.question
+                    text: q.text || q.question || q.questionText
                 }));
 
                 setQuestions(normalizedQuestions);
