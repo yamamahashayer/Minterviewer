@@ -64,7 +64,7 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
   };
 
   /* ======================================================
-     🔥 FULL PROFILE MODE (يخفي كل الصفحة)
+     🔥 FULL PROFILE MODE
      ====================================================== */
   if (selectedMenteeId) {
     return (
@@ -138,6 +138,10 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
                   job={job}
                   theme={theme}
                   onViewProfile={(id) => setSelectedMenteeId(id)}
+                  onBack={() => {
+                    setOpenJobId(null);
+                    setApplicants([]);
+                  }}
                 />
               </div>
             )}

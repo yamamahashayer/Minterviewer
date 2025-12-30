@@ -144,7 +144,7 @@ export default function ChoiceScreen({
                     : "bg-purple-600 hover:bg-purple-700 text-white w-full"
                 }
               >
-                <Upload size={16} className="mr-2" /> Upload My CV
+                <Upload size={16}  className="mr-2" /> Upload My CV
               </Button>
             </div>
 

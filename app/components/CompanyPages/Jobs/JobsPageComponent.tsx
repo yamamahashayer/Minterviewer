@@ -15,6 +15,17 @@ import {
   TabsContent,
 } from "@/app/components/ui/tabs";
 
+import {
+  LayoutDashboard,
+  Briefcase,
+  PlusCircle,
+  Users,
+  Brain,
+  Mic,
+  Award,
+} from "lucide-react";
+import JobsTimelineChart from "./JobsTimelineChart";
+
 type Theme = "dark" | "light";
 
 export default function JobsPageComponent({
@@ -85,49 +96,42 @@ export default function JobsPageComponent({
     });
   }, [jobs, search, status, type, level, applicantsFilter]);
 
-  /* ================= HANDLERS ================= */
-
+  /* ================= HELPERS ================= */
   const getCompanyId = () => {
     const raw = sessionStorage.getItem("user");
     if (!raw) return null;
     return JSON.parse(raw).companyId;
   };
 
-  // ✏️ Edit
   const handleEditJob = (job: any) => {
     setFocusedJob(job);
     setMainTab("create");
   };
 
-  // 🔒 Close
   const handleCloseJob = async (jobId: string) => {
     const companyId = getCompanyId();
     if (!companyId) return;
 
-    await fetch(
-      `/api/company/${companyId}/jobs/${jobId}`,
-      { method: "PATCH" }
-    );
+    await fetch(`/api/company/${companyId}/jobs/${jobId}`, {
+      method: "PATCH",
+    });
 
     refreshJobs();
   };
 
-  // 🗑️ Delete
   const handleDeleteJob = async (jobId: string) => {
     if (!confirm("Are you sure you want to delete this job?")) return;
 
     const companyId = getCompanyId();
     if (!companyId) return;
 
-    await fetch(
-      `/api/company/${companyId}/jobs/${jobId}`,
-      { method: "DELETE" }
-    );
+    await fetch(`/api/company/${companyId}/jobs/${jobId}`, {
+      method: "DELETE",
+    });
 
     refreshJobs();
   };
 
-  /* ================= VIEW APPLICANTS ================= */
   const handleViewApplicants = async (job: any) => {
     setSelectedJob(job);
     setShowApplicants(true);
@@ -142,9 +146,7 @@ export default function JobsPageComponent({
     setApplicants(data.ok ? data.applicants : []);
   };
 
-  /* ======================================================
-     🔥 FULL SCREEN PROFILE MODE
-     ====================================================== */
+  /* ================= PROFILE MODE ================= */
   if (viewingMenteeId) {
     return (
       <div
@@ -164,31 +166,101 @@ export default function JobsPageComponent({
     );
   }
 
-  /* ======================================================
-     🟢 NORMAL PAGE
-     ====================================================== */
+  /* ================= PAGE ================= */
   return (
     <div
       className={`min-h-screen p-6 space-y-8 ${
         isDark ? "bg-[#020617] text-white" : "bg-[#f8fafc] text-black"
       }`}
     >
-      {/* ================= HEADER ================= */}
-      <div className="rounded-2xl p-8 border">
-        <h1 className="text-4xl font-extrabold">Job Posts</h1>
-        <p className="opacity-60 mt-2">
-          Manage your jobs and review applicants.
-        </p>
-      </div>
+{/* ================= HEADER ================= */}
+<div
+  className={`relative rounded-2xl px-8 py-10 border mb-10 overflow-hidden
+    ${isDark
+      ? "bg-[#020617] border-[#1e293b]"
+      : "bg-white border-gray-200"
+    }
+  `}
+>
+  {/* very subtle accent */}
+  <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-transparent" />
 
+  <div className="relative space-y-4 animate-fade-in">
+    <h1
+      className={`text-4xl font-extrabold tracking-tight
+        ${isDark ? "text-white" : "text-gray-900"}
+      `}
+    >
+      Hire with{" "}
+      <span className="text-purple-500">confidence</span>
+    </h1>
+
+    <p
+      className={`max-w-2xl text-base
+        ${isDark ? "text-slate-400" : "text-gray-600"}
+      `}
+    >
+      Analyze CVs, run interviews, and focus on the
+      <span className="text-purple-500 font-medium"> top candidates </span>
+      — without the noise.
+    </p>
+  </div>
+</div>
+
+
+
+      {/* ================= CHART ================= */}
+      <JobsTimelineChart jobs={jobs} theme={theme} />
+
+
+      {/* NAV TABS */}
       <Tabs value={mainTab} onValueChange={setMainTab}>
-        <TabsList className="rounded-xl p-1 w-fit border">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="jobs">Jobs</TabsTrigger>
-          <TabsTrigger value="create">Create Job</TabsTrigger>
+        <TabsList
+          className={`
+            flex gap-1 p-1 rounded-2xl w-fit
+            ${isDark
+              ? "bg-white/5 border border-white/10"
+              : "bg-gray-100 border border-gray-200"}
+          `}
+        >
+          <TabsTrigger
+            value="overview"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition
+              data-[state=active]:bg-purple-600
+              data-[state=active]:text-white
+              data-[state=inactive]:opacity-70
+              hover:opacity-100"
+          >
+            <LayoutDashboard size={16} />
+            Overview
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="jobs"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition
+              data-[state=active]:bg-purple-600
+              data-[state=active]:text-white
+              data-[state=inactive]:opacity-70
+              hover:opacity-100"
+          >
+            <Briefcase size={16} />
+            Jobs
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="create"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition
+              data-[state=active]:bg-purple-600
+              data-[state=active]:text-white
+              data-[state=inactive]:opacity-70
+              hover:opacity-100"
+          >
+            <PlusCircle size={16} />
+            Create Job
+          </TabsTrigger>
         </TabsList>
 
-        {/* ================= OVERVIEW ================= */}
+        {/* OVERVIEW */}
         <TabsContent value="overview">
           <JobsOverview
             jobs={jobs}
@@ -201,9 +273,9 @@ export default function JobsPageComponent({
           />
         </TabsContent>
 
-        {/* ================= JOBS ================= */}
+        {/* JOBS */}
         <TabsContent value="jobs">
-          {/* FILTER BAR */}
+          {/* 🔍 FILTER BAR (رجعت كاملة 👇) */}
           {isJobsListView && (
             <div
               className={`mb-6 flex flex-wrap gap-3 items-center rounded-xl p-4 border
@@ -309,17 +381,21 @@ export default function JobsPageComponent({
               job={selectedJob}
               theme={theme}
               onViewProfile={(menteeId) =>
-                setViewingMenteeId(menteeId)
+                setViewingMenteeId(menteeId)             
               }
+               onBack={() => {
+                  setShowApplicants(false);
+                  setSelectedJob(null);
+                }}
             />
           )}
         </TabsContent>
 
-        {/* ================= CREATE ================= */}
+        {/* CREATE */}
         <TabsContent value="create">
           <CreateJobInlineForm
             theme={theme}
-            job={focusedJob} // لو بدك edit
+            job={focusedJob}
             onCancel={() => {
               setFocusedJob(null);
               setMainTab("overview");

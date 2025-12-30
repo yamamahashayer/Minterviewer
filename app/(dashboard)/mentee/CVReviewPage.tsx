@@ -182,6 +182,7 @@ useEffect(() => {
   if (mode === "upload") {
     return (
       <UploadMode
+        showNotes={true}
         isDark={isDark}
         onBack={() => setMode("choice")}
         onSuccess={(data) => {

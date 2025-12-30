@@ -57,6 +57,33 @@ export default function CreateJobInlineForm({ onCancel, onSaved, theme }) {
   const cardClass = `p-6 rounded-xl border shadow-sm ${isDark ? "bg-[#161821] border-gray-700" : "bg-white border-gray-200"
     } space-y-4`;
 
+    const generatedUserNotes = `
+     You are analyzing a CV for the following job position.
+
+      Job Title: ${title}
+      Job Type: ${type}
+      Level: ${level}
+
+      Required Skills:
+      ${skills
+        .split(",")
+        .map((s) => `- ${s.trim()}`)
+        .join("\n")}
+
+      Evaluation Focus:
+      ${aiFocus.map((f) => `- ${f}`).join("\n")}
+
+      Instructions:
+      - Evaluate how well the candidate matches the job requirements.
+      - Focus on ATS compatibility and keyword alignment.
+      - Identify missing or weak skills.
+      - Assess suitability for the specified job level.
+      - Provide a concise and objective evaluation.
+
+      `;
+
+
+
   // ============================
   //         VALIDATION
   // ============================
@@ -111,6 +138,7 @@ export default function CreateJobInlineForm({ onCancel, onSaved, theme }) {
       aiFocus,
       aiQuestions,
       humanType,
+      userNotes: generatedUserNotes,
     };
 
     const res = await fetch(`/api/company/${user.companyId}/jobs`, {
