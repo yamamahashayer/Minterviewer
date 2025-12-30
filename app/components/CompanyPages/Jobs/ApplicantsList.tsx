@@ -10,6 +10,7 @@ interface Props {
   job: any;
   theme: Theme;
   onViewProfile: (menteeId: string) => void;
+  onBack: () => void; // 🔙 NEW
 }
 
 export default function ApplicantsList({
@@ -17,6 +18,7 @@ export default function ApplicantsList({
   job,
   theme,
   onViewProfile,
+  onBack, // 🔙 NEW
 }: Props) {
   const isDark = theme === "dark";
   const [sortBy, setSortBy] = useState<"cv" | "ats" | "interview">(() => {
@@ -36,12 +38,21 @@ export default function ApplicantsList({
 
   return (
     <div
-      className={`p-8 rounded-2xl space-y-6 ${isDark ? "bg-[#1b2333] text-white" : "bg-white text-black"
-        }`}
+      className={`p-8 rounded-2xl space-y-6 ${
+        isDark ? "bg-[#1b2333] text-white" : "bg-white text-black"
+      }`}
     >
       {/* ================= HEADER ================= */}
       <div className="flex justify-between items-center">
-        <div>
+        <div className="space-y-2">
+          {/* 🔙 BACK BUTTON */}
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 text-sm opacity-70 hover:opacity-100 transition"
+          >
+            ← Back to all jobs
+          </button>
+
           <h2 className="text-3xl font-bold">
             Applicants ({sortedApplicants.length})
           </h2>
@@ -65,10 +76,11 @@ export default function ApplicantsList({
       <div className="overflow-x-auto rounded-xl border">
         <table className="w-full text-sm">
           <thead
-            className={`text-xs uppercase ${isDark
-              ? "bg-[#20283d] text-gray-300"
-              : "bg-gray-100 text-gray-600"
-              }`}
+            className={`text-xs uppercase ${
+              isDark
+                ? "bg-[#20283d] text-gray-300"
+                : "bg-gray-100 text-gray-600"
+            }`}
           >
             <tr>
               <Th>#</Th>
@@ -89,10 +101,11 @@ export default function ApplicantsList({
               return (
                 <tr
                   key={a._id}
-                  className={`border-b ${isDark
-                    ? "border-gray-700 hover:bg-[#1f263a]"
-                    : "border-gray-200 hover:bg-gray-50"
-                    }`}
+                  className={`border-b ${
+                    isDark
+                      ? "border-gray-700 hover:bg-[#1f263a]"
+                      : "border-gray-200 hover:bg-gray-50"
+                  }`}
                 >
                   <Td>{i + 1}</Td>
 
@@ -120,20 +133,29 @@ export default function ApplicantsList({
                   <Td>{a.atsScore != null ? `${a.atsScore}%` : "—"}</Td>
                   <Td>
                     {a.status === "interview_completed" ? (
-                      <span className="text-green-600 dark:text-green-400 font-medium">✓ Completed</span>
+                      <span className="text-green-600 dark:text-green-400 font-medium">
+                        ✓ Completed
+                      </span>
                     ) : a.status === "interview_pending" ? (
-                      <span className="text-yellow-600 dark:text-yellow-400">Pending</span>
+                      <span className="text-yellow-600 dark:text-yellow-400">
+                        Pending
+                      </span>
                     ) : a.interviewId ? (
-                      <span className="text-blue-600 dark:text-blue-400">In Progress</span>
+                      <span className="text-blue-600 dark:text-blue-400">
+                        In Progress
+                      </span>
                     ) : (
                       <span className="opacity-50">Not started</span>
                     )}
                   </Td>
+
                   <Td>
                     {a.evaluation?.interviewScore ? (
                       <div className="flex items-center gap-2">
                         <Award size={14} className="text-yellow-500" />
-                        <span className="font-bold">{a.evaluation.interviewScore}</span>
+                        <span className="font-bold">
+                          {a.evaluation.interviewScore}
+                        </span>
                       </div>
                     ) : (
                       "—"
@@ -142,7 +164,6 @@ export default function ApplicantsList({
 
                   {/* ================= ACTIONS ================= */}
                   <Td className="space-y-2 text-center">
-                    {/* VIEW PROFILE */}
                     <button
                       onClick={() => onViewProfile(m?._id)}
                       className="flex items-center gap-2 mx-auto px-3 py-1 text-xs rounded-lg border hover:bg-white/10"
@@ -151,12 +172,11 @@ export default function ApplicantsList({
                       View Profile
                     </button>
 
-                    {/* ✅ CV ANALYSIS – SAME AS BEFORE */}
                     {a.analysisId ? (
                       <button
                         onClick={() =>
-                        (window.location.href =
-                          `/company/cv-analysis/${a.analysisId}`)
+                          (window.location.href =
+                            `/company/cv-analysis/${a.analysisId}`)
                         }
                         className="flex items-center gap-2 mx-auto px-3 py-1 text-xs rounded-lg border hover:bg-white/10"
                       >
@@ -167,12 +187,12 @@ export default function ApplicantsList({
                       <span className="block text-xs opacity-40">—</span>
                     )}
 
-                    {/* ✅ AI INTERVIEW REPORT */}
-                    {a.interviewId && a.status === "interview_completed" ? (
+                    {a.interviewId &&
+                    a.status === "interview_completed" ? (
                       <button
                         onClick={() =>
-                        (window.location.href =
-                          `/company/jobs/${job._id}/applicants/${a._id}/interview`)
+                          (window.location.href =
+                            `/company/jobs/${job._id}/applicants/${a._id}/interview`)
                         }
                         className="flex items-center gap-2 mx-auto px-3 py-1 text-xs rounded-lg border hover:bg-white/10 bg-purple-500/10 border-purple-500/30"
                       >

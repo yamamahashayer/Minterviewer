@@ -1,27 +1,33 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
+
 import Job from "@/models/Job";
 import Company from "@/models/Company";
-import { sendNotification } from "@/lib/sendNotification"; // ⬅️ مهم
+import Mentee from "@/models/Mentee";
 
+import { sendNotification } from "@/lib/sendNotification";
+
+/* ============================================
+   Helpers
+==============================================*/
 const unwrapParams = async (ctx) => {
   const p = ctx?.params;
   return p && typeof p.then === "function" ? await p : p;
 };
 
+
 /* ============================================
-   GET — All Jobs (Auto Close Expired)
-==============================================*/
-/* ============================================
-   GET — All Jobs (Auto Close + Deadline Reminders)
+   GET — All Jobs
+   - Auto Close Expired
+   - Deadline Reminders
 ==============================================*/
 export async function GET(req, ctx) {
   try {
     await connectDB();
+
     const p = await unwrapParams(ctx);
     const companyId = p.companyId;
 
-    // جلب الشركة لمعرفة userId
     const companyExists = await Company.findById(companyId);
     if (!companyExists) {
       return NextResponse.json(
@@ -33,20 +39,18 @@ export async function GET(req, ctx) {
     const userId = companyExists.user.toString();
 
     let jobs = await Job.find({ companyId }).sort({ createdAt: -1 });
-
     const now = new Date();
 
     for (const job of jobs) {
       /* ============================================
-          1️⃣ تذكير قبل انتهاء الوظيفة
+         🔔 Deadline Reminders
       ===============================================*/
-
       if (job.deadline && job.status === "active") {
         const deadline = new Date(job.deadline);
         const diffMs = deadline.getTime() - now.getTime();
         const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 
-        // 🔔 قبل 3 أيام
+        // 🔔 3 days before
         if (diffDays === 3 && !job.reminder3DaysSent) {
           await sendNotification({
             userId,
@@ -60,7 +64,7 @@ export async function GET(req, ctx) {
           await job.save();
         }
 
-        // 🔔 قبل يوم واحد
+        // 🔔 1 day before
         if (diffDays === 1 && !job.reminder1DaySent) {
           await sendNotification({
             userId,
@@ -76,7 +80,7 @@ export async function GET(req, ctx) {
       }
 
       /* ============================================
-          2️⃣ إغلاق الوظائف المنتهية تلقائيًا
+         ⛔ Auto Close Expired Jobs
       ===============================================*/
       const expired =
         job.deadline &&
@@ -97,9 +101,7 @@ export async function GET(req, ctx) {
       }
     }
 
-    // إعادة جلب النتائج بعد التحديث
     jobs = await Job.find({ companyId }).sort({ createdAt: -1 });
-
     return NextResponse.json({ ok: true, jobs });
   } catch (err) {
     console.error("Get Jobs Error:", err);
@@ -110,9 +112,10 @@ export async function GET(req, ctx) {
   }
 }
 
-
 /* ============================================
    POST — Create Job
+   + Notify Company
+   + Notify ALL Mentees 🔥
 ==============================================*/
 export async function POST(req, ctx) {
   try {
@@ -129,7 +132,7 @@ export async function POST(req, ctx) {
       );
     }
 
-    const userId = companyExists.user.toString(); // 🔥 user الحقيقي للشركة
+    const companyUserId = companyExists.user.toString();
 
     const body = await req.json();
     const {
@@ -166,15 +169,32 @@ export async function POST(req, ctx) {
     });
 
     /* ============================================
-       🔔 إشعار — تم نشر وظيفة جديدة
+       🔔 Notify Company
     ===============================================*/
     await sendNotification({
-      userId,
+      userId: companyUserId,
       title: "Job Published",
       message: `Your job "${job.title}" has been published successfully.`,
       type: "job",
       redirectTo: "/company?tab=jobs",
     });
+
+    /* ============================================
+       🔔 Notify ALL Mentees (NEW)
+    ===============================================*/
+    const mentees = await Mentee.find({}, "_id user");
+
+    for (const mentee of mentees) {
+      if (!mentee.user) continue;
+
+      await sendNotification({
+        userId: mentee.user.toString(),
+        title: "New Job Opportunity 🚀",
+        message: `${companyExists.name} has published a new job: "${job.title}"`,
+        type: "job",
+        redirectTo: `/jobs/${job._id}`,
+      });
+    }
 
     return NextResponse.json({ ok: true, job }, { status: 201 });
   } catch (err) {
