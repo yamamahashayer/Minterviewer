@@ -48,14 +48,11 @@ export default function MentorSidebar({
     { id: "profile", label: "My Profile", icon: User },
     { id: "mentees", label: "My Mentees", icon: Users },
     { id: "sessions", label: "Sessions", icon: Calendar },
-    { id: "availability", label: "Availability", icon: Clock },
     { id: "booking-management", label: "Booking Management", icon: CalendarCheck },
-    { id: "cv-review", label: "CV Review", icon: FileText },
     { id: "feedbacks", label: "Feedbacks", icon: Star },
     { id: "earnings", label: "Earnings", icon: DollarSign },
     { id: "messages", label: "Messages", icon: MessageSquare },
     { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "help", label: "Help & Support", icon: HelpCircle },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 

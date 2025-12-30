@@ -42,7 +42,6 @@ export default function Sidebar({
     { id: "performance", label: "Performance", icon: TrendingUp },
     { id: "messages", label: "Messages", icon: MessageSquare, badge: 3 },
     { id: "notifications", label: "Notifications", icon: Bell, badge: notificationsCount },
-    { id: "reports", label: "Reports", icon: FileText },
     { id: "settings", label: "Settings", icon: Settings },
   ];
 
