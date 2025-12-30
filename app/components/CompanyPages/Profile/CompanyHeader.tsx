@@ -6,14 +6,14 @@ import {
   Check,
   X,
   MapPin,
-  Globe,
-  Mail,
   BadgeCheck,
+  Mail,
 } from "lucide-react";
 
 import { Input } from "@/app/components/ui/input";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Badge } from "@/app/components/ui/badge";
+import { Button } from "@/app/components/ui/button";
 
 export default function CompanyHeader({
   company,
@@ -24,155 +24,126 @@ export default function CompanyHeader({
   isDark,
   onSave,
   onCancel,
-}) {
+  saving,
+  isOwner,
+}: any) {
   if (!company) return null;
 
   const box = isDark
-    ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.03)] border-white/10 shadow-[0_0_40px_rgba(0,255,255,0.08)]"
-    : "bg-white border-purple-200 shadow-[0_0_30px_rgba(168,85,247,0.12)]";
+    ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.03)] border-white/10"
+    : "bg-white border-purple-200";
 
-  const textMain = isDark ? "text-white" : "text-purple-900";
   const textMuted = isDark ? "text-white/60" : "text-purple-700";
 
   return (
-    <div className={`rounded-2xl p-8 relative border backdrop-blur-xl mb-6 ${box}`}>
-      
-      {/* ========== TOP RIGHT ACTIONS ========== */}
+    <div className={`rounded-2xl p-8 relative border ${box}`}>
+      {/* ================= ACTIONS ================= */}
       <div className="absolute top-6 right-6 flex gap-2">
-        {!isEditing ? (
-          <button
-            onClick={() => setIsEditing(true)}
-            className="px-4 py-2 flex items-center gap-2 rounded-lg bg-purple-600 text-white shadow hover:bg-purple-700 transition"
+        {/* 💬 MESSAGE – placeholder */}
+        {!isOwner && (
+          <Button
+            onClick={() => {
+              alert("Messaging coming soon 💬");
+            }}
+            className={
+              isDark
+                ? "bg-teal-600 hover:bg-teal-500 text-white"
+                : "bg-purple-600 hover:bg-purple-500 text-white"
+            }
           >
-            <Pencil size={16} /> Edit
-          </button>
-        ) : (
+            <Mail size={16} className="mr-2" />
+            Message
+          </Button>
+        )}
+
+        {/* ✏️ EDIT – owner only */}
+        {isOwner && (
           <>
-            <button
-              onClick={onSave}
-              className="px-4 py-2 flex items-center gap-2 rounded-lg bg-green-600 text-white hover:bg-green-700"
-            >
-              <Check size={16} /> Save
-            </button>
-            <button
-              onClick={onCancel}
-              className={`px-4 py-2 flex items-center gap-2 rounded-lg ${
-                isDark ? "bg-white/10 text-white" : "bg-gray-200 text-gray-700"
-              }`}
-            >
-              <X size={16} /> Cancel
-            </button>
+            {!isEditing ? (
+              <Button
+                onClick={() => setIsEditing(true)}
+                className="bg-purple-600 text-white"
+              >
+                <Pencil size={16} className="mr-2" />
+                Edit
+              </Button>
+            ) : (
+              <>
+                <Button
+                  onClick={onSave}
+                  disabled={saving}
+                  className="bg-green-600 text-white"
+                >
+                  <Check size={16} className="mr-2" />
+                  {saving ? "Saving..." : "Save"}
+                </Button>
+
+                <Button
+                  onClick={onCancel}
+                  className={isDark ? "bg-white/10" : "bg-gray-200"}
+                >
+                  <X size={16} />
+                </Button>
+              </>
+            )}
           </>
         )}
       </div>
 
-      {/* ========== MAIN HEADER CONTENT ========== */}
-      <div className="flex items-start gap-6">
-        
-        {/* Company Logo / Avatar */}
-        <div className="relative group">
-          {isEditing && (
-            <input
-              type="file"
-              accept="image/*"
-              id="companyLogo"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                  setEdited({ ...edited, logo: ev.target?.result });
-                };
-                reader.readAsDataURL(file);
-              }}
-            />
-          )}
-
-          {/* Avatar */}
-          <div
-            className={`w-24 h-24 rounded-xl overflow-hidden flex items-center justify-center cursor-pointer ${
-              isEditing ? "ring-2 ring-purple-400" : ""
-            }`}
-            onClick={() => {
-              if (isEditing)
-                document.getElementById("companyLogo")?.click();
-            }}
-          >
-            {edited.logo ? (
-              <img src={edited.logo} className="w-full h-full object-cover" />
-            ) : (
-              <div
-                className={`w-full h-full flex items-center justify-center text-4xl font-bold rounded-xl 
-                ${isDark ? "bg-purple-400/20 text-purple-300" : "bg-purple-200 text-purple-700"}`}
-              >
-                {company.name?.charAt(0).toUpperCase() || "C"}
-              </div>
-            )}
+      {/* ================= CONTENT ================= */}
+      <div className="flex gap-6">
+        {/* LOGO */}
+        <div className="relative">
+          <div className="w-24 h-24 rounded-xl flex items-center justify-center bg-purple-500/20 text-4xl font-bold">
+            {company.name?.charAt(0).toUpperCase() || "C"}
           </div>
 
-          {/* Verified Badge */}
           {company.isVerified && (
-            <div
-              className="absolute -bottom-3 -right-3 bg-green-500 text-white w-10 h-10 rounded-full border-4 
-              border-white flex items-center justify-center shadow-lg"
-            >
-              <BadgeCheck size={20} />
+            <div className="absolute -bottom-3 -right-3 bg-green-500 text-white w-9 h-9 rounded-full flex items-center justify-center">
+              <BadgeCheck size={18} />
             </div>
           )}
         </div>
 
-        {/* TEXT SECTION */}
+        {/* INFO */}
         <div className="flex-1">
-          
-          {/* NAME */}
           {!isEditing ? (
-            <h2 className={`${textMain} text-2xl font-semibold mb-1`}>
-              {company.name}
-            </h2>
+            <h2 className="text-2xl font-semibold">{company.name}</h2>
           ) : (
             <Input
               value={edited.name}
               onChange={(e) => setEdited({ ...edited, name: e.target.value })}
-              className="max-w-sm mb-2"
+              className="max-w-sm"
             />
           )}
 
-          {/* Industry */}
-          <p className={`${textMuted} mb-1 flex items-center gap-2`}>
-            <Building2 size={16} />
-            {company.industry || "Industry not set"}
+          <p className={`${textMuted} flex items-center gap-2 mt-1`}>
+            <Building2 size={16} /> {company.industry}
           </p>
 
-          {/* Country (NEW) */}
           <div className="flex items-center gap-2 mt-1">
             <MapPin size={16} className={textMuted} />
-
             {!isEditing ? (
-              <span className={textMuted}>
-                {company.location || "Location not set"}
-              </span>
+              <span className={textMuted}>{company.location}</span>
             ) : (
               <Input
                 value={edited.location || ""}
-                onChange={(e) => setEdited({ ...edited, location: e.target.value })}
+                onChange={(e) =>
+                  setEdited({ ...edited, location: e.target.value })
+                }
                 className="max-w-sm"
-                placeholder="Enter country..."
               />
             )}
           </div>
 
-          {/* Verified Status */}
-          <Badge className="bg-green-600 text-white w-fit mt-2">
+          <Badge className="bg-green-600 text-white mt-2 w-fit">
             {company.isVerified ? "Verified" : "Pending"}
           </Badge>
 
-          {/* BIO */}
           <div className="mt-4">
             {!isEditing ? (
               <p className={textMuted}>
-                {edited.description || "No bio provided."}
+                {company.description || "No bio provided."}
               </p>
             ) : (
               <Textarea
@@ -180,8 +151,8 @@ export default function CompanyHeader({
                 onChange={(e) =>
                   setEdited({ ...edited, description: e.target.value })
                 }
-                className="max-w-xl mt-2"
                 rows={3}
+                className="max-w-xl"
               />
             )}
           </div>

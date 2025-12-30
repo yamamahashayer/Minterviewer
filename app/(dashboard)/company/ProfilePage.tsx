@@ -8,11 +8,7 @@ import CompanyInfoSection from "@/app/components/CompanyPages/Profile/CompanyInf
 
 type Theme = "dark" | "light";
 
-export default function ProfilePage({
-  theme = "dark",
-}: {
-  theme?: Theme;
-}) {
+export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
   const isDark = theme === "dark";
 
   const [loading, setLoading] = useState(true);
@@ -24,7 +20,8 @@ export default function ProfilePage({
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // ⭐ NEW: stats from jobs
+  const [isOwner, setIsOwner] = useState(false);
+
   const [totalJobs, setTotalJobs] = useState(0);
   const [totalApplications, setTotalApplications] = useState(0);
 
@@ -38,7 +35,6 @@ export default function ProfilePage({
 
         const user = JSON.parse(rawUser);
 
-        /* -------- Company profile -------- */
         const r = await fetch("/api/company", {
           headers: token
             ? { Authorization: `Bearer ${token}` }
@@ -51,15 +47,16 @@ export default function ProfilePage({
         setCompany(companyData);
         setEditedCompany(companyData);
 
-        /* -------- Company jobs -------- */
-        const jobsRes = await fetch(
-          `/api/company/${user.companyId}/jobs`
-        );
+        // ⭐ OWNER CHECK
+        if (user.companyId === companyData._id) {
+          setIsOwner(true);
+        }
+
+        const jobsRes = await fetch(`/api/company/${user.companyId}/jobs`);
         const jobsData = await jobsRes.json();
 
         if (jobsData.ok) {
           const jobs = jobsData.jobs || [];
-
           setTotalJobs(jobs.length);
 
           const applicationsCount = jobs.reduce(
@@ -109,7 +106,6 @@ export default function ProfilePage({
     setIsEditing(false);
   };
 
-  /* ================= STATES ================= */
   if (loading)
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -124,7 +120,6 @@ export default function ProfilePage({
       </div>
     );
 
-  /* ================= UI ================= */
   return (
     <div
       className={`min-h-screen ${
@@ -136,7 +131,6 @@ export default function ProfilePage({
       <div className="w-full flex justify-center">
         <div className="w-full max-w-6xl px-4 py-8 space-y-8">
 
-          {/* ===== HEADER ===== */}
           <CompanyHeader
             company={company}
             edited={editedCompany}
@@ -147,9 +141,9 @@ export default function ProfilePage({
             onSave={handleSave}
             onCancel={handleCancel}
             saving={saving}
+            isOwner={isOwner}
           />
 
-          {/* ===== STATS ===== */}
           <CompanyStats
             isDark={isDark}
             stats={[
@@ -157,16 +151,12 @@ export default function ProfilePage({
               { label: "Applications", value: totalApplications },
               {
                 label: "Status",
-                value: company?.isVerified
-                  ? "Verified"
-                  : "Pending",
+                value: company?.isVerified ? "Verified" : "Pending",
               },
             ]}
           />
 
-          {/* ===== COMPANY INFO ===== */}
           <CompanyInfoSection
-            company={company}
             edited={editedCompany}
             isEditing={isEditing}
             setIsEditing={setIsEditing}
@@ -179,6 +169,7 @@ export default function ProfilePage({
             onSave={handleSave}
             onCancel={handleCancel}
             isDark={isDark}
+            isOwner={isOwner}
           />
         </div>
       </div>

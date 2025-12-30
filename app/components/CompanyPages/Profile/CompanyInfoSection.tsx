@@ -14,10 +14,11 @@ import {
   Check,
   X,
   UserCircle,
+  Pencil,
 } from "lucide-react";
 
-// نفس ستايلات المنتور
-const iconColor = (isDark) =>
+/* نفس ستايلات المنتور */
+const iconColor = (isDark: boolean) =>
   `w-4 h-4 ${isDark ? "text-teal-300" : "text-purple-600"}`;
 
 export default function CompanyInfoSection({
@@ -28,6 +29,16 @@ export default function CompanyInfoSection({
   onSave,
   onCancel,
   isDark,
+  isOwner, // ⭐ التعديل هون
+}: {
+  edited: any;
+  isEditing: boolean;
+  setIsEditing: (v: boolean) => void;
+  onFieldChange: (key: string, value: any) => void;
+  onSave: () => void;
+  onCancel: () => void;
+  isDark: boolean;
+  isOwner: boolean;
 }) {
   return (
     <div className="space-y-6 mt-6">
@@ -41,39 +52,41 @@ export default function CompanyInfoSection({
             isDark={isDark}
           />
 
-          {!isEditing ? (
-            <button
+          {/* ===== ACTIONS (OWNER ONLY) ===== */}
+          {isOwner && (
+            !isEditing ? (
+              <button
               onClick={() => setIsEditing(true)}
-              className={`px-4 py-2 rounded-lg text-sm ${
-                isDark
-                  ? "bg-teal-400/20 text-teal-200"
-                  : "bg-purple-600 text-white"
-              }`}
+              className="px-4 py-2 flex items-center gap-2 rounded-lg 
+              bg-purple-600 text-white shadow hover:bg-purple-700 transition"
             >
+              <Pencil size={16} />
               Edit
             </button>
-          ) : (
-            <div className="flex gap-2">
-              <button
-                onClick={onSave}
-                className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm"
-              >
-                <Check className="w-4 h-4 inline-block mr-1" />
-                Save
-              </button>
 
-              <button
-                onClick={onCancel}
-                className={`px-4 py-2 rounded-lg text-sm ${
-                  isDark
-                    ? "bg-white/10 text-white"
-                    : "bg-gray-200 text-gray-800"
-                }`}
-              >
-                <X className="w-4 h-4 inline-block mr-1" />
-                Cancel
-              </button>
-            </div>
+            ) : (
+              <div className="flex gap-2">
+                <button
+                  onClick={onSave}
+                  className="px-4 py-2 rounded-lg bg-green-600 text-white text-sm"
+                >
+                  <Check className="w-4 h-4 inline-block mr-1" />
+                  Save
+                </button>
+
+                <button
+                  onClick={onCancel}
+                  className={`px-4 py-2 rounded-lg text-sm ${
+                    isDark
+                      ? "bg-white/10 text-white"
+                      : "bg-gray-200 text-gray-800"
+                  }`}
+                >
+                  <X className="w-4 h-4 inline-block mr-1" />
+                  Cancel
+                </button>
+              </div>
+            )
           )}
         </div>
 
@@ -88,7 +101,7 @@ export default function CompanyInfoSection({
               label="Work Email"
               value={edited.workEmail}
               icon={<Mail className={iconColor(isDark)} />}
-              editable={isEditing}
+              editable={isEditing && isOwner}
               onChange={(v) => onFieldChange("workEmail", v)}
               isDark={isDark}
             />
@@ -97,7 +110,7 @@ export default function CompanyInfoSection({
               label="Website"
               value={edited.website}
               icon={<Globe className={iconColor(isDark)} />}
-              editable={isEditing}
+              editable={isEditing && isOwner}
               onChange={(v) => onFieldChange("website", v)}
               isDark={isDark}
             />
@@ -106,7 +119,7 @@ export default function CompanyInfoSection({
               label="Location"
               value={edited.location}
               icon={<MapPin className={iconColor(isDark)} />}
-              editable={isEditing}
+              editable={isEditing && isOwner}
               onChange={(v) => onFieldChange("location", v)}
               isDark={isDark}
             />
@@ -115,7 +128,7 @@ export default function CompanyInfoSection({
               label="Founded Year"
               value={edited.foundedYear}
               icon={<Calendar className={iconColor(isDark)} />}
-              editable={isEditing}
+              editable={isEditing && isOwner}
               onChange={(v) => onFieldChange("foundedYear", v)}
               isDark={isDark}
             />
@@ -125,11 +138,10 @@ export default function CompanyInfoSection({
             <SmallTitle title="Social Profiles" isDark={isDark} />
 
             <div className="flex items-center gap-3 mt-2">
-
               <SocialIcon
                 icon={<Linkedin className="w-4 h-4" />}
                 value={edited.social?.linkedin}
-                isEditing={isEditing}
+                isEditing={isEditing && isOwner}
                 onChange={(v) =>
                   onFieldChange("social", { ...edited.social, linkedin: v })
                 }
@@ -139,7 +151,7 @@ export default function CompanyInfoSection({
               <SocialIcon
                 icon={<Twitter className="w-4 h-4" />}
                 value={edited.social?.twitter}
-                isEditing={isEditing}
+                isEditing={isEditing && isOwner}
                 onChange={(v) =>
                   onFieldChange("social", { ...edited.social, twitter: v })
                 }
@@ -149,7 +161,7 @@ export default function CompanyInfoSection({
               <SocialIcon
                 icon={<Facebook className="w-4 h-4" />}
                 value={edited.social?.facebook}
-                isEditing={isEditing}
+                isEditing={isEditing && isOwner}
                 onChange={(v) =>
                   onFieldChange("social", { ...edited.social, facebook: v })
                 }
@@ -159,7 +171,7 @@ export default function CompanyInfoSection({
               <SocialIcon
                 icon={<Instagram className="w-4 h-4" />}
                 value={edited.social?.instagram}
-                isEditing={isEditing}
+                isEditing={isEditing && isOwner}
                 onChange={(v) =>
                   onFieldChange("social", {
                     ...edited.social,
@@ -168,7 +180,6 @@ export default function CompanyInfoSection({
                 }
                 isDark={isDark}
               />
-
             </div>
           </div>
 
@@ -180,7 +191,7 @@ export default function CompanyInfoSection({
               label="Company Name"
               value={edited.name}
               icon={<Building2 className={iconColor(isDark)} />}
-              editable={isEditing}
+              editable={isEditing && isOwner}
               onChange={(v) => onFieldChange("name", v)}
               isDark={isDark}
             />
@@ -189,7 +200,7 @@ export default function CompanyInfoSection({
               label="Industry"
               value={edited.industry}
               icon={<Building2 className={iconColor(isDark)} />}
-              editable={isEditing}
+              editable={isEditing && isOwner}
               onChange={(v) => onFieldChange("industry", v)}
               isDark={isDark}
             />
@@ -198,7 +209,7 @@ export default function CompanyInfoSection({
               label="Hiring Status"
               value={edited.hiringStatus}
               icon={<Briefcase className={iconColor(isDark)} />}
-              editable={isEditing}
+              editable={isEditing && isOwner}
               isDark={isDark}
               onChange={(v) => onFieldChange("hiringStatus", v)}
               options={[
@@ -213,11 +224,9 @@ export default function CompanyInfoSection({
   );
 }
 
-/* ——————————————————————————————— */
-/* COMPONENTS */
-/* ——————————————————————————————— */
+/* ================= COMPONENTS ================= */
 
-function Card({ children, isDark }) {
+function Card({ children, isDark }: any) {
   return (
     <div
       className={`p-5 rounded-xl border ${
@@ -231,7 +240,7 @@ function Card({ children, isDark }) {
   );
 }
 
-function SectionTitle({ title, icon, isDark }) {
+function SectionTitle({ title, icon, isDark }: any) {
   return (
     <h3
       className={`flex items-center gap-2 text-lg font-semibold ${
@@ -244,7 +253,7 @@ function SectionTitle({ title, icon, isDark }) {
   );
 }
 
-function SmallTitle({ title, isDark }) {
+function SmallTitle({ title, isDark }: any) {
   return (
     <h4
       className={`text-sm mb-2 font-medium ${
@@ -256,7 +265,7 @@ function SmallTitle({ title, isDark }) {
   );
 }
 
-function Divider({ isDark }) {
+function Divider({ isDark }: any) {
   return (
     <div
       className={`my-4 border-t ${
@@ -266,7 +275,14 @@ function Divider({ isDark }) {
   );
 }
 
-function InfoItem({ label, value, icon, editable, onChange, isDark }) {
+function InfoItem({
+  label,
+  value,
+  icon,
+  editable,
+  onChange,
+  isDark,
+}: any) {
   return (
     <div className="flex gap-3 mb-3">
       {icon}
@@ -307,7 +323,7 @@ function InfoSelect({
   onChange,
   isDark,
   options,
-}) {
+}: any) {
   return (
     <div className="flex gap-3 mb-3">
       {icon}
@@ -332,7 +348,7 @@ function InfoSelect({
                 : "bg-purple-50 border-purple-200 text-purple-900"
             }`}
           >
-            {options.map((opt) => (
+            {options.map((opt: any) => (
               <option key={opt.value} value={opt.value}>
                 {opt.text}
               </option>
@@ -344,7 +360,7 @@ function InfoSelect({
   );
 }
 
-function SocialIcon({ icon, value, isEditing, onChange, isDark }) {
+function SocialIcon({ icon, value, isEditing, onChange, isDark }: any) {
   if (isEditing) {
     return (
       <input
