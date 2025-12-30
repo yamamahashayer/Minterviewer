@@ -10,17 +10,13 @@ import { MenteesProgress } from "@/app/(dashboard)/mentor/MenteesProgress";
 import { FeedbackManager } from "@/app/(dashboard)/mentor/FeedbackManager";
 import { PerformanceStats } from "@/app/(dashboard)/mentor/PerformanceStats";
 import { QuickActions } from "@/app/(dashboard)/mentor/QuickActions";
-import { HighlightBanner } from "@/app/(dashboard)/mentor/HighlightBanner";
 import { MyMenteesContent } from "@/app/(dashboard)/mentor/MyMenteesContent";
 import { SessionsPage } from "@/app/(dashboard)/mentor/SessionsPage";
 import { FeedbacksPage } from "@/app/(dashboard)/mentor/FeedbacksPage";
 import MentorMessages from "@/app/(dashboard)/mentor/MessagesPage";
 import SettingsPage from "@/app/(dashboard)/mentor/SettingsPage";
 import { EarningsPage } from "@/app/(dashboard)/mentor/EarningsPage";
-import { AvailabilityPage } from "@/app/(dashboard)/mentor/AvailabilityPage";
 import BookingManagementPage from "@/app/(dashboard)/mentor/BookingManagementPage";
-import { CVReviewPage } from "@/app/(dashboard)/mentor/CVReviewPage";
-import { HelpSupportPage } from "@/app/(dashboard)/mentor/HelpSupportPage";
 import MentorNotifications from "@/app/(dashboard)/mentor/NotificationsPage";
 
 type PageType =
@@ -31,11 +27,8 @@ type PageType =
   | "feedbacks"
   | "messages"
   | "earnings"
-  | "availability"
   | "booking-management"
-  | "cv-review"
   | "notifications"
-  | "help"
   | "settings";
 
 type Theme = "dark" | "light";
@@ -95,16 +88,10 @@ export default function MentorPage() {
         return <MentorMessages theme={theme} />;
       case "earnings":
         return <EarningsPage />;
-      case "availability":
-        return <AvailabilityPage />;
       case "booking-management":
         return <BookingManagementPage />;
-      case "cv-review":
-        return <CVReviewPage />;
       case "notifications":
         return <MentorNotifications theme={theme} />;
-      case "help":
-        return <HelpSupportPage />;
       case "settings":
         return <SettingsPage theme={theme} />;
       default:
