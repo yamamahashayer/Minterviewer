@@ -12,7 +12,13 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-export default function JobDetailsDrawer({ job, isDark, open, onClose }: any) {
+export default function JobDetailsDrawer({
+  job,
+  isDark,
+  open,
+  onClose,
+  onViewCompany, // ⭐ الجديد
+}: any) {
   if (!open || !job) return null;
 
   const router = useRouter();
@@ -62,7 +68,14 @@ export default function JobDetailsDrawer({ job, isDark, open, onClose }: any) {
             <h3 className="text-xl font-semibold">{company?.name}</h3>
             <p className="text-sm opacity-80">{company?.industry}</p>
 
-            <button className="flex items-center gap-1 mt-2 text-sm underline opacity-90 hover:opacity-100">
+            {/* ⭐ VIEW COMPANY PROFILE */}
+            <button
+              onClick={() => {
+                onClose();                 // سكّر Drawer الوظيفة
+                onViewCompany(company);    // افتح Drawer الشركة
+              }}
+              className="flex items-center gap-1 mt-2 text-sm underline opacity-90 hover:opacity-100"
+            >
               <ArrowRightCircle className="w-4 h-4" />
               View Company Profile
             </button>
@@ -156,7 +169,11 @@ export default function JobDetailsDrawer({ job, isDark, open, onClose }: any) {
         {/* APPLY BUTTON */}
         <div className="fixed bottom-6 right-6">
           <button
-          onClick={() => router.push(`/mentee/JobForm/${job.companyId._id}/jobs/${job._id}/apply`)}
+            onClick={() =>
+              router.push(
+                `/mentee/JobForm/${job.companyId._id}/jobs/${job._id}/apply`
+              )
+            }
             className={`
               px-6 py-3 rounded-xl font-semibold shadow-lg 
               ${isDark ? "bg-teal-400 text-black" : "bg-teal-600 text-white"}

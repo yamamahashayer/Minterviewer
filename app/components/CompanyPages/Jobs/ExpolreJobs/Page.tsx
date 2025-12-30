@@ -1,17 +1,25 @@
 "use client";
 
+import React, { useEffect, useMemo, useState } from "react";
+
 import JobCard from "@/app/components/CompanyPages/Jobs/ExpolreJobs/JobCard";
 import JobDetailsDrawer from "@/app/components/CompanyPages/Jobs/ExpolreJobs/JobDetailsDrawer";
-import React, { useEffect, useMemo, useState } from "react";
+
+import CompanyHeader from "@/app/components/CompanyPages/Profile/CompanyHeader";
+import CompanyInfoSection from "@/app/components/CompanyPages/Profile/CompanyInfoSection";
 
 export default function ExploreJobsPage({ theme = "dark" }) {
   const isDark = theme === "dark";
 
+  /* ================= STATE ================= */
   const [jobs, setJobs] = useState<any[]>([]);
   const [selectedJob, setSelectedJob] = useState<any>(null);
-  const [isDrawerOpen, setDrawerOpen] = useState(false);
+  const [isJobDrawerOpen, setJobDrawerOpen] = useState(false);
 
-  // 🔍 Filters
+  const [viewMode, setViewMode] = useState<"jobs" | "company">("jobs");
+  const [selectedCompany, setSelectedCompany] = useState<any>(null);
+
+  /* ================= FILTERS ================= */
   const [search, setSearch] = useState("");
   const [company, setCompany] = useState("all");
   const [type, setType] = useState("all");
@@ -32,7 +40,10 @@ export default function ExploreJobsPage({ theme = "dark" }) {
 
   /* ================= OPTIONS ================= */
   const companies = useMemo(
-    () => Array.from(new Set(jobs.map((j) => j.companyId?.name).filter(Boolean))),
+    () =>
+      Array.from(
+        new Set(jobs.map((j) => j.companyId?.name).filter(Boolean))
+      ),
     [jobs]
   );
 
@@ -42,9 +53,7 @@ export default function ExploreJobsPage({ theme = "dark" }) {
       const matchesSearch =
         !search ||
         job.title.toLowerCase().includes(search.toLowerCase()) ||
-        job.companyId?.name
-          ?.toLowerCase()
-          .includes(search.toLowerCase()) ||
+        job.companyId?.name?.toLowerCase().includes(search.toLowerCase()) ||
         job.skills?.some((s: string) =>
           s.toLowerCase().includes(search.toLowerCase())
         );
@@ -64,85 +73,169 @@ export default function ExploreJobsPage({ theme = "dark" }) {
     });
   }, [jobs, search, company, type, level]);
 
+  /* ================= COMPANY JOBS ================= */
+  const companyJobs = useMemo(() => {
+    if (!selectedCompany) return [];
+    return jobs.filter(
+      (job) => job.companyId?._id === selectedCompany._id
+    );
+  }, [jobs, selectedCompany]);
+
   return (
     <div
       className={`p-6 min-h-screen ${
         isDark ? "bg-[#0a0f1e] text-white" : "bg-gray-50 text-black"
       }`}
     >
-      <h1 className="text-3xl font-bold mb-6">Explore Jobs</h1>
+      {/* ================= EXPLORE JOBS VIEW ================= */}
+      {viewMode === "jobs" && (
+        <>
+          <h1 className="text-3xl font-bold mb-6">Explore Jobs</h1>
 
-      {/* 🔍 FILTER BAR */}
-      <div className="flex flex-wrap gap-4 mb-6">
-        <input
-          placeholder="Search jobs, companies, skills…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="px-4 py-2 rounded-lg border w-full md:w-64 bg-transparent"
-        />
-
-        <select
-          value={company}
-          onChange={(e) => setCompany(e.target.value)}
-          className="px-3 py-2 rounded-lg border bg-transparent"
-        >
-          <option value="all">All Companies</option>
-          {companies.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-
-        <select
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-          className="px-3 py-2 rounded-lg border bg-transparent"
-        >
-          <option value="all">All Types</option>
-          <option value="Full-time">Full-time</option>
-          <option value="Part-time">Part-time</option>
-          <option value="Internship">Internship</option>
-        </select>
-
-        <select
-          value={level}
-          onChange={(e) => setLevel(e.target.value)}
-          className="px-3 py-2 rounded-lg border bg-transparent"
-        >
-          <option value="all">All Levels</option>
-          <option value="Entry">Entry</option>
-          <option value="Junior">Junior</option>
-          <option value="Mid">Mid</option>
-          <option value="Senior">Senior</option>
-        </select>
-      </div>
-
-      {/* 🧱 JOBS GRID */}
-      {filteredJobs.length === 0 ? (
-        <p className="opacity-60">No jobs match your filters.</p>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredJobs.map((job) => (
-            <JobCard
-              key={job._id}
-              job={job}
-              isDark={isDark}
-              onSelect={(j) => {
-                setSelectedJob(j);
-                setDrawerOpen(true);
-              }}
+          {/* 🔍 FILTER BAR */}
+          <div className="flex flex-wrap gap-4 mb-6">
+            <input
+              placeholder="Search jobs, companies, skills…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="px-4 py-2 rounded-lg border w-full md:w-64 bg-transparent"
             />
-          ))}
+
+            <select
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              className="px-3 py-2 rounded-lg border bg-transparent"
+            >
+              <option value="all">All Companies</option>
+              {companies.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+              className="px-3 py-2 rounded-lg border bg-transparent"
+            >
+              <option value="all">All Types</option>
+              <option value="Full-time">Full-time</option>
+              <option value="Part-time">Part-time</option>
+              <option value="Internship">Internship</option>
+            </select>
+
+            <select
+              value={level}
+              onChange={(e) => setLevel(e.target.value)}
+              className="px-3 py-2 rounded-lg border bg-transparent"
+            >
+              <option value="all">All Levels</option>
+              <option value="Entry">Entry</option>
+              <option value="Junior">Junior</option>
+              <option value="Mid">Mid</option>
+              <option value="Senior">Senior</option>
+            </select>
+          </div>
+
+          {/* 🧱 JOBS GRID */}
+          {filteredJobs.length === 0 ? (
+            <p className="opacity-60">No jobs match your filters.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredJobs.map((job) => (
+                <JobCard
+                  key={job._id}
+                  job={job}
+                  isDark={isDark}
+                  onSelect={(j) => {
+                    setSelectedJob(j);
+                    setJobDrawerOpen(true);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ================= COMPANY PROFILE VIEW ================= */}
+      {viewMode === "company" && selectedCompany && (
+        <div className="space-y-10">
+
+          {/* 🔙 BACK */}
+          <button
+            onClick={() => {
+              setViewMode("jobs");
+              setSelectedCompany(null);
+            }}
+            className="underline opacity-70 hover:opacity-100"
+          >
+            ← Back to Jobs
+          </button>
+
+          {/* 🏢 COMPANY PROFILE */}
+          <CompanyHeader
+            company={selectedCompany}
+            edited={selectedCompany}
+            isEditing={false}
+            setIsEditing={() => {}}
+            onSave={() => {}}
+            onCancel={() => {}}
+            isDark={isDark}
+            isOwner={false}
+          />
+
+          <CompanyInfoSection
+            edited={selectedCompany}
+            isEditing={false}
+            setIsEditing={() => {}}
+            onFieldChange={() => {}}
+            onSave={() => {}}
+            onCancel={() => {}}
+            isDark={isDark}
+            isOwner={false}
+          />
+
+          {/* 💼 COMPANY JOB POSTS */}
+          <div>
+            <h2 className="text-2xl font-bold mb-4">
+              Open Positions
+            </h2>
+
+            {companyJobs.length === 0 ? (
+              <p className="opacity-60">
+                This company has no active job posts.
+              </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {companyJobs.map((job) => (
+                  <JobCard
+                    key={job._id}
+                    job={job}
+                    isDark={isDark}
+                    onSelect={(j) => {
+                      setSelectedJob(j);
+                      setJobDrawerOpen(true);
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
-      {/* 📄 DETAILS DRAWER */}
+      {/* ================= JOB DETAILS DRAWER ================= */}
       <JobDetailsDrawer
         job={selectedJob}
         isDark={isDark}
-        open={isDrawerOpen}
-        onClose={() => setDrawerOpen(false)}
+        open={isJobDrawerOpen}
+        onClose={() => setJobDrawerOpen(false)}
+        onViewCompany={(company) => {
+          setSelectedCompany(company);
+          setViewMode("company");
+        }}
       />
     </div>
   );
