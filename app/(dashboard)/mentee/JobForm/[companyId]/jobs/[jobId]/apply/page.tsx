@@ -335,6 +335,7 @@ export default function ApplyJobPage() {
 
                 {cvOpen && (
                   <UploadCV
+                    showNotes={false}
                     isDark={isDark}
                     onSuccess={(res) => {
                       setAnalysisId(res.savedId); // ⭐ التعديل هنا

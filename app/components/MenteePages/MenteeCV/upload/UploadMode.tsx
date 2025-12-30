@@ -16,6 +16,7 @@ type Props = {
   isDark?: boolean;
   onBack?: () => void;
   onSuccess?: (result: any) => void;
+  showNotes?: boolean;
 };
 
 const MAX_MB = 5;
@@ -31,6 +32,7 @@ export default function UploadCV({
   isDark = true,
   onBack,
   onSuccess,
+  showNotes = true,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -183,7 +185,8 @@ export default function UploadCV({
           : "bg-[#f5f3ff] text-[#2e1065]"
       }`}
     >
-      {/* Header */}
+       {/* Header */}
+       {showNotes === true && (   
       <div
         className={`mb-8 rounded-xl border p-6 ${
           isDark
@@ -216,8 +219,11 @@ export default function UploadCV({
           )}
         </div>
       </div>
+      )}
+
 
       {/* Instructions */}
+        {showNotes === true && (
       <div
         className={`max-w-3xl mx-auto mb-6 rounded-xl border p-5 transition-shadow ${
           isDark
@@ -265,6 +271,8 @@ export default function UploadCV({
           </div>
         </div>
       </div>
+     )}
+      
 
       {/* Dropzone */}
       <div
@@ -355,7 +363,10 @@ export default function UploadCV({
           Analysis usually takes 10–20 seconds
         </p>
 
+
+
         {/* Notes */}
+        {showNotes === true && (
         <div className="mt-8 text-left max-w-xl mx-auto">
           <div className={`flex items-center gap-2 mb-2 text-sm ${isDark ? "text-[#a8b3cf]" : "text-[#6b21a8]"}`}>
             <Info size={14} />
@@ -367,8 +378,8 @@ export default function UploadCV({
             onChange={(e) => setUserNotes(e.target.value)}
             rows={4}
             placeholder="• I'm applying for a Frontend Developer role
-• Please focus on ATS & missing skills
-• This is my first job / junior position"
+                         • Please focus on ATS & missing skills
+                         • This is my first job / junior position"
             className={`w-full rounded-xl p-3 text-sm resize-none outline-none ${
               isDark
                 ? "bg-white/5 border border-white/20 text-white placeholder:text-[#6a7282]"
@@ -380,7 +391,7 @@ export default function UploadCV({
             This won’t change your CV — it only helps the AI focus better.
           </p>
         </div>
-
+        )}
         {msg && (
           <p
             className={`mt-6 text-sm ${
