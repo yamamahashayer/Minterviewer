@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
 import Resume from "@/models/Resume";
 import Mentee from "@/models/Mentee";
+import Activity from "@/models/Activity";
 import puppeteer from "puppeteer";
 import htmlDocx from "html-to-docx";
 
@@ -40,23 +41,36 @@ export async function POST(req: NextRequest) {
     const url = new URL(req.url);
     const segments = url.pathname.split("/").filter(Boolean);
     const menteeId = segments[2];
+
     console.log("🟢 CV CREATE route hit!");
     console.log("🧩 menteeId extracted from URL:", menteeId);
 
     if (!isValidObjectId(menteeId)) {
-      return NextResponse.json({ ok: false, error: "Invalid menteeId" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "Invalid menteeId" },
+        { status: 400 }
+      );
     }
 
     const menteeObjId = new mongoose.Types.ObjectId(menteeId);
     const { html, parsed } = await req.json();
 
     if (!html || typeof html !== "string") {
-      return NextResponse.json({ ok: false, error: "Missing HTML content" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "Missing HTML content" },
+        { status: 400 }
+      );
     }
 
-    const menteeDoc = await Mentee.findById(menteeObjId).select("_id user").lean();
+    const menteeDoc = await Mentee.findById(menteeObjId)
+      .select("_id user")
+      .lean();
+
     if (!menteeDoc) {
-      return NextResponse.json({ ok: false, error: "Mentee not found" }, { status: 404 });
+      return NextResponse.json(
+        { ok: false, error: "Mentee not found" },
+        { status: 404 }
+      );
     }
 
     const userId =
@@ -72,11 +86,23 @@ export async function POST(req: NextRequest) {
       source: "builder",
     });
 
+    /* ===== ACTIVITY LOG ===== */
+    await Activity.create({
+      ownerModel: "Mentee",
+      owner: menteeObjId,
+      type: "achievement",
+      title: "Created a new CV",
+    });
+
     console.log("✅ Resume created:", resume._id);
+
     return NextResponse.json({ ok: true, resume }, { status: 201 });
   } catch (err: any) {
     console.error("💥 CV CREATE error:", err);
-    return NextResponse.json({ ok: false, error: "Server error" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: "Server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -91,13 +117,20 @@ export async function GET(req: NextRequest) {
     console.log("📦 Export requested:", { format, resumeId, menteeId });
 
     if (!resumeId || !isValidObjectId(resumeId)) {
-      return NextResponse.json({ ok: false, error: "Invalid resumeId" }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: "Invalid resumeId" },
+        { status: 400 }
+      );
     }
 
     await connectDB();
+
     const resume = await Resume.findById(resumeId).lean();
     if (!resume) {
-      return NextResponse.json({ ok: false, error: "Resume not found" }, { status: 404 });
+      return NextResponse.json(
+        { ok: false, error: "Resume not found" },
+        { status: 404 }
+      );
     }
 
     const html = wrapHtml(resume.html || "<p>No content</p>");
@@ -108,8 +141,10 @@ export async function GET(req: NextRequest) {
         headless: true,
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
       });
+
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: "networkidle0" });
+
       const pdfBuffer = await page.pdf({ format: "A4" });
       await browser.close();
 
@@ -126,15 +161,22 @@ export async function GET(req: NextRequest) {
       const docxBuffer = await htmlDocx(html);
       return new NextResponse(docxBuffer, {
         headers: {
-          "Content-Type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
           "Content-Disposition": `attachment; filename="resume-${resumeId}.docx"`,
         },
       });
     }
 
-    return NextResponse.json({ ok: false, error: "Unsupported format" }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: "Unsupported format" },
+      { status: 400 }
+    );
   } catch (err: any) {
     console.error("💥 CV EXPORT error:", err);
-    return NextResponse.json({ ok: false, error: "Export failed" }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: "Export failed" },
+      { status: 500 }
+    );
   }
 }
