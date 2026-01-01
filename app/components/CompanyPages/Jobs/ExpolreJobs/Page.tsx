@@ -90,7 +90,53 @@ export default function ExploreJobsPage({ theme = "dark" }) {
       {/* ================= EXPLORE JOBS VIEW ================= */}
       {viewMode === "jobs" && (
         <>
-          <h1 className="text-3xl font-bold mb-6">Explore Jobs</h1>
+      {/* ===== HEADER ===== */}
+        <div className="mb-12">
+          <h1
+            className={`
+              text-4xl md:text-5xl font-extrabold tracking-tight
+              ${
+                isDark
+                  ? "bg-gradient-to-r from-teal-300 via-cyan-400 to-emerald-300 bg-clip-text text-transparent"
+                  : "bg-gradient-to-r from-purple-600 via-pink-500 to-fuchsia-500 bg-clip-text text-transparent"
+              }
+            `}
+          >
+            Explore Jobs
+          </h1>
+
+          <p
+            className={`
+              mt-4 max-w-3xl text-lg leading-relaxed font-medium
+              ${
+                isDark
+                  ? "text-gray-300"
+                  : "text-[#4c1d95]"
+              }
+            `}
+          >
+            Explore intelligent job opportunities designed around your{" "}
+            <span
+              className={`font-semibold ${
+                isDark ? "text-teal-300" : "text-purple-600"
+              }`}
+            >
+              skills,interests, and future career goals.
+            </span>
+      
+          </p>
+
+          <div
+            className={`
+              mt-5 h-1.5 w-28 rounded-full
+              ${
+                isDark
+                  ? "bg-gradient-to-r from-teal-400 to-cyan-400"
+                  : "bg-gradient-to-r from-purple-500 to-pink-500"
+              }
+            `}
+          />
+        </div>
 
           {/* 🔍 FILTER BAR */}
           <div className="flex flex-wrap gap-4 mb-6">

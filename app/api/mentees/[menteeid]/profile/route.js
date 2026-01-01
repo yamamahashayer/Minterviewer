@@ -100,8 +100,6 @@ export async function PUT(req, ctx) {
     if (has("bio")) userSet.short_bio = payload.bio;
     if (has("phone")) userSet.phoneNumber = payload.phone;
     if (has("location")) userSet.Country = payload.location;
-
-    // ⭐⭐ أهم خطوة: تحديث صورة البروفايل
     if (has("profile_photo")) userSet.profile_photo = payload.profile_photo;
 
     /* ================= MENTEE UPDATES ================= */

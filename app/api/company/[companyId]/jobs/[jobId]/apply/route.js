@@ -6,6 +6,7 @@ import Job from "@/models/Job";
 import Mentee from "@/models/Mentee";
 import CvAnalysis from "@/models/CvAnalysis";
 import User from "@/models/User";
+import Activity from "@/models/Activity"; // ✅ ACTIVITY
 
 const unwrapParams = async (ctx) => {
   const p = ctx?.params;
@@ -113,6 +114,14 @@ export async function POST(req, ctx) {
     });
 
     await job.save();
+
+    /* ===== ACTIVITY LOG ===== */
+    await Activity.create({
+      ownerModel: "Mentee",
+      owner: menteeId,
+      type: "achievement",
+      title: `Applied for ${job.title} at ${companyName}`,
+    });
 
     return NextResponse.json({ ok: true });
   } catch (err) {

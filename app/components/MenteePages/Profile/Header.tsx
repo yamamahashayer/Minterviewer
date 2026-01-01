@@ -1,14 +1,23 @@
 "use client";
 
-import { Mail, Phone, MapPin, Calendar, Edit2, Check, X } from "lucide-react";
-import { Input } from "@/app/components/ui/input";
+import {
+  MapPin,
+  Calendar,
+  Edit2,
+  Check,
+  X,
+  Github,
+  Linkedin,
+  Mail,
+} from "lucide-react";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
+import { Input } from "@/app/components/ui/input";
 
 type Props = {
   profile: any;
   editedProfile: any;
-  targetUserId?: string;            // ✅ ID للي بدنا نراسله
+  targetUserId?: string; // ✅ للببلك بروفايل (المسج)
   setEditedProfile?: (v: any) => void;
   isEditing?: boolean;
   setIsEditing?: (b: boolean) => void;
@@ -31,133 +40,136 @@ export default function Header({
   readOnly = false,
 }: Props) {
   const canEdit = !readOnly && isEditing && setEditedProfile;
+  const data = canEdit ? editedProfile : profile;
 
   return (
     <div
-      className={`
-        rounded-2xl p-8 mb-6 border
-        ${
-          isDark
-            ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)] backdrop-blur-sm border-[rgba(94,234,212,0.2)]"
-            : "bg-white shadow-xl border-[#e9d5ff]"
-        }
-      `}
+      className={`${
+        isDark
+          ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]"
+          : "bg-white shadow-lg"
+      } border ${
+        isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"
+      } rounded-xl p-8 backdrop-blur-sm mb-6`}
     >
       {/* ================= TOP ================= */}
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-start gap-6">
-          {/* ===== AVATAR ===== */}
-          <div className="relative group">
-            {!readOnly && isEditing && (
-              <input
-                type="file"
-                accept="image/*"
-                id="profilePhotoInput"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (!file || !setEditedProfile) return;
+      <div className="flex justify-between items-start gap-6 flex-wrap">
+        {/* Identity */}
+        <div className="flex gap-6">
+          {/* Avatar */}
+          <div
+            className={`w-24 h-24 rounded-full flex items-center justify-center
+            text-3xl font-bold
+            ${
+              isDark
+                ? "bg-gradient-to-br from-teal-300 to-emerald-400 text-black"
+                : "bg-gradient-to-br from-purple-600 to-pink-600 text-white"
+            }`}
+          >
+            {data.name?.[0] || "U"}
+          </div>
 
-                  const reader = new FileReader();
-                  reader.onload = (ev) => {
-                    setEditedProfile((prev: any) => ({
-                      ...prev,
-                      profile_photo: ev.target?.result,
-                    }));
-                  };
-                  reader.readAsDataURL(file);
-                }}
+          <div className="space-y-2">
+            {/* Name */}
+            {canEdit ? (
+              <Input
+                value={data.name}
+                onChange={(e) =>
+                  setEditedProfile?.({ ...data, name: e.target.value })
+                }
+                className="max-w-xs"
               />
+            ) : (
+              <h1
+                className={`text-2xl font-bold ${
+                  isDark ? "text-white" : "text-[#2e1065]"
+                }`}
+              >
+                {data.name}
+              </h1>
             )}
 
-            <div
-              className={`relative w-24 h-24 rounded-full overflow-hidden ${
-                canEdit ? "cursor-pointer ring-2 ring-purple-400" : ""
-              }`}
-              onClick={() => {
-                if (canEdit)
-                  document.getElementById("profilePhotoInput")?.click();
-              }}
-            >
-              {editedProfile?.profile_photo ? (
-                <img
-                  src={editedProfile.profile_photo}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div
-                  className={`w-full h-full bg-gradient-to-br ${
-                    isDark
-                      ? "from-teal-300 to-emerald-400"
-                      : "from-purple-500 to-pink-500"
-                  } flex items-center justify-center text-white`}
-                >
-                  <span className="text-4xl font-semibold">
-                    {(profile?.name || "U")[0]}
-                  </span>
+            {/* Interests */}
+            {canEdit ? (
+              <Input
+                className="mt-1 max-w-md"
+                placeholder="Interests (comma separated)"
+                value={(data.area_of_expertise || []).join(", ")}
+                onChange={(e) =>
+                  setEditedProfile?.({
+                    ...data,
+                    area_of_expertise: e.target.value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter(Boolean),
+                  })
+                }
+              />
+            ) : (
+              data.area_of_expertise?.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {data.area_of_expertise.map((tag: string) => (
+                    <Badge
+                      key={tag}
+                      className={
+                        isDark
+                          ? "bg-teal-500/20 text-teal-300"
+                          : "bg-purple-100 text-purple-700"
+                      }
+                    >
+                      {tag}
+                    </Badge>
+                  ))}
                 </div>
-              )}
+              )
+            )}
 
-              {canEdit && (
-                <div className="absolute inset-0 bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                  Change Photo
-                </div>
+            {/* Social links */}
+            <div className="flex items-center gap-2 pt-1">
+              {data.linkedin && (
+                <a
+                  href={data.linkedin}
+                  target="_blank"
+                  className={`w-9 h-9 rounded-full flex items-center justify-center border transition
+                  ${
+                    isDark
+                      ? "border-[rgba(94,234,212,0.2)] text-teal-300 hover:bg-teal-500/20"
+                      : "border-[#ddd6fe] text-purple-600 hover:bg-purple-100"
+                  }`}
+                >
+                  <Linkedin size={18} />
+                </a>
+              )}
+              {data.github && (
+                <a
+                  href={data.github}
+                  target="_blank"
+                  className={`w-9 h-9 rounded-full flex items-center justify-center border transition
+                  ${
+                    isDark
+                      ? "border-[rgba(94,234,212,0.2)] text-teal-300 hover:bg-teal-500/20"
+                      : "border-[#ddd6fe] text-purple-600 hover:bg-purple-100"
+                  }`}
+                >
+                  <Github size={18} />
+                </a>
               )}
             </div>
           </div>
-
-          {/* ===== MAIN INFO ===== */}
-          <div>
-            {/* NAME */}
-            {canEdit ? (
-              <Input
-                value={editedProfile.name}
-                onChange={(e) =>
-                  setEditedProfile?.({
-                    ...editedProfile,
-                    name: e.target.value,
-                  })
-                }
-                className={`mb-2 ${
-                  isDark
-                    ? "bg-white/5 border-[rgba(94,234,212,0.3)] text-white"
-                    : "bg-white border-[#ddd6fe] text-gray-900"
-                }`}
-              />
-            ) : (
-              <h2
-                className={`mb-1 font-bold text-xl ${
-                  isDark ? "text-white" : "text-gray-900"
-                }`}
-              >
-                {profile.name}
-              </h2>
-            )}
-
-            {/* TITLE */}
-            <p
-              className={`mb-3 ${
-                isDark ? "text-teal-300" : "text-purple-600"
-              }`}
-            >
-              {profile.title}
-            </p>
-
-            
-          </div>
         </div>
 
-        {/* ===== ACTIONS ===== */}
+        {/* ================= ACTIONS ================= */}
         <div className="flex gap-2">
           {/* 💬 MESSAGE (Public only) */}
           {readOnly && targetUserId && (
             <Button
               onClick={() =>
-                (window.location.href = `/company?tab=messages&chatWith=${targetUserId}`)
+                (window.location.href =
+                  `/company?tab=messages&chatWith=${targetUserId}`)
               }
               className={
                 isDark
-                  ? "bg-teal-600 hover:bg-teal-500 text-white"
+                  ? "bg-teal-600 hover:bg-teal-500 text-black"
                   : "bg-purple-600 hover:bg-purple-500 text-white"
               }
             >
@@ -174,28 +186,25 @@ export default function Header({
                   onClick={() => setIsEditing(true)}
                   className={
                     isDark
-                      ? "bg-[rgba(94,234,212,0.2)] text-teal-300 border border-[rgba(94,234,212,0.3)]"
-                      : "bg-white text-purple-700 border border-[#ddd6fe] hover:bg-purple-50"
+                      ? "bg-teal-500 hover:bg-teal-400 text-black"
+                      : "bg-purple-600 hover:bg-purple-500 text-white"
                   }
                 >
                   <Edit2 size={16} className="mr-2" />
                   Edit
                 </Button>
               ) : (
-                <>
-                  <Button
-                    onClick={onCancel}
-                    className="bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  >
+                <div className="flex gap-2">
+                  <Button onClick={onCancel} variant="outline">
                     <X size={16} />
                   </Button>
                   <Button
                     onClick={onSave}
-                    className="bg-green-600 text-white hover:bg-green-700"
+                    className="bg-emerald-500 hover:bg-emerald-400 text-black"
                   >
                     <Check size={16} />
                   </Button>
-                </>
+                </div>
               )}
             </>
           )}
@@ -203,67 +212,67 @@ export default function Header({
       </div>
 
       {/* ================= BIO ================= */}
-      {canEdit ? (
-        <Input
-          value={editedProfile.bio}
-          onChange={(e) =>
-            setEditedProfile?.({ ...editedProfile, bio: e.target.value })
-          }
-          className={`mb-6 ${
-            isDark
-              ? "bg-white/5 border-[rgba(94,234,212,0.3)] text-white"
-              : "bg-white border-[#ddd6fe] text-gray-900"
-          }`}
+      <div className="mt-6 max-w-3xl">
+        {canEdit ? (
+          <Input
+            value={data.bio}
+            onChange={(e) =>
+              setEditedProfile?.({ ...data, bio: e.target.value })
+            }
+          />
+        ) : (
+          <p className={isDark ? "text-[#c3d4d8]" : "text-[#4c1d95]"}>
+            {data.bio}
+          </p>
+        )}
+      </div>
+
+      {/* ================= META ================= */}
+      <div className="flex flex-wrap gap-6 mt-6 text-sm">
+        <div className="flex items-center gap-2 text-gray-400">
+          <MapPin size={16} />
+          <span>{data.location || "—"}</span>
+        </div>
+
+        <Meta
+          icon={<Calendar size={16} />}
+          label={`Joined ${data.joinedDate}`}
         />
-      ) : (
-        <p
-          className={`mb-6 leading-relaxed ${
-            isDark ? "text-[#d1d5dc]" : "text-gray-700"
-          }`}
-        >
-          {profile.bio}
-        </p>
-      )}
-
-      {/* ================= CONTACT ================= */}
-      <div
-        className={`grid grid-cols-2 gap-4 pt-6 border-t ${
-          isDark ? "border-[rgba(94,234,212,0.1)]" : "border-[#eee]"
-        }`}
-      >
-        
-        {!readOnly && (
-          <>
-
-        <ContactField
-          icon={<Calendar size={18} />}
-          value={profile.joinedDate ? `Joined ${profile.joinedDate}` : "—"}
-          isDark={isDark}
-        />
-        </>
-         )}
-       <ContactField icon={<Mail size={18} />} value={profile.email} isDark={isDark} />
-
-
-       <ContactField icon={<Phone size={18} />} value={profile.phone} isDark={isDark} />
-
-       <ContactField icon={<MapPin size={18} />} value={profile.location} isDark={isDark} />
-
       </div>
     </div>
   );
 }
 
-/* ================= CONTACT FIELD ================= */
-function ContactField({ icon, value, isDark }: any) {
+/* ================= Helpers ================= */
+
+function Meta({ icon, label }: any) {
   return (
-    <div className="flex items-center gap-3">
-      <span className={isDark ? "text-teal-300" : "text-purple-600"}>
-        {icon}
-      </span>
-      <span className={isDark ? "text-[#99a1af]" : "text-gray-700"}>
-        {value || "—"}
-      </span>
+    <div className="flex items-center gap-2 text-gray-400">
+      {icon}
+      <span>{label || "—"}</span>
     </div>
   );
 }
+
+
+
+{/* <Header
+  profile={profile}
+  editedProfile={profile}
+  targetUserId={profile.userId}
+  isDark={isDark}
+  readOnly
+/> */}
+
+
+{/* <Header
+  profile={profile}
+  editedProfile={editedProfile}
+  setEditedProfile={setEditedProfile}
+  isEditing={isEditing}
+  setIsEditing={setIsEditing}
+  isDark={isDark}
+  onSave={handleSave}
+  onCancel={handleCancel}
+/> */}
+
