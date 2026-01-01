@@ -9,16 +9,21 @@ import StatsSection from "@/app/components/MenteePages/Profile/StatsSection";
 import SkillsSection from "@/app/components/MenteePages/Profile/SkillsSection";
 import ActivitySection from "@/app/components/MenteePages/Profile/ActivitySection";
 import MenteeBackgroundSection from "@/app/components/Background/MenteeBackgroundSection";
+import ProfileContactCard from "@/app/components/MenteePages/Profile/ProfileContactCard";
 
 type Theme = "dark" | "light";
 
 type ApiUser = {
+  github: string;
+  linkedin_url: string;
   full_name?: string;
   email?: string;
   short_bio?: string;
   phoneNumber?: string;
   Country?: string;
+  area_of_expertise?: string[]; 
 };
+
 
 type ApiMentee = {
   overall_score: number;
@@ -45,18 +50,22 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
   const [menteeId, setMenteeId] = useState<string | null>(null);
 
   const [profile, setProfile] = useState({
-    name: "—",
-    title: "Mentee",
-    bio: "Passionate learner on Minterviewer.",
-    email: "—",
-    phone: "—",
-    location: "—",
-    joinedDate: "—",
-    company: "—",
-    education: "—",
-    active: true,
-    skills: [] as { name: string; level: number }[],
-  });
+  name: "—",
+  title: "Mentee",
+  bio: "Passionate learner on Minterviewer.",
+  email: "—",
+  phone: "—",
+  location: "—",
+  joinedDate: "—",
+  company: "—",
+  education: "—",
+  active: true,
+  skills: [] as { name: string; level: number }[],
+  area_of_expertise: [] as string[], // ✅ جديد
+  linkedin: "",     // ✅
+  github: "",       // ✅
+});
+
 
   const [editedProfile, setEditedProfile] = useState(profile);
   const [isEditing, setIsEditing] = useState(false);
@@ -68,7 +77,18 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
   const [activities, setActivities] = useState<any[]>([]);
   const [activitiesLoading, setActivitiesLoading] = useState(true);
 
-  const EDITABLE_KEYS = ["name", "bio", "phone", "location", "profile_photo"] as const;
+    const EDITABLE_KEYS = [
+      "name",
+      "bio",
+      "phone",
+      "location",
+      "linkedin",
+      "github",
+      "area_of_expertise", // 👈 مهم
+      "profile_photo",
+    ] as const;
+
+
 
   function diff(next: Record<string, any>, prev: Record<string, any>) {
     const changed: Record<string, any> = {};
@@ -139,49 +159,26 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
             })
           : "—";
 
-        const mapped = {
-          name: user?.full_name ?? "—",
-          title: "Mentee",
-          bio: user?.short_bio ?? "Passionate learner on Minterviewer.",
-          email: user?.email ?? "—",
-          phone: user?.phoneNumber ?? mentee?.phone ?? "—",
-          location: user?.Country ?? mentee?.location ?? "—",
-          joinedDate: joined,
-          company: mentee?.company ?? "—",
-          education: mentee?.education ?? "—",
-          skills: mentee?.skills ?? [],
-          active: mentee?.active ?? true,
-        };
+       const mapped = {
+        name: user?.full_name ?? "—",
+        title: "Mentee",
+        bio: user?.short_bio ?? "Passionate learner on Minterviewer.",
+        email: user?.email ?? "—",
+        phone: user?.phoneNumber ?? mentee?.phone ?? "—",
+        location: user?.Country ?? mentee?.location ?? "—",
+        joinedDate: joined,
+        company: mentee?.company ?? "—",
+        education: mentee?.education ?? "—",
+        skills: mentee?.skills ?? [],
+        active: mentee?.active ?? true,
+        area_of_expertise: user?.area_of_expertise ?? [], // ✅ الجديد
+        linkedin: user?.linkedin_url ?? "",   // ✅
+        github: user?.github ?? "",            // ✅
+      };
+
 
         setProfile(mapped);
         setEditedProfile(mapped);
-
-        const timeInvested =
-          typeof mentee?.time_invested_minutes === "number"
-            ? `${Math.floor(mentee.time_invested_minutes / 60)}h ${
-                mentee.time_invested_minutes % 60
-              }m`
-            : "—";
-
-        setStats([
-          {
-            label: "Total Interviews",
-            value: String(mentee?.total_interviews ?? 0),
-            icon: CheckCircle2,
-          },
-          {
-            label: "Average Score",
-            value: mentee?.overall_score
-              ? `${mentee.overall_score.toFixed(1)}/10`
-              : "—",
-            icon: TrendingUp,
-          },
-          {
-            label: "Time Invested",
-            value: timeInvested,
-            icon: Clock,
-          },
-        ]);
 
         setErr(null);
       } catch (e: any) {
@@ -259,43 +256,58 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
       </div>
     );
 
-  return (
-    <div className={`min-h-screen ${isDark ? "bg-[#0a0f1e]" : "bg-[#f5f3ff]"}`}>
-      <div className="flex justify-center">
-        <div className="w-full max-w-6xl px-4 py-8">
-          {/* Header */}
-          <Header
+return (
+  <div className={`min-h-screen ${isDark ? "bg-[#0a0f1e]" : "bg-[#f5f3ff]"}`}>
+    <div className="flex justify-center">
+      <div className="w-full max-w-6xl px-4 py-8">
+
+        {/* ================= HEADER ================= */}
+        <Header
+          profile={profile}
+          editedProfile={editedProfile}
+          setEditedProfile={setEditedProfile}
+          isEditing={isEditing}
+          setIsEditing={setIsEditing}
+          isDark={isDark}
+          onSave={handleSave}
+          onCancel={handleCancel}
+        />
+
+      
+        {/* ================= MAIN GRID ================= */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+
+          {/* ===== LEFT (Main Content) ===== */}
+          <div className="lg:col-span-2 space-y-6">
+            <SkillsSection profile={profile} isDark={isDark} />
+
+            <MenteeBackgroundSection
+              menteeId={menteeId}
+              theme={isDark ? "dark" : "light"}
+            />
+
+            <ActivitySection
+              activities={activities}
+              loading={activitiesLoading}
+              isDark={isDark}
+            />
+          </div>
+
+          {/* ===== RIGHT (Contact & Links) ===== */}
+          <div className="space-y-6">
+          <ProfileContactCard
             profile={profile}
             editedProfile={editedProfile}
             setEditedProfile={setEditedProfile}
             isEditing={isEditing}
-            setIsEditing={setIsEditing}
             isDark={isDark}
-            onSave={handleSave}
-            onCancel={handleCancel}
           />
-
-          {/* Stats */}
-          <StatsSection stats={stats} isDark={isDark} />
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
-            <div className="lg:col-span-2 space-y-6">
-              <SkillsSection profile={profile} isDark={isDark} />
-
-              <MenteeBackgroundSection
-                menteeId={menteeId}
-                theme={isDark ? "dark" : "light"}
-              />
-
-              <ActivitySection
-                activities={activities}
-                loading={activitiesLoading}
-                isDark={isDark}
-              />
-            </div>
           </div>
+
         </div>
       </div>
     </div>
-  );
+  </div>
+);
+
 }

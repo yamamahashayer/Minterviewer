@@ -1,6 +1,8 @@
 "use client";
 import * as React from "react";
 import { Plus, Pencil, Trash2, GraduationCap, Building2, Save, X } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
+
 
 /* ============================================================
                         TYPES
@@ -30,6 +32,12 @@ function fmt(d?: string) {
     return d || "";
   }
 }
+function yearOnly(d?: string) {
+  if (!d) return "";
+  const date = new Date(d);
+  return isNaN(date.getTime()) ? "" : date.getFullYear().toString();
+}
+
 
 /* ============================================================
                 CARET PRESERVE FOR INPUTS
@@ -119,9 +127,15 @@ export default function BackgroundSection({
       : "bg-white border-purple-200"
   }`;
 
-  const [items, setItems] = React.useState<BgItem[]>([]);
-  const [loading, setLoading] = React.useState(false);
-  const [openAdd, setOpenAdd] = React.useState(false);
+const [items, setItems] = React.useState<BgItem[]>([]);
+const [loading, setLoading] = React.useState(false);
+const [openAdd, setOpenAdd] = React.useState(false);
+
+const [successId, setSuccessId] = React.useState<string | null>(null);
+const [editId, setEditId] = React.useState<string | null>(null);
+const [editPayload, setEditPayload] = React.useState<BgItem | null>(null);
+const [pendingId, setPendingId] = React.useState<string | null>(null);
+
 
   const [addPayload, setAddPayload] = React.useState<BgItem>({
     _id: "",
@@ -134,10 +148,6 @@ export default function BackgroundSection({
     end_date: "",
     description: "",
   });
-
-  const [editId, setEditId] = React.useState<string | null>(null);
-  const [editPayload, setEditPayload] = React.useState<BgItem | null>(null);
-  const [pendingId, setPendingId] = React.useState<string | null>(null);
 
   /* ============================================================
                     API HANDLER
@@ -202,43 +212,53 @@ export default function BackgroundSection({
     });
 
     setOpenAdd(false);
-    fetchList();
+    await fetchList();
   }
+
 
   /* ============================================================
                     UPDATE ITEM
   ============================================================ */
-  async function saveEdit(id: string) {
-    if (!editPayload) return;
+    async function saveEdit(id: string) {
+      if (!editPayload) return;
 
-    setPendingId(id);
+      setPendingId(id);
 
-    const body: any = {};
-    [
-      "entry_type",
-      "company_name",
-      "position",
-      "school",
-      "degree",
-      "start_date",
-      "end_date",
-      "description",
-    ].forEach((k) => {
-      if ((editPayload as any)[k] !== undefined)
-        body[k] = (editPayload as any)[k];
-    });
+      const body: any = {};
+      [
+        "entry_type",
+        "company_name",
+        "position",
+        "school",
+        "degree",
+        "start_date",
+        "end_date",
+        "description",
+      ].forEach((k) => {
+        if ((editPayload as any)[k] !== undefined)
+          body[k] = (editPayload as any)[k];
+      });
 
-    await fetch(api(`/background/${id}`), {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+      await fetch(api(`/background/${id}`), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-    setEditId(null);
-    setEditPayload(null);
-    setPendingId(null);
-    fetchList();
-  }
+      // ✅ هنا المؤشر
+      setSuccessId(String(id));
+
+      setTimeout(() => {
+        setSuccessId(null);
+      }, 1800);
+
+      setEditId(null);
+      setEditPayload(null);
+      setPendingId(null);
+
+      await fetchList();
+    }
+
 
   /* ============================================================
                     DELETE ITEM
@@ -670,33 +690,51 @@ export default function BackgroundSection({
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <span className="text-sm opacity-70">
+                      {/* <span className="text-sm opacity-70">
                         {fmt(it.start_date)} —{" "}
                         {it.end_date ? fmt(it.end_date) : "Present"}
+                      </span> */}
+                      <span className="text-sm opacity-70">
+                        {yearOnly(it.start_date)}
+                        {it.end_date ? ` — ${yearOnly(it.end_date)}` : " — Present"}
                       </span>
 
-                      {/* EDIT BUTTON */}
-                      <button
-                        className="border px-2 rounded-lg"
-                        onClick={() => {
-                          setEditId(it._id);
-                          setEditPayload({
-                            ...it,
-                            start_date: fmt(it.start_date),
-                            end_date: fmt(it.end_date),
-                          });
-                        }}
-                      >
-                        <Pencil size={14} />
-                      </button>
 
-                      {/* DELETE BUTTON */}
-                      <button
-                        className="border px-2 rounded-lg border-red-300 text-red-600"
-                        onClick={() => removeItem(it._id)}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="flex items-center gap-3">
+                        {/* SUCCESS INDICATOR */}
+                        {String(successId) === String(it._id) && (
+                        <CheckCircle2
+                          size={18}
+                          className={`animate-pulse ${
+                            isDark ? "text-teal-300" : "text-green-600"
+                          }`}
+                        />
+                      )}
+
+                        {/* EDIT */}
+                        <button
+                          className="border px-2 rounded-lg"
+                          onClick={() => {
+                            setEditId(it._id);
+                            setEditPayload({
+                              ...it,
+                              start_date: fmt(it.start_date),
+                              end_date: fmt(it.end_date),
+                            });
+                          }}
+                        >
+                          <Pencil size={14} />
+                        </button>
+
+                        {/* DELETE */}
+                        <button
+                          className="border px-2 rounded-lg border-red-300 text-red-600"
+                          onClick={() => removeItem(it._id)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                        </div>
+
                     </div>
                   </div>
 
