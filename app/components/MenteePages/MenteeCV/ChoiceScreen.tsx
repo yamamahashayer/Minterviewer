@@ -74,22 +74,34 @@ export default function ChoiceScreen({
       }`}
     >
       <div className="max-w-5xl mx-auto text-center">
+    
+
         {/* Title */}
-        <h1 className="text-4xl font-bold mb-3">
-          Build Your{" "}
-          <span className={isDark ? "text-teal-300" : "text-purple-600"}>
-            Dream CV
+        <h1 className="text-4xl font-semibold tracking-tight mb-4">
+          Your CV,{" "}
+          <span
+            className={`${
+              isDark
+                ? "text-teal-300"
+                : "bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent"
+            }`}
+          >
+            Smarter & Stronger
           </span>
         </h1>
+        {/* Badge */}
+        <span
+        className={`inline-block mb-4 px-4 py-1 text-xs font-medium rounded-full ${
+          isDark
+            ? "bg-white/10 text-teal-300"
+            : "bg-purple-100 text-purple-700"
+        }`} >
+        Build, upload, and improve your CV using AI — tailored to your profile,
+        skills, and experience.
+        </span>
 
-        {/* Subtitle */}
-        <p
-          className={`text-base mb-10 ${
-            isDark ? "text-gray-300" : "text-purple-800"
-          }`}
-        >
-          Upload your resume or craft a new one with AI-powered guidance.
-        </p>
+
+
 
         {/* Divider */}
         <div

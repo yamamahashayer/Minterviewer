@@ -53,7 +53,7 @@ export default function Analyzed({
             : "bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent"
         }`}
       >
-        Your CV Activity
+        Your CV Analysis History
       </h3>
 
       {/* 💬 States */}

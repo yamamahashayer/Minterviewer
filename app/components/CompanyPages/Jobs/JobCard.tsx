@@ -56,139 +56,176 @@ export default function JobCard({
     </span>
   );
 
-  return (
-    <div
-      className={`
-        relative rounded-2xl p-5 transition-all duration-200
-        ${
-          isDark
-            ? "bg-[#1b2333] border border-[#2e3a55] shadow-[0_0_20px_rgba(0,0,0,0.6)] text-white"
-            : "bg-white border-gray-200 shadow-sm text-black"
-        }
-        hover:shadow-xl hover:-translate-y-1
-      `}
-    >
-      {/* MENU */}
-      <div className="absolute top-4 right-4">
-        <DropdownMenu>
-          <DropdownMenuTrigger>
-            <MoreVertical className={`w-5 h-5 cursor-pointer ${muted}`} />
-          </DropdownMenuTrigger>
+return (
+  <div
+    className={`
+      relative rounded-2xl p-5 transition-all duration-200 backdrop-blur-sm
+      ${
+        isDark
+          ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)] border border-[rgba(94,234,212,0.2)] shadow-[0_0_25px_rgba(0,0,0,0.6)] text-white"
+          : "bg-white border border-[#ddd6fe] shadow-lg text-[#2e1065]"
+      }
+      hover:shadow-xl hover:-translate-y-1
+    `}
+  >
+    {/* MENU */}
+    <div className="absolute top-4 right-4">
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <MoreVertical
+            className={`w-5 h-5 cursor-pointer ${
+              isDark ? "text-teal-300" : "text-purple-600"
+            }`}
+          />
+        </DropdownMenuTrigger>
 
-          <DropdownMenuContent
-            className={`${
-              isDark ? "bg-[#1f2333] text-white" : "bg-white text-black"
+        <DropdownMenuContent
+          className={`rounded-lg ${
+            isDark
+              ? "bg-[#0f172a] border border-[rgba(94,234,212,0.2)] text-white"
+              : "bg-white border border-[#ddd6fe] text-[#2e1065]"
+          }`}
+        >
+          <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
+          <DropdownMenuItem onClick={onClose}>Close</DropdownMenuItem>
+          <DropdownMenuItem className="text-red-500" onClick={onDelete}>
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+
+    {/* TITLE + FEATURES */}
+    <div className="mb-5">
+      <h2 className="text-xl font-semibold mb-2">{job.title}</h2>
+
+      <div className="flex flex-wrap gap-2">
+        {job.enableCVAnalysis && (
+          <span
+            className={`px-2 py-0.5 text-xs rounded-full ${
+              isDark
+                ? "bg-teal-500/20 text-teal-300"
+                : "bg-purple-100 text-purple-700"
             }`}
           >
-            <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
-            <DropdownMenuItem onClick={onClose}>Close</DropdownMenuItem>
-            <DropdownMenuItem className="text-red-500" onClick={onDelete}>
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-
-     {/* TITLE + FEATURES */}
-        <div className="mb-5">
-          <h2 className="text-xl font-semibold mb-2">{job.title}</h2>
-
-          <div className="flex flex-wrap gap-2">
-            {job.enableCVAnalysis && (
-              <span className="px-2 py-0.5 text-xs rounded-full bg-violet-100 text-violet-700">
-                CV Analysis
-              </span>
-            )}
-
-            {job.interviewType === "ai" && (
-              <span className="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">
-                AI Interview
-              </span>
-            )}
-
-            {job.interviewType === "human" && (
-              <span className="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700">
-                Human Interview
-              </span>
-            )}
-          </div>
-        </div>
-
-
-
-      {/* INFO GRID */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <div>
-          <p className="text-xs font-semibold mb-1">Status</p>
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColor(
-              job.status
-            )}`}
-          >
-            {job.status}
+            CV Analysis
           </span>
-        </div>
+        )}
 
-        <div>
-          <p className="text-xs font-semibold mb-1">Location</p>
-          {bubble(job.location || "—")}
-        </div>
+        {job.interviewType === "ai" && (
+          <span
+            className={`px-2 py-0.5 text-xs rounded-full ${
+              isDark
+                ? "bg-emerald-500/20 text-emerald-300"
+                : "bg-indigo-100 text-indigo-700"
+            }`}
+          >
+            AI Interview
+          </span>
+        )}
 
-        <div>
-          <p className="text-xs font-semibold mb-1">Type</p>
-          {bubble(job.type || "—")}
-        </div>
-
-        <div>
-          <p className="text-xs font-semibold mb-1">Level</p>
-          {bubble(job.level || "—")}
-        </div>
-
-        <div>
-          <p className="text-xs font-semibold mb-1">Deadline</p>
-          {bubble(
-            job.deadline
-              ? new Date(job.deadline).toLocaleDateString()
-              : "—"
-          )}
-        </div>
-      </div>
-
-      {/* DESCRIPTION */}
-      {job.description && (
-        <div className="mb-4">
-          <p className="text-xs font-semibold mb-1">Description</p>
-          <p className={`text-sm line-clamp-2 ${muted}`}>
-            {job.description}
-          </p>
-        </div>
-      )}
-
-      {/* SKILLS */}
-      {job.skills?.length > 0 && (
-        <div className="mb-4">
-          <p className="text-xs font-semibold mb-1">Skills</p>
-          <div className="flex flex-wrap gap-2">
-            {job.skills.map((skill: string, idx: number) => (
-              <span key={idx}>{bubble(skill)}</span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* FOOTER */}
-      <div className="flex justify-between items-center mt-6 pt-3 border-t border-gray-700 text-sm">
-        <span className={muted}>
-          Applicants: {job.applicants?.length || 0}
-        </span>
-
-        <button
-          onClick={() => onViewApplicants(job)} // ✅ FIX
-          className="font-semibold underline hover:opacity-70 transition"
-        >
-          View Applicants →
-        </button>
+        {job.interviewType === "human" && (
+          <span
+            className={`px-2 py-0.5 text-xs rounded-full ${
+              isDark
+                ? "bg-white/10 text-gray-300"
+                : "bg-gray-100 text-gray-700"
+            }`}
+          >
+            Human Interview
+          </span>
+        )}
       </div>
     </div>
-  );
+
+    {/* INFO GRID */}
+    <div className="grid grid-cols-3 gap-4 mb-4">
+      <div>
+        <p className="text-xs font-semibold mb-1 opacity-70">Status</p>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-semibold ${statusColor(
+            job.status
+          )}`}
+        >
+          {job.status}
+        </span>
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold mb-1 opacity-70">Location</p>
+        {bubble(job.location || "—")}
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold mb-1 opacity-70">Type</p>
+        {bubble(job.type || "—")}
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold mb-1 opacity-70">Level</p>
+        {bubble(job.level || "—")}
+      </div>
+
+      <div>
+        <p className="text-xs font-semibold mb-1 opacity-70">Deadline</p>
+        {bubble(
+          job.deadline
+            ? new Date(job.deadline).toLocaleDateString()
+            : "—"
+        )}
+      </div>
+    </div>
+
+    {/* DESCRIPTION */}
+    {job.description && (
+      <div className="mb-4">
+        <p className="text-xs font-semibold mb-1 opacity-70">Description</p>
+        <p
+          className={`text-sm line-clamp-2 ${
+            isDark ? "text-[#c3d4d8]" : "text-[#4c1d95]"
+          }`}
+        >
+          {job.description}
+        </p>
+      </div>
+    )}
+
+    {/* SKILLS */}
+    {job.skills?.length > 0 && (
+      <div className="mb-4">
+        <p className="text-xs font-semibold mb-1 opacity-70">Skills</p>
+        <div className="flex flex-wrap gap-2">
+          {job.skills.map((skill: string, idx: number) => (
+            <span key={idx}>{bubble(skill)}</span>
+          ))}
+        </div>
+      </div>
+    )}
+
+    {/* FOOTER */}
+    <div
+      className={`flex justify-between items-center mt-6 pt-3 text-sm border-t ${
+        isDark
+          ? "border-[rgba(94,234,212,0.2)]"
+          : "border-[#e9d5ff]"
+      }`}
+    >
+      <span className={isDark ? "text-gray-400" : "text-gray-500"}>
+        Applicants: {job.applicants?.length || 0}
+      </span>
+
+      <button
+        onClick={() => onViewApplicants(job)}
+        className={`font-semibold underline transition ${
+          isDark
+            ? "text-teal-300 hover:text-teal-200"
+            : "text-purple-600 hover:text-purple-500"
+        }`}
+      >
+        View Applicants →
+      </button>
+    </div>
+  </div>
+);
+
 }
