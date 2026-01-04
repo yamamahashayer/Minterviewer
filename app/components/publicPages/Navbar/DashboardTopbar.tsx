@@ -18,9 +18,17 @@ export default function DashboardTopbar() {
   const router = useRouter();
 
   const handleLogout = async () => {
-    // Call logout API
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
+    try {
+      // Call logout API
+      await fetch('/api/auth/logout', { method: 'POST' });
+      // Clear all session storage
+      sessionStorage.clear();
+      router.push('/login');
+    } catch (err) {
+      console.error("Logout error:", err);
+      sessionStorage.clear();
+      router.push('/login');
+    }
   };
 
   // Mock notifications
@@ -76,9 +84,8 @@ export default function DashboardTopbar() {
                   {notifications.map((notif) => (
                     <div
                       key={notif.id}
-                      className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
-                        notif.unread ? 'bg-blue-50' : ''
-                      }`}
+                      className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${notif.unread ? 'bg-blue-50' : ''
+                        }`}
                     >
                       <p className="text-sm text-gray-900">{notif.text}</p>
                       <p className="text-xs text-gray-500 mt-1">{notif.time}</p>

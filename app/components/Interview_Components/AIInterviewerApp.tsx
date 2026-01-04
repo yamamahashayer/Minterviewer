@@ -375,29 +375,21 @@ const AIInterviewerApp = ({ jobId, companyId, menteeId, onComplete, onInterviewS
     // Welcome Screen (default)
     return (
         <div className={`h-screen bg-white dark:bg-[#0A0F1E] text-foreground flex flex-col overflow-hidden`}>
-            <div className="flex-1 flex flex-col items-center justify-center p-4">
+            <div className="flex-1 flex flex-col items-center justify-start p-4">
                 <div className="max-w-5xl w-full text-center">
-                    {/* Hero Section */}
-                    <div className="mb-8">
-                        <h1 className="text-5xl font-bold text-gray-900 dark:text-white mb-3">
-                            Mock your interview
-                        </h1>
-                        <p className="text-xl text-gray-600 dark:text-gray-300">
-                            Practice your interview skills with our AI-powered interviewer
-                        </p>
-                    </div>
 
+                    <br />
                     {/* Features Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-                        <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 dark:border-white/20 shadow-sm dark:shadow-none transition-transform hover:scale-105 duration-300">
+                        <div className="bg-pink-200 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 dark:border-white/20 shadow-sm dark:shadow-none transition-transform hover:scale-105 duration-300">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Personalized Questions</h3>
                             <p className="text-sm text-gray-600 dark:text-gray-300">Tailored to your role and tech stack</p>
                         </div>
-                        <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 dark:border-white/20 shadow-sm dark:shadow-none transition-transform hover:scale-105 duration-300">
+                        <div className="bg-pink-200 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 dark:border-white/20 shadow-sm dark:shadow-none transition-transform hover:scale-105 duration-300">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Voice & Video</h3>
                             <p className="text-sm text-gray-600 dark:text-gray-300">Real interview experience with feedback</p>
                         </div>
-                        <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 dark:border-white/20 shadow-sm dark:shadow-none transition-transform hover:scale-105 duration-300">
+                        <div className="bg-pink-200 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-gray-200 dark:border-white/20 shadow-sm dark:shadow-none transition-transform hover:scale-105 duration-300">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Detailed Report</h3>
                             <p className="text-sm text-gray-600 dark:text-gray-300">Get insights on your performance</p>
                         </div>
@@ -411,7 +403,6 @@ const AIInterviewerApp = ({ jobId, companyId, menteeId, onComplete, onInterviewS
                             {/* Audio Interview with Setup */}
                             <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-8 border-2 border-gray-200 dark:border-white/20 hover:border-purple-500 dark:hover:border-purple-500 transition-all duration-300 hover:shadow-xl">
                                 <div className="text-center mb-6">
-                                    <div className="text-5xl mb-4">🎤</div>
                                     <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Audio Interview</h3>
                                     <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">Customized questions based on your role and tech stack</p>
                                 </div>
@@ -444,7 +435,6 @@ const AIInterviewerApp = ({ jobId, companyId, menteeId, onComplete, onInterviewS
                             {/* Video Interview - Direct Start */}
                             <div className="bg-white/50 dark:bg-white/10 backdrop-blur-lg rounded-2xl p-8 border-2 border-pink-500 dark:border-pink-500 hover:border-pink-600 dark:hover:border-pink-600 transition-all duration-300 hover:shadow-xl shadow-pink-500/20">
                                 <div className="text-center mb-6">
-                                    <div className="text-5xl mb-4">🎥</div>
                                     <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Video Interview</h3>
                                     <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">Pre-recorded questions with video analysis</p>
                                 </div>
@@ -474,10 +464,6 @@ const AIInterviewerApp = ({ jobId, companyId, menteeId, onComplete, onInterviewS
                                 </button>
                             </div>
                         </div>
-
-                        <p className="text-gray-500 dark:text-white/60 mt-4 text-sm">
-                            Nothing required • Practice anytime • Instant feedback
-                        </p>
                     </div>
                 </div>
             </div>
