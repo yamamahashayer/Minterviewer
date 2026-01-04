@@ -12,38 +12,42 @@ import {
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import { LoginResponse } from '../../types/auth';
 
-const LoginScreen = ({ navigation }: any) => {
+const SignupScreen = ({ navigation }: any) => {
+  const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'mentee' | 'mentor' | 'company'>('mentee');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
 
-  const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Missing info', 'Please enter email and password');
+  const handleSignup = async () => {
+    if (!fullName || !email || !password) {
+      Alert.alert('Missing info', 'Please fill all fields');
       return;
     }
 
     setLoading(true);
     try {
-      const res = await api.post<LoginResponse>('/api/auth/signin', {
+      const res = await api.post('/api/auth/signup', {
+        full_name: fullName,
         email,
         password,
+        role,
       });
 
       if (res.data.ok) {
-        await signIn(res.data.token, res.data.user);
-        // RootNavigator رح يحوّل حسب الدور
+        Alert.alert(
+          'Success 🎉',
+          'Account created successfully. Please sign in.',
+          [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+        );
       } else {
-        Alert.alert('Login failed', res.data.message || 'Invalid credentials');
+        Alert.alert('Signup failed', res.data.message || 'Error');
       }
     } catch (err: any) {
       Alert.alert(
-        'Login error',
+        'Signup error',
         err.response?.data?.message || 'Something went wrong'
       );
     } finally {
@@ -67,10 +71,22 @@ const LoginScreen = ({ navigation }: any) => {
             {/* Brand */}
             <Text style={styles.brand}>Minterviewer</Text>
 
-            <Text style={styles.title}>Welcome back!</Text>
+            <Text style={styles.title}>Create account</Text>
             <Text style={styles.subtitle}>
-              Ready to ace your next interview?
+              Start your interview journey 🚀
             </Text>
+
+            {/* Full name */}
+            <View style={styles.field}>
+              <Text style={styles.label}>Full name</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Your full name"
+                placeholderTextColor="#9CA3AF"
+                value={fullName}
+                onChangeText={setFullName}
+              />
+            </View>
 
             {/* Email */}
             <View style={styles.field}>
@@ -88,17 +104,7 @@ const LoginScreen = ({ navigation }: any) => {
 
             {/* Password */}
             <View style={styles.field}>
-              <View style={styles.passwordRow}>
-                <Text style={styles.label}>Password</Text>
-                <TouchableOpacity
-                  onPress={() =>
-                    Alert.alert('Info', 'Forgot password coming soon')
-                  }
-                >
-                  <Text style={styles.forgot}>Forgot?</Text>
-                </TouchableOpacity>
-              </View>
-
+              <Text style={styles.label}>Password</Text>
               <TextInput
                 style={styles.input}
                 placeholder="••••••••"
@@ -109,26 +115,48 @@ const LoginScreen = ({ navigation }: any) => {
               />
             </View>
 
+            {/* Role selector */}
+            <Text style={styles.label}>Account type</Text>
+            <View style={styles.roleRow}>
+              {(['mentee', 'mentor', 'company'] as const).map((r) => (
+                <TouchableOpacity
+                  key={r}
+                  onPress={() => setRole(r)}
+                  style={[
+                    styles.roleButton,
+                    role === r && styles.roleActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.roleText,
+                      role === r && styles.roleTextActive,
+                    ]}
+                  >
+                    {r.toUpperCase()}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             {/* Button */}
             <TouchableOpacity
               style={styles.button}
-              onPress={handleLogin}
+              onPress={handleSignup}
               disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator color="#0a192f" />
               ) : (
-                <Text style={styles.buttonText}>Sign In</Text>
+                <Text style={styles.buttonText}>Sign Up</Text>
               )}
             </TouchableOpacity>
 
             {/* Footer */}
             <View style={styles.footer}>
-              <Text style={styles.footerText}>Don’t have an account?</Text>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('Signup')}
-              >
-                <Text style={styles.signup}> Sign up</Text>
+              <Text style={styles.footerText}>Already have an account?</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                <Text style={styles.signup}> Sign in</Text>
               </TouchableOpacity>
             </View>
 
@@ -140,7 +168,7 @@ const LoginScreen = ({ navigation }: any) => {
   );
 };
 
-export default LoginScreen;
+export default SignupScreen;
 
 /* ================== STYLES ================== */
 
@@ -152,11 +180,11 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: 'rgba(10,25,47,0.85)',
+    backgroundColor: 'rgba(10,25,47,0.88)',
     borderRadius: 24,
     padding: 28,
     borderWidth: 1,
-    borderColor: 'rgba(0,255,178,0.2)',
+    borderColor: 'rgba(0,255,178,0.25)',
   },
 
   brand: {
@@ -179,7 +207,7 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     textAlign: 'center',
     marginTop: 6,
-    marginBottom: 32,
+    marginBottom: 28,
   },
 
   field: {
@@ -204,24 +232,43 @@ const styles = StyleSheet.create({
     borderColor: '#1f2937',
   },
 
-  passwordRow: {
+  roleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 26,
+  },
+
+  roleButton: {
+    flex: 1,
+    marginHorizontal: 4,
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#1f2937',
+    backgroundColor: '#112240',
     alignItems: 'center',
   },
 
-  forgot: {
-    fontSize: 13,
-    color: '#00FFB2',
-    fontWeight: '600',
+  roleActive: {
+    backgroundColor: '#00FFB2',
+  },
+
+  roleText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#9CA3AF',
+  },
+
+  roleTextActive: {
+    color: '#0a192f',
   },
 
   button: {
-    marginTop: 28,
     backgroundColor: '#00FFB2',
     paddingVertical: 16,
     borderRadius: 16,
     alignItems: 'center',
+    marginTop: 10,
   },
 
   buttonText: {
