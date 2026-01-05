@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api';
+import { authService } from '../../services/authService';
 import { LoginResponse } from '../../types/auth';
 
 const LoginScreen = ({ navigation }: any) => {
@@ -30,21 +30,18 @@ const LoginScreen = ({ navigation }: any) => {
 
     setLoading(true);
     try {
-      const res = await api.post<LoginResponse>('/api/auth/signin', {
-        email,
-        password,
-      });
+      const response = await authService.signIn({ email, password });
 
-      if (res.data.ok) {
-        await signIn(res.data.token, res.data.user);
+      if (response.ok) {
+        await signIn(response.token, response.user);
         // RootNavigator رح يحوّل حسب الدور
       } else {
-        Alert.alert('Login failed', res.data.message || 'Invalid credentials');
+        Alert.alert('Login failed', response.message || 'Invalid credentials');
       }
     } catch (err: any) {
       Alert.alert(
         'Login error',
-        err.response?.data?.message || 'Something went wrong'
+        err.message || 'Something went wrong'
       );
     } finally {
       setLoading(false);

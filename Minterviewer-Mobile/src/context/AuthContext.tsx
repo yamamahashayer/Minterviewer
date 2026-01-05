@@ -3,6 +3,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../services/api';
 import { AuthState, User, LoginResponse } from '../types/auth';
 
+interface SessionResponse {
+    ok: boolean;
+    token: string | null;
+    user: User | null;
+    mentee?: { _id: string } | null;
+    mentor?: any | null;
+    company?: { _id: string; isVerified?: boolean } | null;
+}
+
 interface AuthContextData extends AuthState {
     signIn: (token: string, user: User) => Promise<void>;
     signOut: () => Promise<void>;
@@ -27,16 +36,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         try {
             const [token, userJson] = await AsyncStorage.multiGet(['auth_token', 'user_data']);
 
-            if (token[1] && userJson[1]) {
-                const user = JSON.parse(userJson[1]);
+            if (token[1]) {
+                // Use session endpoint to validate token and get fresh user data
                 api.defaults.headers.Authorization = `Bearer ${token[1]}`;
+                
+                try {
+                    const response = await api.get<SessionResponse>('/api/auth/session');
+                    
+                    if (response.data.ok && response.data.user) {
+                        const user: User = {
+                            ...response.data.user,
+                            menteeId: response.data.mentee?._id,
+                            mentorId: response.data.mentor?._id,
+                            companyId: response.data.company?._id,
+                            isVerified: response.data.company?.isVerified,
+                        };
 
-                setData({
-                    token: token[1],
-                    user,
-                    isLoading: false,
-                    isAuthenticated: true,
-                });
+                        console.log('AuthContext Session Debug:', { 
+                            response: response.data, 
+                            user,
+                            menteeId: user.menteeId,
+                            mentorId: user.mentorId,
+                            companyId: user.companyId
+                        });
+
+                        // Update stored user data with fresh data
+                        await AsyncStorage.setItem('user_data', JSON.stringify(user));
+
+                        setData({
+                            token: token[1],
+                            user,
+                            isLoading: false,
+                            isAuthenticated: true,
+                        });
+                    } else {
+                        // Token invalid, clear storage
+                        await AsyncStorage.multiRemove(['auth_token', 'user_data']);
+                        delete api.defaults.headers.Authorization;
+                        setData((prevState) => ({ ...prevState, isLoading: false }));
+                    }
+                } catch (sessionError) {
+                    console.error('Session validation failed:', sessionError);
+                    // Session endpoint failed, clear storage
+                    await AsyncStorage.multiRemove(['auth_token', 'user_data']);
+                    delete api.defaults.headers.Authorization;
+                    setData((prevState) => ({ ...prevState, isLoading: false }));
+                }
             } else {
                 setData((prevState) => ({ ...prevState, isLoading: false }));
             }

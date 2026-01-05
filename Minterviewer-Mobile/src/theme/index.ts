@@ -21,6 +21,8 @@ export const colors = {
 
     /* 🔥 مضاف */
     gray: '#9CA3AF',
+    secondaryDark: '#9CA3AF',
+    secondaryLight: '#6b7280',
   },
 
   border: {
