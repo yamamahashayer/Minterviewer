@@ -8,24 +8,28 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 import { colors } from '../../theme';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function ScrollableTabBar({
   state,
   descriptors,
   navigation,
-  theme = 'dark',
 }: any) {
-  const isDark = theme === 'dark';
+  const { isDark } = useTheme();          // ✅ مصدر واحد للثيم
+  const insets = useSafeAreaInsets();     // ✅ يرفع الشريط عن أزرار الجهاز
 
   return (
     <View
       style={[
         styles.wrapper,
         {
+          paddingBottom: insets.bottom,
           backgroundColor: isDark
-            ? colors.background.dark     // 🌙 web dark
-            : colors.background.light,   // ☀️ web light
+            ? colors.background.dark
+            : colors.background.light,
           borderTopColor: isDark
             ? colors.border.dark
             : colors.border.light,
@@ -36,8 +40,6 @@ export default function ScrollableTabBar({
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scroll}
-        decelerationRate="fast"
-        snapToAlignment="center"
       >
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
@@ -48,14 +50,14 @@ export default function ScrollableTabBar({
           return (
             <TouchableOpacity
               key={route.key}
-              activeOpacity={0.8}
+              activeOpacity={0.85}
               onPress={() => navigation.navigate(route.name)}
               style={[
                 styles.tab,
                 focused && {
                   backgroundColor: isDark
-                    ? 'rgba(255,255,255,0.06)' // web dark card
-                    : 'rgba(124,58,237,0.08)', // web light tint
+                    ? 'rgba(255,255,255,0.08)'
+                    : 'rgba(124,58,237,0.1)',
                 },
               ]}
             >
@@ -66,8 +68,8 @@ export default function ScrollableTabBar({
                   focused
                     ? colors.primary
                     : isDark
-                      ? colors.text.secondary
-                      : colors.text.muted
+                    ? colors.text.secondary
+                    : colors.text.muted
                 }
               />
 
@@ -78,22 +80,15 @@ export default function ScrollableTabBar({
                     color: focused
                       ? colors.primary
                       : isDark
-                        ? colors.text.secondary
-                        : colors.text.muted,
+                      ? colors.text.secondary
+                      : colors.text.muted,
                   },
                 ]}
               >
                 {label}
               </Text>
 
-              {focused && (
-                <View
-                  style={[
-                    styles.indicator,
-                    { backgroundColor: colors.primary },
-                  ]}
-                />
-              )}
+              {focused && <View style={styles.indicator} />}
             </TouchableOpacity>
           );
         })}
@@ -106,19 +101,18 @@ export default function ScrollableTabBar({
 
 const styles = StyleSheet.create({
   wrapper: {
-    height: 86,
     borderTopWidth: 1,
+    paddingTop: 8,
 
-    // نفس إحساس الويب
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
+        shadowOpacity: 0.06,
+        shadowRadius: 12,
         shadowOffset: { width: 0, height: -4 },
       },
       android: {
-        elevation: 10,
+        elevation: 12,
       },
     }),
   },
@@ -130,7 +124,7 @@ const styles = StyleSheet.create({
 
   tab: {
     width: 86,
-    height: 70,
+    height: 60,
     marginHorizontal: 6,
     borderRadius: 18,
     alignItems: 'center',
@@ -148,5 +142,6 @@ const styles = StyleSheet.create({
     width: 18,
     height: 3,
     borderRadius: 2,
+    backgroundColor: colors.primary,
   },
 });

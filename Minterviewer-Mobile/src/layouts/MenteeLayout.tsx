@@ -1,41 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
+  StatusBar,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 
 import { colors } from '../theme';
-
-type Theme = 'dark' | 'light';
+import NotificationBell from '../components/notifications/NotificationBell';
+import { useTheme } from '../context/ThemeContext';
 
 export default function MenteeLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  /* ================= THEME ================= */
-  const [theme, setTheme] = useState<Theme>('dark');
-  const isDark = theme === 'dark';
-
-  useEffect(() => {
-    (async () => {
-      const saved = await AsyncStorage.getItem('theme');
-      if (saved === 'dark' || saved === 'light') {
-        setTheme(saved);
-      }
-    })();
-  }, []);
-
-  const toggleTheme = async () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    await AsyncStorage.setItem('theme', next);
-  };
+  const { isDark, toggleTheme } = useTheme();
 
   return (
     <SafeAreaView
@@ -48,7 +31,8 @@ export default function MenteeLayout({
         },
       ]}
     >
-      {/* ========== HEADER ========== */}
+      <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />
+
       <View
         style={[
           styles.header,
@@ -62,53 +46,50 @@ export default function MenteeLayout({
           },
         ]}
       >
-        <Text
-          style={[
-            styles.title,
-            {
-              color: isDark
-                ? colors.text.primaryDark
-                : colors.text.primaryLight,
-            },
-          ]}
-        >
-          Minterviewer
-        </Text>
+        {/* LEFT */}
+        <View>
+          <Text
+            style={[
+              styles.title,
+              { color: isDark ? colors.text.primaryDark : colors.text.primaryLight },
+            ]}
+          >
+            Minterviewer
+          </Text>
+          <Text
+            style={[
+              styles.subtitle,
+              { color: isDark ? colors.text.secondaryDark : colors.text.secondaryLight },
+            ]}
+          >
+            Mentee Dashboard
+          </Text>
+        </View>
 
+        {/* RIGHT */}
         <View style={styles.headerRight}>
-          {/* Theme Toggle */}
           <TouchableOpacity
             onPress={toggleTheme}
-            style={styles.iconButton}
-            activeOpacity={0.7}
+            style={[
+              styles.iconButton,
+              {
+                backgroundColor: isDark
+                  ? 'rgba(255,255,255,0.08)'
+                  : 'rgba(0,0,0,0.05)',
+              },
+            ]}
           >
             <Ionicons
               name={isDark ? 'sunny-outline' : 'moon-outline'}
-              size={26}
+              size={22}
               color={isDark ? '#facc15' : colors.primary}
             />
           </TouchableOpacity>
 
-          {/* Notification */}
-          <TouchableOpacity
-            style={styles.iconButton}
-            activeOpacity={0.7}
-          >
-            <Ionicons
-              name="notifications-outline"
-              size={26}
-              color={
-                isDark
-                  ? colors.text.primaryDark
-                  : colors.text.primaryLight
-              }
-            />
-            <View style={styles.badge} />
-          </TouchableOpacity>
+          <NotificationBell isDark={isDark} />
         </View>
       </View>
 
-      {/* ========== CONTENT ========== */}
       <View style={styles.content}>{children}</View>
     </SafeAreaView>
   );
@@ -122,44 +103,45 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: 90,                // ⬆️ أكبر
-    paddingHorizontal: 20,     // ⬆️ أوسع
+    paddingHorizontal: 20,
+    paddingTop: 45,
+    paddingBottom: 16,
     borderBottomWidth: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    zIndex: 10,
   },
 
   title: {
-    fontSize: 27,              // ⬆️ أوضح
+    fontSize: 26,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
+  },
+
+  subtitle: {
+    fontSize: 13,
+    marginTop: 2,
+    opacity: 0.85,
   },
 
   headerRight: {
     flexDirection: 'row',
-    gap: 3,
+    alignItems: 'center',
+    gap: 10,
   },
 
   iconButton: {
-    padding: 15,               // ⬆️ أسهل بالكبس
+    width: 42,
+    height: 42,
     borderRadius: 14,
-    position: 'relative',
-  },
-
-  badge: {
-    position: 'absolute',
-    top: 10,
-    right: 6,
-    width: 10,                 // ⬆️ أكبر
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   content: {
     flex: 1,
-    paddingHorizontal: 80,     // ⬆️ أريح
-    paddingVertical: 50,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
 });

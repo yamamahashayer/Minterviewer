@@ -20,73 +20,17 @@ const Tab = createBottomTabNavigator();
 
 /* ================= TAB CONFIG ================= */
 const tabs = [
-  {
-    name: 'Overview',
-    label: 'Overview',
-    icon: 'home-outline',
-    component: OverviewScreen,
-  },
-  {
-    name: 'Profile',
-    label: 'Profile',
-    icon: 'person-outline',
-    component: ProfileScreen,
-  },
-  {
-    name: 'CV',
-    label: 'CV',
-    icon: 'document-text-outline',
-    component: CVReviewScreen,
-  },
-  {
-    name: 'Jobs',
-    label: 'Jobs',
-    icon: 'briefcase-outline',
-    component: ExploreJobsScreen,
-  },
-  {
-    name: 'Interview',
-    label: 'Interview',
-    icon: 'mic-outline',
-    component: InterviewPracticeScreen,
-  },
-  {
-    name: 'Schedule',
-    label: 'Schedule',
-    icon: 'calendar-outline',
-    component: ScheduleScreen,
-  },
-  {
-    name: 'Performance',
-    label: 'Performance',
-    icon: 'trending-up-outline',
-    component: PerformanceScreen,
-  },
-  {
-    name: 'Sessions',
-    label: 'Sessions',
-    icon: 'search-outline',
-    component: BrowseSessionsScreen,
-  },
-  {
-    name: 'Messages',
-    label: 'Messages',
-    icon: 'chatbubble-ellipses-outline',
-    component: MessagesScreen,
-    badge: 3,
-  },
-  {
-    name: 'Notifications',
-    label: 'Alerts',
-    icon: 'notifications-outline',
-    component: NotificationsScreen,
-  },
-  {
-    name: 'Settings',
-    label: 'Settings',
-    icon: 'settings-outline',
-    component: SettingsScreen,
-  },
+  { name: 'Overview', label: 'Overview', icon: 'home-outline', component: OverviewScreen },
+  { name: 'Profile', label: 'Profile', icon: 'person-outline', component: ProfileScreen },
+  { name: 'CV', label: 'CV', icon: 'document-text-outline', component: CVReviewScreen },
+  { name: 'Jobs', label: 'Jobs', icon: 'briefcase-outline', component: ExploreJobsScreen },
+  { name: 'Interview', label: 'Interview', icon: 'mic-outline', component: InterviewPracticeScreen },
+  { name: 'Schedule', label: 'Schedule', icon: 'calendar-outline', component: ScheduleScreen },
+  { name: 'Performance', label: 'Performance', icon: 'trending-up-outline', component: PerformanceScreen },
+  { name: 'Sessions', label: 'Sessions', icon: 'search-outline', component: BrowseSessionsScreen },
+  { name: 'Messages', label: 'Messages', icon: 'chatbubble-ellipses-outline', component: MessagesScreen, badge: 3 },
+  { name: 'Notifications', label: 'Alerts', icon: 'notifications-outline', component: NotificationsScreen },
+  { name: 'Settings', label: 'Settings', icon: 'settings-outline', component: SettingsScreen },
 ];
 
 /* ================= NAVIGATOR ================= */
@@ -96,14 +40,14 @@ export default function MenteeNavigator() {
       screenOptions={{ headerShown: false }}
       tabBar={(props) => <ScrollableTabBar {...props} />}
     >
-      {tabs.map(tab => (
+      {tabs.map((tab) => (
         <Tab.Screen
           key={tab.name}
           name={tab.name}
           component={tab.component}
           options={{
             tabBarLabel: tab.label,
-            tabBarIconName: tab.icon, // 👈 مهم
+            tabBarIconName: tab.icon,
             tabBarBadge: tab.badge,
           }}
         />
