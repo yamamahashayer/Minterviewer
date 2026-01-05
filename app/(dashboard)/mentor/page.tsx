@@ -19,6 +19,7 @@ import { EarningsPage } from "@/app/(dashboard)/mentor/EarningsPage";
 import BookingManagementPage from "@/app/(dashboard)/mentor/BookingManagementPage";
 import MentorNotifications from "@/app/(dashboard)/mentor/NotificationsPage";
 import { MentorAnalyticsPage } from "@/app/(dashboard)/mentor/MentorAnalyticsPage";
+import MentorOverviewPage from "@/app/(dashboard)/mentor/MentorOverviewPage";
 
 type PageType =
   | "overview"
@@ -60,24 +61,7 @@ export default function MentorPage() {
   const render = () => {
     switch (tab) {
       case "overview":
-        return (
-          <div className="p-8 max-w-7xl mx-auto">
-            <ProfileOverview />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-              <div className="lg:col-span-2">
-                <UpcomingSessions />
-              </div>
-              <QuickActions />
-            </div>
-            <div className="mt-6">
-              <MenteesProgress />
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-              <FeedbackManager />
-              <PerformanceStats />
-            </div>
-          </div>
-        );
+        return <MentorOverviewPage />;
       case "profile":
         return <MyProfilePage />;
       case "mentees":
