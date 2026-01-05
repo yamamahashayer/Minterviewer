@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -18,8 +18,15 @@ export default function ScrollableTabBar({
   descriptors,
   navigation,
 }: any) {
-  const { isDark } = useTheme();          // ✅ مصدر واحد للثيم
-  const insets = useSafeAreaInsets();     // ✅ يرفع الشريط عن أزرار الجهاز
+  const { isDark } = useTheme();
+  const insets = useSafeAreaInsets();
+
+  const [expanded, setExpanded] = useState(false);
+
+  // ⭐ تحكم ذكي بحجم الأيقونات
+  const iconSize = expanded
+    ? { focused: 28, normal: 24 }   // مفتوح
+    : { focused: 24, normal: 20 };  // مسكّر
 
   return (
     <View
@@ -33,13 +40,30 @@ export default function ScrollableTabBar({
           borderTopColor: isDark
             ? colors.border.dark
             : colors.border.light,
+          height: expanded ? 260 : undefined, // ⭐ يفتح لفوق
         },
       ]}
     >
+      {/* 🔼 زر التوسيع */}
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => setExpanded(!expanded)}
+        style={styles.handle}
+      >
+        <Ionicons
+          name={expanded ? 'chevron-down' : 'chevron-up'}
+          size={22}
+          color={isDark ? colors.text.secondary : colors.text.muted}
+        />
+      </TouchableOpacity>
+
       <ScrollView
-        horizontal
+        horizontal={!expanded}
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[
+          styles.scroll,
+          expanded && styles.scrollExpanded,
+        ]}
       >
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
@@ -51,9 +75,13 @@ export default function ScrollableTabBar({
             <TouchableOpacity
               key={route.key}
               activeOpacity={0.85}
-              onPress={() => navigation.navigate(route.name)}
+              onPress={() => {
+                navigation.navigate(route.name);
+                setExpanded(false); // ⭐ يسكر بعد الاختيار
+              }}
               style={[
                 styles.tab,
+                expanded && styles.tabExpanded,
                 focused && {
                   backgroundColor: isDark
                     ? 'rgba(255,255,255,0.08)'
@@ -63,7 +91,7 @@ export default function ScrollableTabBar({
             >
               <Ionicons
                 name={iconName}
-                size={focused ? 26 : 24}
+                size={focused ? iconSize.focused : iconSize.normal}
                 color={
                   focused
                     ? colors.primary
@@ -102,7 +130,7 @@ export default function ScrollableTabBar({
 const styles = StyleSheet.create({
   wrapper: {
     borderTopWidth: 1,
-    paddingTop: 8,
+    paddingTop: 6,
 
     ...Platform.select({
       ios: {
@@ -117,18 +145,35 @@ const styles = StyleSheet.create({
     }),
   },
 
+  handle: {
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+
   scroll: {
     alignItems: 'center',
     paddingHorizontal: 12,
+  },
+
+  scrollExpanded: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    paddingVertical: 8,
   },
 
   tab: {
     width: 86,
     height: 60,
     marginHorizontal: 6,
+    marginBottom: 8,
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  tabExpanded: {
+    width: 100,
   },
 
   label: {
@@ -145,3 +190,4 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
 });
+ 
