@@ -6,12 +6,10 @@ import ProfileScreen from '../screens/mentee/ProfileScreen';
 import CVReviewScreen from '../screens/mentee/CVReviewScreen';
 import ExploreJobsScreen from '../screens/mentee/ExploreJobsScreen';
 import MessagesScreen from '../screens/mentee/MessagesScreen';
-import SettingsScreen from '../screens/mentee/SettingsScreen';
 
 import InterviewPracticeScreen from '../screens/mentee/InterviewPracticeScreen';
 import NotificationsScreen from '../screens/mentee/NotificationsScreen';
 import ScheduleScreen from '../screens/mentee/ScheduleScreen';
-import PerformanceScreen from '../screens/mentee/PerformanceScreen';
 import BrowseSessionsScreen from '../screens/mentee/BrowseSessionsScreen';
 
 import ScrollableTabBar from '../screens/mentee/ScrollableTabBar';
@@ -26,11 +24,9 @@ const tabs = [
   { name: 'Jobs', label: 'Jobs', icon: 'briefcase-outline', component: ExploreJobsScreen },
   { name: 'Interview', label: 'Interview', icon: 'mic-outline', component: InterviewPracticeScreen },
   { name: 'Schedule', label: 'Schedule', icon: 'calendar-outline', component: ScheduleScreen },
-  { name: 'Performance', label: 'Performance', icon: 'trending-up-outline', component: PerformanceScreen },
   { name: 'Sessions', label: 'Sessions', icon: 'search-outline', component: BrowseSessionsScreen },
   { name: 'Messages', label: 'Messages', icon: 'chatbubble-ellipses-outline', component: MessagesScreen, badge: 3 },
   { name: 'Notifications', label: 'Alerts', icon: 'notifications-outline', component: NotificationsScreen },
-  { name: 'Settings', label: 'Settings', icon: 'settings-outline', component: SettingsScreen },
 ];
 
 /* ================= NAVIGATOR ================= */
