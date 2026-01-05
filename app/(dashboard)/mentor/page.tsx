@@ -18,6 +18,7 @@ import SettingsPage from "@/app/(dashboard)/mentor/SettingsPage";
 import { EarningsPage } from "@/app/(dashboard)/mentor/EarningsPage";
 import BookingManagementPage from "@/app/(dashboard)/mentor/BookingManagementPage";
 import MentorNotifications from "@/app/(dashboard)/mentor/NotificationsPage";
+import { MentorAnalyticsPage } from "@/app/(dashboard)/mentor/MentorAnalyticsPage";
 
 type PageType =
   | "overview"
@@ -27,6 +28,7 @@ type PageType =
   | "feedbacks"
   | "messages"
   | "earnings"
+  | "analytics"
   | "booking-management"
   | "notifications"
   | "settings";
@@ -88,6 +90,8 @@ export default function MentorPage() {
         return <MentorMessages theme={theme} />;
       case "earnings":
         return <EarningsPage />;
+      case "analytics":
+        return <MentorAnalyticsPage />;
       case "booking-management":
         return <BookingManagementPage />;
       case "notifications":

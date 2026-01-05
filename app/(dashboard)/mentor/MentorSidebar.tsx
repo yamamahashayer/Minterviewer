@@ -19,6 +19,7 @@ import {
   Settings,
   LogOut,
   Search,
+  BarChart3,
 } from "lucide-react";
 
 import {
@@ -46,6 +47,7 @@ export default function MentorSidebar({
 
   const items = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
+    { id: "analytics", label: "Analytics", icon: BarChart3 },
     { id: "profile", label: "My Profile", icon: User },
     { id: "mentees", label: "My Mentees", icon: Users },
     { id: "sessions", label: "Sessions", icon: Calendar },
