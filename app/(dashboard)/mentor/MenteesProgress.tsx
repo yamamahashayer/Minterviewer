@@ -1,9 +1,8 @@
-"use client";
-
+// app/(dashboard)/mentor/MenteesProgress.tsx
 import { motion } from "framer-motion";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrendingUp } from 'lucide-react';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -11,17 +10,16 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 
-const data = [
-  { week: 'Week 1', progress: 45 },
-  { week: 'Week 2', progress: 52 },
-  { week: 'Week 3', progress: 61 },
-  { week: 'Week 4', progress: 68 },
-  { week: 'Week 5', progress: 75 },
-  { week: 'Week 6', progress: 82 },
-  { week: 'Week 7', progress: 88 }
-];
+interface ProgressData {
+  week: string;
+  progress: number;
+}
 
-export const MenteesProgress = () => {
+interface MenteesProgressProps {
+  data: ProgressData[];
+}
+
+export const MenteesProgress = ({ data = [] }: MenteesProgressProps) => {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -67,17 +65,17 @@ export const MenteesProgress = () => {
           <LineChart data={data}>
             <defs>
               <linearGradient id="colorProgress" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis 
-              dataKey="week" 
+            <XAxis
+              dataKey="week"
               stroke="var(--foreground-muted)"
               style={{ fontSize: '12px' }}
             />
-            <YAxis 
+            <YAxis
               stroke="var(--foreground-muted)"
               style={{ fontSize: '12px' }}
             />
@@ -105,16 +103,22 @@ export const MenteesProgress = () => {
       {/* Stats */}
       <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t" style={{ borderColor: 'var(--border)' }}>
         <div>
-          <p className="text-[var(--foreground-muted)] text-sm">Average Progress</p>
-          <p className="text-[var(--foreground)] mt-1">68%</p>
+          <p className="text-[var(--foreground-muted)] text-sm">Total Sessions</p>
+          <p className="text-[var(--foreground)] mt-1">
+            {data.reduce((acc, curr) => acc + curr.progress, 0)}
+          </p>
         </div>
         <div>
-          <p className="text-[var(--foreground-muted)] text-sm">Top Performer</p>
-          <p className="text-[var(--foreground)] mt-1">Emily Chen</p>
+          <p className="text-[var(--foreground-muted)] text-sm">Weekly Average</p>
+          <p className="text-[var(--foreground)] mt-1">
+            {(data.reduce((acc, curr) => acc + curr.progress, 0) / (data.length || 1)).toFixed(1)}
+          </p>
         </div>
         <div>
           <p className="text-[var(--foreground-muted)] text-sm">Growth Rate</p>
-          <p className="mt-1" style={{ color: 'var(--accent-teal)' }}>+12% this week</p>
+          <p className="mt-1" style={{ color: 'var(--accent-teal)' }}>
+            From {data[0]?.progress || 0} to {data[data.length - 1]?.progress || 0}
+          </p>
         </div>
       </div>
     </motion.div>

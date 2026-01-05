@@ -45,20 +45,28 @@ export async function GET(req, context) {
     const user = cleanUser(mentor.user);
 
     const reviews = await MentorFeedback.find({ mentor: mentorId }).lean();
+
+    // Calculate basic earnings mock (e.g. sessions * price per session)
+    // For now assuming $50 per session if not tracked
+    const estimatedEarnings = (mentor.sessionsCount ?? 0) * 50;
+    mentor.earnings = estimatedEarnings;
+
     const avgRating = reviews.length
       ? Number(
-          (
-            reviews.reduce((acc, r) => acc + (r.rating ?? 0), 0) /
-            reviews.length
-          ).toFixed(1)
-        )
+        (
+          reviews.reduce((acc, r) => acc + (r.rating ?? 0), 0) /
+          reviews.length
+        ).toFixed(1)
+      )
       : 0;
 
     const stats = {
       rating: avgRating,
       reviewsCount: reviews.length,
-      menteesCount: mentor.menteesCount ?? 0,
-      sessionsCount: mentor.sessionsCount ?? 0,
+      mentees: mentor.menteesCount ?? 0,
+      sessions: mentor.sessionsCount ?? 0,
+      earned: mentor.earnings ?? 0, // Ensure 'earnings' is in Mentor model or calculated
+      responseTime: "<2 hrs" // Mock response time
     };
 
     const frontProfile = {
@@ -96,8 +104,8 @@ export async function GET(req, context) {
         mentor.yearsOfExperience >= 5
           ? 3
           : mentor.yearsOfExperience >= 3
-          ? 2
-          : 1,
+            ? 2
+            : 1,
     };
 
     return NextResponse.json(
