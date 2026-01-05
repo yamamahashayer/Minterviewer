@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { useSearchParams, usePathname } from "next/navigation";
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   User,
@@ -39,6 +39,7 @@ export default function MentorSidebar({
 }) {
   const params = useSearchParams();
   const pathname = usePathname();
+  const router = useRouter();
 
   const activeTab = params.get("tab") || "overview";
   const isDark = theme === "dark";
@@ -181,6 +182,10 @@ export default function MentorSidebar({
           <button
             className="w-full bg-[rgba(220,38,38,0.1)] hover:bg-[rgba(220,38,38,0.2)]
               text-red-400 rounded-lg p-3 text-sm transition-all flex items-center gap-2"
+            onClick={async () => {
+              sessionStorage.clear();
+              router.push("/login");
+            }}
           >
             <LogOut size={16} />
             Logout
@@ -191,6 +196,10 @@ export default function MentorSidebar({
               <button
                 className="w-full flex justify-center bg-[rgba(220,38,38,0.1)]
                   hover:bg-[rgba(220,38,38,0.2)] text-red-400 rounded-lg p-3"
+                onClick={async () => {
+                  sessionStorage.clear();
+                  router.push("/login");
+                }}
               >
                 <LogOut size={20} />
               </button>
