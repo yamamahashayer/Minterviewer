@@ -5,7 +5,7 @@ import React, {
   useState,
 } from "react";
 
-import api from "../services/api";
+import { messageService } from "../services/messageService";
 import { useAuth } from "./AuthContext";
 
 /* ================= TYPES ================= */
@@ -15,17 +15,17 @@ export type Conversation = {
   participants: any[];
   lastMessage?: {
     text: string;
-    fromUser: string;
-    toUser: string;
-    read: boolean;
     createdAt: string;
   };
   lastActivity: string;
+  unreadCount?: number;
 };
 
 type MessageContextType = {
   conversations: Conversation[];
   unreadMessagesCount: number;
+  loading: boolean;
+  error: string | null;
   refreshConversations: () => Promise<void>;
   markConversationAsRead: (conversationId: string) => Promise<void>;
 };
@@ -47,6 +47,8 @@ export const MessageProvider = ({
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const userId = (user as any)?._id || (user as any)?.id;
 
@@ -56,26 +58,33 @@ export const MessageProvider = ({
     if (!userId) return;
 
     try {
-      const res = await api.get(`/api/chat/user/${userId}`);
-      const json = res.data;
+      setLoading(true);
+      setError(null);
+      
+      const json = await messageService.getConversations(userId);
+      setConversations(json.conversations);
 
-      if (json.ok && json.conversations) {
-        setConversations(json.conversations);
+      // 🔢 unread count (نفس منطق الويب)
+      const unread = json.conversations.filter((c: Conversation) => {
+        return c.unreadCount && c.unreadCount > 0;
+      }).reduce((sum, c) => sum + (c.unreadCount || 0), 0);
 
-        // 🔢 unread count (نفس منطق الويب)
-        const unread = json.conversations.filter((c: Conversation) => {
-          const last = c.lastMessage;
-          return (
-            last &&
-            last.toUser === userId &&
-            last.read === false
-          );
-        }).length;
-
-        setUnreadMessagesCount(unread);
-      }
-    } catch (err) {
+      setUnreadMessagesCount(unread);
+    } catch (err: any) {
       console.error("refreshConversations error", err);
+      
+      // Handle 401 errors specifically
+      if (err.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+      } else {
+        setError(`Failed to load conversations: ${err.message || 'Unknown error'}`);
+      }
+      
+      // Set empty state on error
+      setConversations([]);
+      setUnreadMessagesCount(0);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -86,7 +95,7 @@ export const MessageProvider = ({
 
     try {
       // Backend (MongoDB)
-      await api.post("/api/chat/mark-read", {
+      await messageService.markAsRead({
         conversationId,
         userId,
       });
@@ -94,22 +103,16 @@ export const MessageProvider = ({
       // Update local state (instant UI)
       setConversations((prev) =>
         prev.map((c) =>
-          c._id === conversationId && c.lastMessage
+          c._id === conversationId
             ? {
                 ...c,
-                lastMessage: {
-                  ...c.lastMessage,
-                  read: true,
-                },
+                unreadCount: 0,
               }
             : c
         )
       );
 
-      // Recalculate unread
-      setUnreadMessagesCount((prev) =>
-        prev > 0 ? prev - 1 : 0
-      );
+      setUnreadMessagesCount(0);
     } catch (err) {
       console.error("markConversationAsRead error", err);
     }
@@ -120,6 +123,12 @@ export const MessageProvider = ({
   useEffect(() => {
     if (isAuthenticated && userId) {
       refreshConversations();
+    } else if (!isAuthenticated) {
+      // Reset state when not authenticated
+      setConversations([]);
+      setUnreadMessagesCount(0);
+      setError(null);
+      setLoading(false);
     }
   }, [isAuthenticated, userId]);
 
@@ -128,6 +137,8 @@ export const MessageProvider = ({
       value={{
         conversations,
         unreadMessagesCount,
+        loading,
+        error,
         refreshConversations,
         markConversationAsRead,
       }}

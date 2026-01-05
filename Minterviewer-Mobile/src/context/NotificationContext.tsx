@@ -4,18 +4,6 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import {
-  collection,
-  query,
-  where,
-  orderBy,
-  onSnapshot,
-  doc,
-  updateDoc,
-  deleteDoc,
-} from "firebase/firestore";
-
-import { db } from "../lib/firebase"; // عدلي المسار إذا مختلف
 import api from "../services/api";
 import { useAuth } from "./AuthContext";
 
@@ -35,6 +23,9 @@ export type NotificationItem = {
 type NotificationContextType = {
   notifications: NotificationItem[];
   unreadCount: number;
+  loading: boolean;
+  error: string | null;
+  refreshNotifications: () => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   removeNotification: (id: string) => Promise<void>;
@@ -57,48 +48,81 @@ export const NotificationProvider = ({
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!isAuthenticated || !user) return;
+  const userId = (user as any)?._id || (user as any)?.id;
 
-    // نفس منطق الويب
-    const userId = (user as any)._id || (user as any).id;
+  /* ================= LOAD NOTIFICATIONS ================= */
+
+  const refreshNotifications = async () => {
     if (!userId) return;
 
-    const q = query(
-      collection(db, "notifications"),
-      where("userId", "==", userId),
-      orderBy("createdAt", "desc")
-    );
+    try {
+      setLoading(true);
+      setError(null);
 
-    const unsub = onSnapshot(q, (snap) => {
-      const arr: NotificationItem[] = snap.docs.map((d) => ({
-        id: d.id,
-        ...(d.data() as any),
-      }));
+      const response = await api.get(`/api/notifications?userId=${userId}`);
+      
+      if (response.data && response.data.notifications) {
+        setNotifications(response.data.notifications);
+        setUnreadCount(response.data.notifications.filter((n: NotificationItem) => !n.read).length);
+      } else {
+        setNotifications([]);
+        setUnreadCount(0);
+      }
+    } catch (err: any) {
+      console.error("refreshNotifications error", err);
+      
+      // Handle 401 errors specifically
+      if (err.response?.status === 401) {
+        setError("Session expired. Please log in again.");
+      } else {
+        setError(`Failed to load notifications: ${err.message || 'Unknown error'}`);
+      }
+      
+      // Set empty state on error
+      setNotifications([]);
+      setUnreadCount(0);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      setNotifications(arr);
-      setUnreadCount(arr.filter((n) => !n.read).length);
-    });
+  /* ================= AUTO LOAD ================= */
 
-    return () => unsub();
-  }, [isAuthenticated, user]);
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      refreshNotifications();
+    } else if (!isAuthenticated) {
+      // Reset state when not authenticated
+      setNotifications([]);
+      setUnreadCount(0);
+      setError(null);
+      setLoading(false);
+    }
+  }, [isAuthenticated, userId]);
 
   /* ================= ACTIONS ================= */
 
   const markAsRead = async (id: string) => {
     try {
-      // Firestore update (instant UI)
-      await updateDoc(doc(db, "notifications", id), {
-        read: true,
-      });
-
-      // Backend (مثل الويب)
-      await api.put("/api/notifications", {
-        id,
-        read: true,
-      });
-    } catch (err) {
+      // Update backend
+      await api.put("/api/notifications", { id, read: true });
+      
+      // Update local state
+      setNotifications((prev) =>
+        prev.map((n) =>
+          n.id === id
+            ? {
+                ...n,
+                read: true,
+              }
+            : n
+        )
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (err: any) {
       console.error("markAsRead error", err);
     }
   };
@@ -106,33 +130,30 @@ export const NotificationProvider = ({
   const markAllAsRead = async () => {
     try {
       const unread = notifications.filter((n) => !n.read);
-
       await Promise.all(
-        unread.map((n) =>
-          updateDoc(doc(db, "notifications", n.id), { read: true })
-        )
+        unread.map((n) => api.put("/api/notifications", { id: n.id, read: true }))
       );
-
-      await Promise.all(
-        unread.map((n) =>
-          api.put("/api/notifications", { id: n.id, read: true })
-        )
+      setNotifications((prev) =>
+        prev.map((n) => ({
+          ...n,
+          read: true,
+        }))
       );
-    } catch (err) {
+      setUnreadCount(0);
+    } catch (err: any) {
       console.error("markAllAsRead error", err);
     }
   };
 
   const removeNotification = async (id: string) => {
     try {
-      // Firestore
-      await deleteDoc(doc(db, "notifications", id));
-
-      // Backend
-      await api.delete("/api/notifications", {
-        data: { id },
-      });
-    } catch (err) {
+      await api.delete("/api/notifications", { data: { id } });
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      const notification = notifications.find((n) => n.id === id);
+      if (notification && !notification.read) {
+        setUnreadCount((prev) => Math.max(0, prev - 1));
+      }
+    } catch (err: any) {
       console.error("removeNotification error", err);
     }
   };
@@ -142,6 +163,9 @@ export const NotificationProvider = ({
       value={{
         notifications,
         unreadCount,
+        loading,
+        error,
+        refreshNotifications,
         markAsRead,
         markAllAsRead,
         removeNotification,

@@ -12,7 +12,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import api from '../../services/api';
+import { authService } from '../../services/authService';
 
 const SignupScreen = ({ navigation }: any) => {
   const [fullName, setFullName] = useState('');
@@ -29,26 +29,26 @@ const SignupScreen = ({ navigation }: any) => {
 
     setLoading(true);
     try {
-      const res = await api.post('/api/auth/signup', {
+      const response = await authService.signUp({
         full_name: fullName,
         email,
         password,
         role,
       });
 
-      if (res.data.ok) {
+      if (response.ok) {
         Alert.alert(
           'Success 🎉',
           'Account created successfully. Please sign in.',
           [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
         );
       } else {
-        Alert.alert('Signup failed', res.data.message || 'Error');
+        Alert.alert('Signup failed', response.message || 'Error');
       }
     } catch (err: any) {
       Alert.alert(
         'Signup error',
-        err.response?.data?.message || 'Something went wrong'
+        err.message || 'Something went wrong'
       );
     } finally {
       setLoading(false);

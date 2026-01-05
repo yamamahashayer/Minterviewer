@@ -27,11 +27,11 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
-        // Handle 401 Unauthorized globally if needed (e.g., logout)
+        // Handle 401 Unauthorized globally - clear auth data
         if (error.response && error.response.status === 401) {
-            // Optional: Clear storage and redirect to login
-            // await AsyncStorage.removeItem('auth_token');
-            // await AsyncStorage.removeItem('user_data');
+            console.log('Token expired or invalid, clearing auth data');
+            await AsyncStorage.multiRemove(['auth_token', 'user_data']);
+            delete api.defaults.headers.Authorization;
         }
         return Promise.reject(error);
     }
