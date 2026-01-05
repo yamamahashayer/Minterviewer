@@ -60,9 +60,12 @@ export async function GET(request: NextRequest) {
 
         // Calculate earnings from booked slots
         let totalEarnings = 0;
+        let pendingEarnings = 0;
         const earningsByMonth: { [key: string]: number } = {};
         const sessionsByMonth: { [key: string]: number } = {};
         const revenueByType: { [key: string]: { revenue: number; count: number } } = {};
+
+        const referenceDate = new Date();
 
         for (const slot of bookedSlots) {
             // Get price from sessionOffering
@@ -73,59 +76,53 @@ export async function GET(request: NextRequest) {
                 (o: any) => o._id?.toString() === offeringId.toString()
             );
 
-            const price = offering?.price || 0;
-            totalEarnings += price;
+            const priceInCents = offering?.price || 0;
+            const priceInDollars = priceInCents / 100; // Convert cents to dollars
 
-            // Monthly trend
-            const monthKey = new Date(slot.startTime).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'short'
-            });
-            earningsByMonth[monthKey] = (earningsByMonth[monthKey] || 0) + price;
-            sessionsByMonth[monthKey] = (sessionsByMonth[monthKey] || 0) + 1;
+            const isCompleted = new Date(slot.endTime) < referenceDate;
 
-            // Revenue by type
-            const type = offering?.title || offering?.sessionType || 'Other';
-            if (!revenueByType[type]) {
-                revenueByType[type] = { revenue: 0, count: 0 };
+            if (isCompleted) {
+                totalEarnings += priceInDollars;
+
+                // Monthly trend
+                const monthKey = new Date(slot.startTime).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short'
+                });
+                earningsByMonth[monthKey] = (earningsByMonth[monthKey] || 0) + priceInDollars;
+                sessionsByMonth[monthKey] = (sessionsByMonth[monthKey] || 0) + 1;
+
+                // Revenue by type
+                const type = offering?.title || offering?.sessionType || 'Other';
+                if (!revenueByType[type]) {
+                    revenueByType[type] = { revenue: 0, count: 0 };
+                }
+                revenueByType[type].revenue += priceInDollars;
+                revenueByType[type].count += 1;
+            } else {
+                // Future booked session -> Pending Earnings
+                pendingEarnings += priceInDollars;
             }
-            revenueByType[type].revenue += price;
-            revenueByType[type].count += 1;
         }
 
         const earningsTrend = Object.keys(earningsByMonth)
             .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
             .map(month => ({
                 month,
-                earnings: earningsByMonth[month] / 100, // Convert cents to dollars
+                earnings: earningsByMonth[month], // Already in dollars
                 sessions: sessionsByMonth[month]
             }));
 
         const revenueBreakdown = Object.keys(revenueByType).map(type => ({
             type,
-            revenue: revenueByType[type].revenue / 100,
+            revenue: revenueByType[type].revenue, // Already in dollars
             sessions: revenueByType[type].count,
             percentage: totalEarnings > 0
                 ? ((revenueByType[type].revenue / totalEarnings) * 100).toFixed(1)
                 : '0'
         }));
 
-        // Pending earnings (available slots that could be booked)
-        const availableSlots = await TimeSlot.find({
-            mentor: mentorId,
-            status: 'available',
-            startTime: { $gte: new Date() }
-        }).limit(10).lean();
-
-        let pendingEarnings = 0;
-        for (const slot of availableSlots) {
-            if (!slot.sessionOffering) continue;
-            const offering = mentor.sessionOfferings.find(
-                (o: any) => o._id?.toString() === slot.sessionOffering.toString()
-            );
-            pendingEarnings += offering?.price || 0;
-        }
-
+        // Removed old "Available Slots" pending calculation to align with Earnings Page "Pending" definition (Future Booked)
         // 2. SESSION STATISTICS - Using TimeSlots
         const allSlots = await TimeSlot.find({ mentor: mentorId }).lean();
         const totalSlots = allSlots.length;
@@ -234,12 +231,12 @@ export async function GET(request: NextRequest) {
         );
 
         // 5. PERFORMANCE INSIGHTS
-        // Calculate growth (compare last month vs previous month)
-        const now = new Date();
-        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
-        const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-        const prevMonthEnd = new Date(now.getFullYear(), now.getMonth() - 1, 0);
+        // Calculate growth (compare last month vs previous month) - Fixed duplicates
+
+        const lastMonthStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - 1, 1);
+        const lastMonthEnd = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), 0);
+        const prevMonthStart = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - 2, 1);
+        const prevMonthEnd = new Date(referenceDate.getFullYear(), referenceDate.getMonth() - 1, 0);
 
         const lastMonthSlots = bookedSlots.filter((s: any) => {
             const date = new Date(s.startTime);
@@ -257,7 +254,7 @@ export async function GET(request: NextRequest) {
             const offering = mentor.sessionOfferings.find(
                 (o: any) => o._id?.toString() === (slot as any).sessionOffering.toString()
             );
-            lastMonthEarnings += offering?.price || 0;
+            lastMonthEarnings += (offering?.price || 0) / 100; // Convert cents to dollars
         }
 
         let prevMonthEarnings = 0;
@@ -266,7 +263,7 @@ export async function GET(request: NextRequest) {
             const offering = mentor.sessionOfferings.find(
                 (o: any) => o._id?.toString() === (slot as any).sessionOffering.toString()
             );
-            prevMonthEarnings += offering?.price || 0;
+            prevMonthEarnings += (offering?.price || 0) / 100; // Convert cents to dollars
         }
 
         const earningsGrowth = prevMonthEarnings > 0
@@ -281,12 +278,12 @@ export async function GET(request: NextRequest) {
             data: {
                 // KPIs
                 kpis: {
-                    totalEarnings: totalEarnings / 100,
+                    totalEarnings: totalEarnings,
                     totalSessions: totalSlots,
                     completedSessions: bookedCount,
                     averageRating: parseFloat(avgRating),
                     activeMentees: uniqueMenteeIds.length,
-                    pendingEarnings: pendingEarnings / 100,
+                    pendingEarnings: pendingEarnings,
                     completionRate: parseFloat(completionRate)
                 },
 
@@ -294,8 +291,8 @@ export async function GET(request: NextRequest) {
                 earnings: {
                     trend: earningsTrend,
                     breakdown: revenueBreakdown,
-                    total: totalEarnings / 100,
-                    pending: pendingEarnings / 100,
+                    total: totalEarnings,
+                    pending: pendingEarnings,
                     growth: parseFloat(earningsGrowth)
                 },
 

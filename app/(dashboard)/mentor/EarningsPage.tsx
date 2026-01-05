@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { DollarSign, TrendingUp, Calendar, Download, CreditCard, Wallet, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -15,37 +15,75 @@ import {
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 
-const earningsData = [
-  { month: 'Jan', earnings: 2400, sessions: 18 },
-  { month: 'Feb', earnings: 2800, sessions: 21 },
-  { month: 'Mar', earnings: 3200, sessions: 24 },
-  { month: 'Apr', earnings: 2900, sessions: 22 },
-  { month: 'May', earnings: 3600, sessions: 27 },
-  { month: 'Jun', earnings: 4200, sessions: 32 }
-];
+// Interfaces for API Data
+interface ChartDataPoint {
+  month: string;
+  earnings: number;
+}
 
-const recentTransactions = [
-  { id: 1, mentee: 'Sarah Mitchell', type: 'Technical Interview', amount: 120, date: 'Oct 13, 2025', status: 'completed' },
-  { id: 2, mentee: 'James Rodriguez', type: 'System Design', amount: 150, date: 'Oct 12, 2025', status: 'completed' },
-  { id: 3, mentee: 'Emily Chen', type: 'Behavioral Mock', amount: 100, date: 'Oct 11, 2025', status: 'completed' },
-  { id: 4, mentee: 'Michael Brown', type: 'CV Review', amount: 80, date: 'Oct 10, 2025', status: 'completed' },
-  { id: 5, mentee: 'Lisa Wang', type: 'Career Guidance', amount: 90, date: 'Oct 9, 2025', status: 'pending' }
-];
+interface Transaction {
+  id: string;
+  menteeName: string;
+  menteeAvatar?: string;
+  sessionType: string;
+  amount: number;
+  date: string;
+  status: 'completed' | 'pending';
+}
 
-const sessionPricing = [
-  { type: 'Technical Interview (1hr)', price: 120, sessions: 48 },
-  { type: 'System Design (1.5hr)', price: 150, sessions: 32 },
-  { type: 'Behavioral Mock (1hr)', price: 100, sessions: 38 },
-  { type: 'CV Review (30min)', price: 80, sessions: 24 },
-  { type: 'Career Guidance (1hr)', price: 90, sessions: 18 }
-];
+interface SessionBreakdown {
+  type: string;
+  sessions: number;
+  earnings: number;
+  price: number;
+}
+
+interface EarningsData {
+  totalEarnings: number;
+  totalSessions: number;
+  avgPerSession: number;
+  pendingEarnings: number;
+  chartData: ChartDataPoint[];
+  transactions: Transaction[];
+  sessionsBreakdown: SessionBreakdown[];
+}
 
 export const EarningsPage = () => {
   const [timePeriod, setTimePeriod] = useState('6months');
+  const [data, setData] = useState<EarningsData | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const totalEarnings = earningsData.reduce((sum, item) => sum + item.earnings, 0);
-  const totalSessions = earningsData.reduce((sum, item) => sum + item.sessions, 0);
-  const avgPerSession = Math.round(totalEarnings / totalSessions);
+  useEffect(() => {
+    const fetchEarnings = async () => {
+      try {
+        const token = sessionStorage.getItem('token');
+        if (!token) return;
+
+        const res = await fetch('/api/mentor/earnings', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await res.json();
+
+        if (result.success) {
+          setData(result.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch earnings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEarnings();
+  }, []);
+
+  if (loading) {
+    return <div className="p-8 text-center text-white">Loading earnings data...</div>;
+  }
+
+  if (!data) {
+    return <div className="p-8 text-center text-white">No earnings data available.</div>;
+  }
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -67,12 +105,12 @@ export const EarningsPage = () => {
               </div>
               <Badge className="bg-green-500/20 text-green-300 border-green-500/30">
                 <ArrowUpRight className="w-3 h-3 mr-1" />
-                +12%
+                Live
               </Badge>
             </div>
             <p className="text-[var(--foreground-muted)] text-sm mb-1">Total Earnings</p>
-            <p className="text-[var(--foreground)] text-2xl">${totalEarnings.toLocaleString()}</p>
-            <p className="text-[var(--foreground-subtle)] text-xs mt-1">Last 6 months</p>
+            <p className="text-[var(--foreground)] text-2xl">${data.totalEarnings.toLocaleString()}</p>
+            <p className="text-[var(--foreground-subtle)] text-xs mt-1">Lifetime revenue</p>
           </div>
 
           <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 backdrop-blur-xl border border-purple-500/30 p-5">
@@ -82,7 +120,7 @@ export const EarningsPage = () => {
               </div>
             </div>
             <p className="text-[var(--foreground-muted)] text-sm mb-1">Total Sessions</p>
-            <p className="text-[var(--foreground)] text-2xl">{totalSessions}</p>
+            <p className="text-[var(--foreground)] text-2xl">{data.totalSessions}</p>
             <p className="text-[var(--foreground-subtle)] text-xs mt-1">Completed</p>
           </div>
 
@@ -93,7 +131,7 @@ export const EarningsPage = () => {
               </div>
             </div>
             <p className="text-[var(--foreground-muted)] text-sm mb-1">Avg per Session</p>
-            <p className="text-[var(--foreground)] text-2xl">${avgPerSession}</p>
+            <p className="text-[var(--foreground)] text-2xl">${data.avgPerSession}</p>
             <p className="text-[var(--foreground-subtle)] text-xs mt-1">Average rate</p>
           </div>
 
@@ -104,8 +142,8 @@ export const EarningsPage = () => {
               </div>
             </div>
             <p className="text-[var(--foreground-muted)] text-sm mb-1">Pending</p>
-            <p className="text-[var(--foreground)] text-2xl">$240</p>
-            <p className="text-[var(--foreground-subtle)] text-xs mt-1">To be paid</p>
+            <p className="text-[var(--foreground)] text-2xl">${data.pendingEarnings}</p>
+            <p className="text-[var(--foreground-subtle)] text-xs mt-1">To be paid (Future sessions)</p>
           </div>
         </div>
       </motion.div>
@@ -129,20 +167,18 @@ export const EarningsPage = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="3months">Last 3 months</SelectItem>
                   <SelectItem value="6months">Last 6 months</SelectItem>
-                  <SelectItem value="12months">Last 12 months</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={earningsData}>
+                <LineChart data={data.chartData}> // Use fetched data
                   <defs>
                     <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
@@ -162,6 +198,7 @@ export const EarningsPage = () => {
                     stroke="#10b981"
                     strokeWidth={3}
                     dot={{ fill: '#10b981', r: 5 }}
+                    activeDot={{ r: 8 }}
                     fill="url(#colorEarnings)"
                   />
                 </LineChart>
@@ -170,7 +207,7 @@ export const EarningsPage = () => {
           </motion.div>
         </div>
 
-        {/* Session Pricing */}
+        {/* This Session Breakdown */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -180,13 +217,14 @@ export const EarningsPage = () => {
           <div className="flex items-center gap-3 mb-6">
             <CreditCard className="w-5 h-5 text-purple-400" />
             <div>
-              <h3 className="text-[var(--foreground)]">Session Pricing</h3>
-              <p className="text-[var(--foreground-muted)] text-sm">Your rates</p>
+              <h3 className="text-[var(--foreground)]">Session Breakdown</h3>
+              <p className="text-[var(--foreground-muted)] text-sm">Earnings by type</p>
             </div>
           </div>
 
           <div className="space-y-3">
-            {sessionPricing.map((item, index) => (
+            {data.sessionsBreakdown.length === 0 && <p className="text-gray-500">No session data yet.</p>}
+            {data.sessionsBreakdown.map((item, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 10 }}
@@ -197,15 +235,18 @@ export const EarningsPage = () => {
               >
                 <div className="flex items-start justify-between mb-2">
                   <p className="text-[var(--foreground)] text-sm">{item.type}</p>
-                  <p className="text-green-400">${item.price}</p>
+                  <p className="text-green-400">${item.earnings}</p>
                 </div>
-                <p className="text-[var(--foreground-subtle)] text-xs">{item.sessions} sessions completed</p>
+                <div className="flex justify-between text-xs text-[var(--foreground-subtle)]">
+                  <span>{item.sessions} sessions</span>
+                  <span>Avg: ${item.price}</span>
+                </div>
               </motion.div>
             ))}
           </div>
 
           <Button className="w-full mt-4 bg-purple-500/20 border border-purple-500/50 text-purple-300 hover:bg-purple-500/30">
-            Update Pricing
+            View Analytics
           </Button>
         </motion.div>
       </div>
@@ -240,7 +281,12 @@ export const EarningsPage = () => {
               </tr>
             </thead>
             <tbody>
-              {recentTransactions.map((transaction, index) => (
+              {data.transactions.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-gray-500">No transactions found.</td>
+                </tr>
+              )}
+              {data.transactions.map((transaction, index) => (
                 <motion.tr
                   key={transaction.id}
                   initial={{ opacity: 0, x: -20 }}
@@ -252,12 +298,12 @@ export const EarningsPage = () => {
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
-                        <span className="text-white text-xs">{transaction.mentee.charAt(0)}</span>
+                        <span className="text-white text-xs">{(transaction.menteeName || "U").charAt(0)}</span>
                       </div>
-                      <span className="text-[var(--foreground)]">{transaction.mentee}</span>
+                      <span className="text-[var(--foreground)]">{transaction.menteeName}</span>
                     </div>
                   </td>
-                  <td className="py-4 px-4 text-[var(--foreground)]">{transaction.type}</td>
+                  <td className="py-4 px-4 text-[var(--foreground)]">{transaction.sessionType}</td>
                   <td className="py-4 px-4 text-green-400">${transaction.amount}</td>
                   <td className="py-4 px-4 text-[var(--foreground-muted)]">{transaction.date}</td>
                   <td className="py-4 px-4">

@@ -46,10 +46,26 @@ export async function GET(req, context) {
 
     const reviews = await MentorFeedback.find({ mentor: mentorId }).lean();
 
-    // Calculate basic earnings mock (e.g. sessions * price per session)
-    // For now assuming $50 per session if not tracked
-    const estimatedEarnings = (mentor.sessionsCount ?? 0) * 50;
-    mentor.earnings = estimatedEarnings;
+    // Calculate real earnings from TimeSlots
+    const TimeSlot = (await import("@/models/TimeSlot")).default;
+    const completedSlots = await TimeSlot.find({
+      mentor: mentorId,
+      status: 'booked',
+      endTime: { $lt: new Date() }
+    }).lean();
+
+    let realEarnings = 0;
+    for (const slot of completedSlots) {
+      // We need to fetch offering details if not populated, but ideally prices should be on slot or offering
+      // Since offerings are on Mentor model, we can find them
+      if (slot.sessionOffering) {
+        const offering = mentor.sessionOfferings.find(o => o._id.toString() === slot.sessionOffering.toString());
+        if (offering && offering.price) {
+          realEarnings += (offering.price / 100);
+        }
+      }
+    }
+    mentor.earnings = realEarnings;
 
     const avgRating = reviews.length
       ? Number(

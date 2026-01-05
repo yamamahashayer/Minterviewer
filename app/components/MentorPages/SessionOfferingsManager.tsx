@@ -254,7 +254,13 @@ export const SessionOfferingsManager = () => {
                                 <input
                                     type="number"
                                     value={formData.price}
-                                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        setFormData({
+                                            ...formData,
+                                            price: val === '' ? 0 : parseFloat(val)
+                                        });
+                                    }}
                                     min="0"
                                     step="0.01"
                                     placeholder="50.00"
