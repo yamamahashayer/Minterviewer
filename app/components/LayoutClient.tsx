@@ -27,7 +27,7 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
 
   // ⭐ final combined condition
   const hideLayout =
-    isAuthPage || isMenteeDashboard || isMentorDashboard || isCompanyDashboard;
+    isAuthPage || isMenteeDashboard || isMentorDashboard || isCompanyDashboard || pathname.startsWith("/admin");
 
   return (
     <ThemeProvider>

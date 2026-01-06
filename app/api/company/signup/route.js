@@ -74,6 +74,7 @@ export async function POST(req) {
       website,
       location,
       isVerified: false,
+      approvalStatus: 'pending', // Explicitly set approval status
       description: "",
       companySize: "",
       foundedYear: null,
@@ -93,11 +94,27 @@ export async function POST(req) {
       body: JSON.stringify({
         userId: newUser._id.toString(),
         title: "🎉 Welcome to Minterviewer!",
-        message: `Welcome ${full_name}! Your company account has been created.`,
+        message: `Welcome ${full_name}! Your company account is pending admin approval.`,
         type: "system",
         redirectTo: "/company/overview",
       }),
     });
+
+    // 🔔 2) Notify ALL Admins about new company registration
+    const admins = await User.find({ role: "admin" });
+    for (const admin of admins) {
+      await fetch(`${origin}/api/notifications`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: admin._id.toString(),
+          title: "🏢 New Company Registration",
+          message: `${name} (${industry}) has registered and is awaiting approval.`,
+          type: "system",
+          redirectTo: "/admin/companies",
+        }),
+      });
+    }
 
     // =============================
     // RESPONSE
