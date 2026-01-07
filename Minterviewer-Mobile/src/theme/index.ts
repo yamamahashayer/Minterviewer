@@ -1,5 +1,5 @@
 export const colors = {
-  primary: '#00FFB2',
+  primary: '#06b6d4',
 
   background: {
     /* موجود سابقًا */
@@ -23,6 +23,7 @@ export const colors = {
     gray: '#9CA3AF',
     secondaryDark: '#9CA3AF',
     secondaryLight: '#6b7280',
+    muted: '#6b7280',
   },
 
   border: {
@@ -35,4 +36,6 @@ export const colors = {
   },
 
   danger: '#ef4444',
+  success: '#10b981',
+  warning: '#f59e0b',
 };

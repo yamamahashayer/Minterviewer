@@ -6,12 +6,14 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { colors } from '../theme';
 import NotificationBell from '../components/notifications/NotificationBell';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 
 export default function MentorLayout({
   children,
@@ -19,6 +21,28 @@ export default function MentorLayout({
   children: React.ReactNode;
 }) {
   const { isDark, toggleTheme } = useTheme();
+  const { signOut } = useAuth();
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Logout', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              await signOut();
+            } catch (error) {
+              console.error('Logout error:', error);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <SafeAreaView
@@ -87,6 +111,22 @@ export default function MentorLayout({
           </TouchableOpacity>
 
           <NotificationBell isDark={isDark} />
+
+          <TouchableOpacity
+            onPress={handleLogout}
+            style={[
+              styles.iconButton,
+              {
+                backgroundColor: isDark
+                  ? 'rgba(239, 68, 68, 0.1)'
+                  : 'rgba(239, 68, 68, 0.05)',
+              },
+            ]}
+          >
+            <Text style={[styles.logoutText, { color: colors.danger }]}>
+              ✕
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -137,6 +177,11 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+
+  logoutText: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
 
   content: {
