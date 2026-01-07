@@ -1,39 +1,26 @@
+// app/(dashboard)/mentor/UpcomingSessions.tsx
 import { motion } from "framer-motion";
 import { Calendar, Clock, Video } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 
-const sessions = [
-  {
-    id: 1,
-    mentee: 'Sarah Mitchell',
-    type: 'Technical Interview',
-    date: 'Oct 14, 2025',
-    time: '10:00 AM',
-    color: 'from-cyan-500 to-blue-500',
-    borderColor: 'border-cyan-500/30'
-  },
-  {
-    id: 2,
-    mentee: 'James Rodriguez',
-    type: 'Behavioral Mock',
-    date: 'Oct 14, 2025',
-    time: '2:30 PM',
-    color: 'from-teal-500 to-green-500',
-    borderColor: 'border-teal-500/30'
-  },
-  {
-    id: 3,
-    mentee: 'Emily Chen',
-    type: 'AI Mock Interview',
-    date: 'Oct 15, 2025',
-    time: '11:00 AM',
-    color: 'from-purple-500 to-pink-500',
-    borderColor: 'border-purple-500/30'
-  }
-];
+interface Session {
+  id: string;
+  mentee: string;
+  menteePhoto?: string;
+  type: string;
+  date: string;
+  time: string;
+  color: string;
+  borderColor: string;
+}
 
-export const UpcomingSessions = () => {
+interface UpcomingSessionsProps {
+  sessions: Session[];
+}
+
+export const UpcomingSessions = ({ sessions = [] }: UpcomingSessionsProps) => {
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between mb-4">
@@ -64,7 +51,7 @@ export const UpcomingSessions = () => {
           >
             {/* Glow effect on hover */}
             <div className={`absolute inset-0 bg-gradient-to-r ${session.color} opacity-0 group-hover:opacity-10 transition-opacity`} />
-            
+
             <div className="relative">
               <div className="flex items-start gap-4 mb-4">
                 {/* Avatar */}

@@ -53,6 +53,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (user.isDeleted) {
+      return NextResponse.json(
+        { message: "This account has been deactivated." },
+        { status: 403 }
+      );
+    }
+
     // 2) Check password
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {

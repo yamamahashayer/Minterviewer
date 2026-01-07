@@ -30,6 +30,18 @@ const CompanySchema = new Schema(
       instagram: String,
     },
 
+    // Approval System
+    approvalStatus: {
+      type: String,
+      enum: ["pending", "approved", "rejected"],
+      default: "pending",
+      index: true
+    },
+    approvedBy: { type: Schema.Types.ObjectId, ref: "User" },
+    approvedAt: { type: Date },
+    rejectedAt: { type: Date },
+    rejectionReason: { type: String },
+
     hiringStatus: {
       type: String,
       enum: ["open", "closed"],
