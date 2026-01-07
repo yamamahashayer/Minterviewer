@@ -1,62 +1,100 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, Dimensions } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  ActivityIndicator, 
+  TouchableOpacity, 
+  Alert 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import MentorLayout from '../../layouts/MentorLayout';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 import { colors } from '../../theme';
-import { mentorService, MentorAnalyticsResponse } from '../../services/mentorService';
+import { mentorService } from '../../services/mentorService';
 
-const { width: screenWidth } = Dimensions.get('window');
+interface EarningsData {
+  totalEarnings: number;
+  totalSessions: number;
+  avgPerSession: number;
+  pendingEarnings: number;
+  chartData: Array<{
+    month: string;
+    earnings: number;
+  }>;
+  transactions: Array<{
+    id: string;
+    menteeName: string;
+    menteeAvatar: string;
+    sessionType: string;
+    amount: number;
+    date: string;
+    status: 'completed' | 'pending';
+  }>;
+  sessionsBreakdown: Array<{
+    type: string;
+    sessions: number;
+    earnings: number;
+    price: number;
+  }>;
+}
 
-const MentorAnalyticsScreen = () => {
+const MentorEarningsScreen = () => {
   const { isDark } = useTheme();
+  const { user, isAuthenticated } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [analyticsData, setAnalyticsData] = useState<MentorAnalyticsResponse['data'] | null>(null);
+  const [earningsData, setEarningsData] = useState<EarningsData | null>(null);
   const [selectedPeriod, setSelectedPeriod] = useState(6);
 
   useEffect(() => {
-    fetchAnalytics();
-  }, [selectedPeriod]);
+    if (!isAuthenticated) return;
+    loadEarnings();
+  }, [isAuthenticated, selectedPeriod]);
 
-  const fetchAnalytics = async () => {
+  const loadEarnings = async () => {
     try {
       setLoading(true);
-      const response = await mentorService.getAnalytics(selectedPeriod);
+      
+      // Use the mentorService to get earnings data
+      const response = await mentorService.getEarnings();
+      
       if (response.success && response.data) {
-        setAnalyticsData(response.data);
+        setEarningsData(response.data);
         setError(null);
       } else {
-        setError('Failed to load analytics');
+        setError('Failed to load earnings data');
       }
     } catch (err: any) {
-      setError(String(err));
+      setError('Failed to load earnings data');
     } finally {
       setLoading(false);
     }
   };
 
-  const KPICard = ({ icon, title, value, subtitle, color }: any) => (
+  const StatCard = ({ icon, title, value, subtitle, color }: any) => (
     <View style={[
-      styles.kpiCard,
+      styles.statCard,
       { 
         backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'white',
         borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#e5e7eb'
       }
     ]}>
-      <View style={[styles.kpiIcon, { backgroundColor: color + '20' }]}>
+      <View style={[styles.statIcon, { backgroundColor: color + '20' }]}>
         <Ionicons name={icon} size={24} color={color} />
       </View>
-      <View style={styles.kpiContent}>
-        <Text style={[styles.kpiTitle, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
+      <View style={styles.statContent}>
+        <Text style={[styles.statTitle, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
           {title}
         </Text>
-        <Text style={[styles.kpiValue, { color: isDark ? 'white' : '#111827' }]}>
+        <Text style={[styles.statValue, { color: isDark ? 'white' : '#111827' }]}>
           {value}
         </Text>
         {subtitle && (
-          <Text style={[styles.kpiSubtitle, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
+          <Text style={[styles.statSubtitle, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
             {subtitle}
           </Text>
         )}
@@ -86,80 +124,113 @@ const MentorAnalyticsScreen = () => {
     </View>
   );
 
-  const ReviewCard = ({ review }: any) => (
+  const TransactionItem = ({ transaction }: { transaction: any }) => (
     <View style={[
-      styles.reviewCard,
+      styles.transactionItem,
       { 
         backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'white',
         borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#e5e7eb'
       }
     ]}>
-      <View style={styles.reviewHeader}>
-        <View style={styles.reviewInfo}>
-          <Text style={[styles.reviewName, { color: isDark ? 'white' : '#111827' }]}>
-            {review.mentee.name}
+      <View style={styles.transactionHeader}>
+        <View style={styles.transactionInfo}>
+          <Text style={[styles.transactionDate, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
+            {new Date(transaction.date).toLocaleDateString()}
           </Text>
-          <Text style={[styles.reviewDate, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
-            {new Date(review.date).toLocaleDateString()}
+          <Text style={[styles.transactionDescription, { color: isDark ? 'white' : '#111827' }]}>
+            {transaction.sessionType} with {transaction.menteeName}
           </Text>
         </View>
-        <View style={styles.starRating}>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <Ionicons 
-              key={star}
-              name={star <= review.rating ? 'star' : 'star-outline'} 
-              size={16} 
-              color={star <= review.rating ? '#fbbf24' : '#d1d5db'} 
-            />
-          ))}
+        <View style={styles.transactionAmount}>
+          <Text style={[
+            styles.amountText,
+            { 
+              color: transaction.status === 'pending'
+                ? colors.warning
+                : colors.success
+            }
+          ]}>
+            ${transaction.amount}
+          </Text>
         </View>
       </View>
-      {review.reviewText && (
-        <Text style={[styles.reviewText, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
-          {review.reviewText}
-        </Text>
-      )}
+      <View style={styles.transactionMeta}>
+        <View style={[
+          styles.transactionType,
+          { 
+            backgroundColor: colors.primary + '20',
+            borderColor: colors.primary
+          }
+        ]}>
+          <Text style={[
+            styles.typeText,
+            { 
+              color: colors.primary
+            }
+          ]}>
+            {transaction.sessionType?.charAt(0).toUpperCase() + transaction.sessionType?.slice(1) || 'Session'}
+          </Text>
+        </View>
+        <View style={[
+          styles.statusBadge,
+          { 
+            backgroundColor: transaction.status === 'completed'
+              ? colors.success + '20'
+              : colors.warning + '20',
+            borderColor: transaction.status === 'completed'
+              ? colors.success
+              : colors.warning
+          }
+        ]}>
+          <Text style={[
+            styles.statusText,
+            { 
+              color: transaction.status === 'completed'
+                ? colors.success
+                : colors.warning
+            }
+          ]}>
+            {transaction.status}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 
-  const MenteeCard = ({ mentee }: any) => (
+  const SessionTypeItem = ({ type }: { type: any }) => (
     <View style={[
-      styles.menteeCard,
+      styles.sessionTypeItem,
       { 
         backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'white',
         borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#e5e7eb'
       }
     ]}>
-      <View style={styles.menteeHeader}>
-        <View style={styles.menteeInfo}>
-          <Text style={[styles.menteeName, { color: isDark ? 'white' : '#111827' }]}>
-            {mentee.name}
+      <Text style={[styles.sessionTypeName, { color: isDark ? 'white' : '#111827' }]}>
+        {type.type}
+      </Text>
+      <View style={styles.sessionTypeStats}>
+        <View style={styles.sessionTypeStat}>
+          <Text style={[styles.statValue, { color: isDark ? 'white' : '#111827' }]}>
+            {type.sessions}
           </Text>
-          <Text style={[styles.menteeSessions, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
-            {mentee.totalSessions} sessions
-          </Text>
-        </View>
-        {mentee.averageRating && (
-          <View style={styles.ratingBadge}>
-            <Text style={styles.ratingText}>⭐ {mentee.averageRating}</Text>
-          </View>
-        )}
-      </View>
-      <View style={styles.menteeDetails}>
-        <View style={styles.menteeDetail}>
-          <Text style={[styles.detailLabel, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
-            Completed
-          </Text>
-          <Text style={[styles.detailValue, { color: isDark ? 'white' : '#111827' }]}>
-            {mentee.completedSessions}
+          <Text style={[styles.statSubtitle, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
+            sessions
           </Text>
         </View>
-        <View style={styles.menteeDetail}>
-          <Text style={[styles.detailLabel, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
-            Last Session
+        <View style={styles.sessionTypeStat}>
+          <Text style={[styles.statValue, { color: isDark ? 'white' : '#111827' }]}>
+            ${type.earnings}
           </Text>
-          <Text style={[styles.detailValue, { color: isDark ? 'white' : '#111827' }]}>
-            {mentee.lastSessionDate ? new Date(mentee.lastSessionDate).toLocaleDateString() : 'N/A'}
+          <Text style={[styles.statSubtitle, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
+            earned
+          </Text>
+        </View>
+        <View style={styles.sessionTypeStat}>
+          <Text style={[styles.statValue, { color: isDark ? 'white' : '#111827' }]}>
+            ${type.price}
+          </Text>
+          <Text style={[styles.statSubtitle, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
+            avg rate
           </Text>
         </View>
       </View>
@@ -172,7 +243,7 @@ const MentorAnalyticsScreen = () => {
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
-            Loading analytics...
+            Loading earnings...
           </Text>
         </View>
       </MentorLayout>
@@ -186,7 +257,7 @@ const MentorAnalyticsScreen = () => {
           <Text style={[styles.errorText, { color: colors.danger }]}>
             {error}
           </Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchAnalytics}>
+          <TouchableOpacity style={styles.retryButton} onPress={loadEarnings}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -194,15 +265,25 @@ const MentorAnalyticsScreen = () => {
     );
   }
 
-  const maxEarnings = Math.max(...(analyticsData?.earnings?.trend?.map(item => item.earnings) || [1]));
+  const maxEarnings = Math.max(...(earningsData?.chartData?.map(item => item.earnings) || [1]));
 
   return (
     <MentorLayout>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: isDark ? 'white' : '#111827' }]}>
+            Earnings
+          </Text>
+          <Text style={[styles.subtitle, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
+            Track your income and payments
+          </Text>
+        </View>
+
         {/* Period Selector */}
         <View style={styles.periodSelector}>
           <Text style={[styles.sectionTitle, { color: isDark ? 'white' : '#111827' }]}>
-            Analytics Period
+            Earnings Period
           </Text>
           <View style={styles.periodButtons}>
             {[3, 6, 12].map((period) => (
@@ -236,36 +317,36 @@ const MentorAnalyticsScreen = () => {
           </View>
         </View>
 
-        {/* KPIs Grid */}
+        {/* Stats Grid */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: isDark ? 'white' : '#111827' }]}>
-            Key Performance Indicators
+            Earnings Overview
           </Text>
-          <View style={styles.kpiGrid}>
-            <KPICard
+          <View style={styles.statsGrid}>
+            <StatCard
               icon="cash-outline"
               title="Total Earnings"
-              value={`$${analyticsData?.kpis?.totalEarnings?.toFixed(2) || '0'}`}
+              value={`$${earningsData?.totalEarnings?.toFixed(2) || '0'}`}
               color="#10b981"
             />
-            <KPICard
+            <StatCard
               icon="calendar-outline"
               title="Total Sessions"
-              value={analyticsData?.kpis?.totalSessions?.toString() || '0'}
+              value={earningsData?.totalSessions?.toString() || '0'}
               color="#3b82f6"
             />
-            <KPICard
-              icon="star-outline"
-              title="Average Rating"
-              value={analyticsData?.kpis?.averageRating?.toFixed(1) || '0'}
-              subtitle={`${analyticsData?.kpis?.completedSessions || 0} reviews`}
-              color="#f59e0b"
-            />
-            <KPICard
-              icon="people-outline"
-              title="Active Mentees"
-              value={analyticsData?.kpis?.activeMentees?.toString() || '0'}
+            <StatCard
+              icon="trending-up-outline"
+              title="Avg per Session"
+              value={`$${earningsData?.avgPerSession?.toFixed(2) || '0'}`}
               color="#8b5cf6"
+            />
+            <StatCard
+              icon="time-outline"
+              title="Pending"
+              value={`$${earningsData?.pendingEarnings?.toFixed(2) || '0'}`}
+              subtitle="from 2 sessions"
+              color="#f59e0b"
             />
           </View>
         </View>
@@ -282,9 +363,9 @@ const MentorAnalyticsScreen = () => {
               borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#e5e7eb'
             }
           ]}>
-            {analyticsData?.earnings?.trend && analyticsData.earnings.trend.length > 0 ? (
+            {earningsData?.chartData && earningsData.chartData.length > 0 ? (
               <View style={styles.chartContent}>
-                {analyticsData.earnings.trend.map((item, index) => (
+                {earningsData.chartData.map((item, index) => (
                   <EarningsBar
                     key={index}
                     month={item.month}
@@ -303,69 +384,28 @@ const MentorAnalyticsScreen = () => {
           </View>
         </View>
 
-        {/* Session Types Breakdown */}
+        {/* Sessions Breakdown */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: isDark ? 'white' : '#111827' }]}>
-            Session Types
+            Sessions Breakdown
           </Text>
-          <View style={styles.breakdownContainer}>
-            {analyticsData?.sessions?.byType?.map((type, index) => (
-              <View key={index} style={[
-                styles.breakdownItem,
-                { 
-                  backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'white',
-                  borderColor: isDark ? 'rgba(255,255,255,0.2)' : '#e5e7eb'
-                }
-              ]}>
-                <Text style={[styles.breakdownType, { color: isDark ? 'white' : '#111827' }]}>
-                  {type.type}
-                </Text>
-                <Text style={[styles.breakdownCount, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
-                  {type.count} sessions
-                </Text>
-              </View>
-            ))}
+          <View style={styles.sessionsBreakdown}>
+            {earningsData?.sessionsBreakdown?.map((type, index) => (
+              <SessionTypeItem key={index} type={type} />
+            )) || []}
           </View>
         </View>
 
-        {/* Recent Reviews */}
+        {/* Recent Transactions */}
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: isDark ? 'white' : '#111827' }]}>
-            Recent Reviews
+            Recent Transactions
           </Text>
-          <ScrollView style={styles.reviewsList} showsVerticalScrollIndicator={false}>
-            {analyticsData?.feedback?.recent && analyticsData.feedback.recent.length > 0 ? (
-              analyticsData.feedback.recent.slice(0, 5).map((review, index) => (
-                <ReviewCard key={review.id || index} review={review} />
-              ))
-            ) : (
-              <View style={styles.noDataContainer}>
-                <Text style={[styles.noDataText, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
-                  No reviews available
-                </Text>
-              </View>
-            )}
-          </ScrollView>
-        </View>
-
-        {/* Top Mentees */}
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: isDark ? 'white' : '#111827' }]}>
-            Active Mentees
-          </Text>
-          <ScrollView style={styles.menteesList} showsVerticalScrollIndicator={false}>
-            {analyticsData?.mentees?.list && analyticsData.mentees.list.length > 0 ? (
-              analyticsData.mentees.list.slice(0, 5).map((mentee, index) => (
-                <MenteeCard key={mentee.id || index} mentee={mentee} />
-              ))
-            ) : (
-              <View style={styles.noDataContainer}>
-                <Text style={[styles.noDataText, { color: isDark ? 'rgba(255,255,255,0.7)' : '#6b7280' }]}>
-                  No mentees available
-                </Text>
-              </View>
-            )}
-          </ScrollView>
+          <View style={styles.transactionsList}>
+            {earningsData?.transactions?.slice(0, 10).map((transaction) => (
+              <TransactionItem key={transaction.id} transaction={transaction} />
+            )) || []}
+          </View>
         </View>
       </ScrollView>
     </MentorLayout>
@@ -400,6 +440,20 @@ const styles = StyleSheet.create({
     color: '#000',
     fontWeight: '600',
   },
+  header: {
+    alignItems: 'center',
+    marginBottom: 24,
+    padding: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 16,
+    opacity: 0.7,
+  },
   periodSelector: {
     marginBottom: 24,
   },
@@ -413,10 +467,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   periodButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    flex: 1,
+    paddingVertical: 12,
     borderRadius: 8,
     borderWidth: 1,
+    alignItems: 'center',
   },
   periodButtonText: {
     fontSize: 14,
@@ -425,13 +480,13 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 32,
   },
-  kpiGrid: {
+  statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
     gap: 12,
   },
-  kpiCard: {
+  statCard: {
     width: '48%',
     flexDirection: 'row',
     alignItems: 'center',
@@ -440,7 +495,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     marginBottom: 12,
   },
-  kpiIcon: {
+  statIcon: {
     width: 48,
     height: 48,
     borderRadius: 12,
@@ -448,19 +503,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  kpiContent: {
+  statContent: {
     flex: 1,
   },
-  kpiTitle: {
+  statTitle: {
     fontSize: 14,
     marginBottom: 4,
   },
-  kpiValue: {
+  statValue: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 2,
   },
-  kpiSubtitle: {
+  statSubtitle: {
     fontSize: 12,
     opacity: 0.7,
   },
@@ -499,111 +554,84 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'right',
   },
-  breakdownContainer: {
+  sessionsBreakdown: {
     gap: 12,
   },
-  breakdownItem: {
+  sessionTypeItem: {
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+  },
+  sessionTypeName: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  sessionTypeStats: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
   },
-  breakdownType: {
-    fontSize: 16,
-    fontWeight: '600',
+  sessionTypeStat: {
+    alignItems: 'center',
   },
-  breakdownCount: {
-    fontSize: 14,
-    opacity: 0.7,
+  transactionsList: {
+    gap: 12,
   },
-  reviewsList: {
-    maxHeight: 300,
-  },
-  reviewCard: {
+  transactionItem: {
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
     marginBottom: 12,
   },
-  reviewHeader: {
+  transactionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 12,
   },
-  reviewInfo: {
+  transactionInfo: {
     flex: 1,
   },
-  reviewName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  reviewDate: {
+  transactionDate: {
     fontSize: 14,
     opacity: 0.7,
+    marginBottom: 4,
   },
-  starRating: {
+  transactionDescription: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  transactionAmount: {
+    alignItems: 'flex-end',
+  },
+  amountText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  transactionMeta: {
     flexDirection: 'row',
-    gap: 2,
-  },
-  reviewText: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  menteesList: {
-    maxHeight: 300,
-  },
-  menteeCard: {
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    marginBottom: 12,
-  },
-  menteeHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    gap: 8,
   },
-  menteeInfo: {
-    flex: 1,
-  },
-  menteeName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  menteeSessions: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
-  ratingBadge: {
-    backgroundColor: colors.primary + '20',
+  transactionType: {
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+    borderWidth: 1,
   },
-  ratingText: {
+  typeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: colors.primary,
   },
-  menteeDetails: {
-    gap: 8,
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
   },
-  menteeDetail: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  detailLabel: {
-    fontSize: 14,
-    opacity: 0.7,
-  },
-  detailValue: {
-    fontSize: 14,
+  statusText: {
+    fontSize: 12,
     fontWeight: '600',
   },
   noDataContainer: {
@@ -616,4 +644,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MentorAnalyticsScreen;
+export default MentorEarningsScreen;

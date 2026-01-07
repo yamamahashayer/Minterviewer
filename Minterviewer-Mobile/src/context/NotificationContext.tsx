@@ -4,7 +4,17 @@ import React, {
   useEffect,
   useState,
 } from "react";
-import api from "../services/api";
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  doc,
+  updateDoc,
+  deleteDoc,
+} from "firebase/firestore";
+import { db } from '../lib/firebase';
 import { useAuth } from "./AuthContext";
 
 /* ================= TYPES ================= */
@@ -14,7 +24,7 @@ export type NotificationItem = {
   userId: string;
   title: string;
   message: string;
-  type?: string;
+  type: 'session' | 'message' | 'payment' | 'system' | 'review' | 'achievement';
   read: boolean;
   createdAt?: any;
   redirectTo?: string;
@@ -48,80 +58,57 @@ export const NotificationProvider = ({
 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Start with loading = true
   const [error, setError] = useState<string | null>(null);
 
   const userId = (user as any)?._id || (user as any)?.id;
 
-  /* ================= LOAD NOTIFICATIONS ================= */
-
-  const refreshNotifications = async () => {
-    if (!userId) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await api.get(`/api/notifications?userId=${userId}`);
-      
-      if (response.data && response.data.notifications) {
-        setNotifications(response.data.notifications);
-        setUnreadCount(response.data.notifications.filter((n: NotificationItem) => !n.read).length);
-      } else {
-        setNotifications([]);
-        setUnreadCount(0);
-      }
-    } catch (err: any) {
-      console.error("refreshNotifications error", err);
-      
-      // Handle 401 errors specifically
-      if (err.response?.status === 401) {
-        setError("Session expired. Please log in again.");
-      } else {
-        setError(`Failed to load notifications: ${err.message || 'Unknown error'}`);
-      }
-      
-      // Set empty state on error
-      setNotifications([]);
-      setUnreadCount(0);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* ================= AUTO LOAD ================= */
-
+  /* ================= REAL-TIME FIRESTORE ================= */
   useEffect(() => {
-    if (isAuthenticated && userId) {
-      refreshNotifications();
-    } else if (!isAuthenticated) {
-      // Reset state when not authenticated
-      setNotifications([]);
-      setUnreadCount(0);
-      setError(null);
+    if (!isAuthenticated || !userId) return;
+
+    const q = query(
+      collection(db, "notifications"),
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const notifications = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toMillis?.() || Date.now(),
+      }));
+
+      setNotifications(notifications);
+      setUnreadCount(notifications ? notifications.filter((n) => !n.read).length : 0);
       setLoading(false);
-    }
+      setError(null);
+    });
+
+    return () => unsubscribe;
   }, [isAuthenticated, userId]);
 
   /* ================= ACTIONS ================= */
-
   const markAsRead = async (id: string) => {
     try {
-      // Update backend
-      await api.put("/api/notifications", { id, read: true });
+      // Update Firestore
+      const notificationRef = doc(db, "notifications", id);
+      await updateDoc(notificationRef, {
+        read: true,
+        readAt: new Date(),
+      });
       
       // Update local state
-      setNotifications((prev) =>
-        prev.map((n) =>
-          n.id === id
-            ? {
-                ...n,
-                read: true,
-              }
-            : n
+      setNotifications(prev => 
+        prev.map(notif => 
+          notif.id === id 
+            ? { ...notif, read: true }
+            : notif
         )
       );
-      setUnreadCount((prev) => Math.max(0, prev - 1));
+      
+      setUnreadCount((prev) => Math.max(0, prev.filter(n => !n.read).length - 1));
     } catch (err: any) {
       console.error("markAsRead error", err);
     }
@@ -130,11 +117,22 @@ export const NotificationProvider = ({
   const markAllAsRead = async () => {
     try {
       const unread = notifications.filter((n) => !n.read);
+      
+      // Update all unread notifications in Firestore
       await Promise.all(
-        unread.map((n) => api.put("/api/notifications", { id: n.id, read: true }))
+        unread.map((notification) => {
+          const notificationRef = doc(db, "notifications", notification.id);
+          return updateDoc(notificationRef, {
+            read: true,
+            readAt: new Date(),
+          });
+        })
       );
+      
+      // Update local state
       setNotifications((prev) =>
         prev.map((n) => ({
+
           ...n,
           read: true,
         }))
@@ -147,12 +145,11 @@ export const NotificationProvider = ({
 
   const removeNotification = async (id: string) => {
     try {
-      await api.delete("/api/notifications", { data: { id } });
+      // Delete from Firestore
+      const notificationRef = doc(db, "notifications", id);
+      await deleteDoc(notificationRef);
+      
       setNotifications((prev) => prev.filter((n) => n.id !== id));
-      const notification = notifications.find((n) => n.id === id);
-      if (notification && !notification.read) {
-        setUnreadCount((prev) => Math.max(0, prev - 1));
-      }
     } catch (err: any) {
       console.error("removeNotification error", err);
     }
@@ -165,7 +162,7 @@ export const NotificationProvider = ({
         unreadCount,
         loading,
         error,
-        refreshNotifications,
+        refreshNotifications: () => Promise.resolve(), // dummy function
         markAsRead,
         markAllAsRead,
         removeNotification,
@@ -177,7 +174,6 @@ export const NotificationProvider = ({
 };
 
 /* ================= HOOK ================= */
-
 export function useNotifications() {
   return useContext(NotificationContext);
 }
