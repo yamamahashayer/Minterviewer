@@ -17,9 +17,13 @@ export class BaseService {
     }
   }
 
-  protected async get<T>(url: string, params?: any): Promise<T> {
+  protected async get<T>(url: string, params?: any, customHeaders?: any): Promise<T> {
     try {
-      const response = await this.api.get(url, { params });
+      const config: any = { params };
+      if (customHeaders) {
+        config.headers = customHeaders;
+      }
+      const response = await this.api.get(url, config);
       return response.data;
     } catch (error) {
       this.handleError(error);
