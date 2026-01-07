@@ -68,7 +68,10 @@ export default function ScrollableTabBar({
         {state.routes.map((route: any, index: number) => {
           const { options } = descriptors[route.key];
           const label = options.tabBarLabel ?? route.name;
-          const iconName = options.tabBarIconName;
+        const iconName =
+          options.tabBarIconName ||
+          options.tabBarIcon ||
+          'ellipse-outline'; 
           const focused = state.index === index;
 
           return (

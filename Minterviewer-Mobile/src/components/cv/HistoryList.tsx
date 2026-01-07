@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { CONFIG } from '../../constants/config';
 
 interface Props {
   menteeId: string;
@@ -36,9 +37,9 @@ export default function HistoryList({ menteeId }: Props) {
 
     const fetchHistory = async () => {
       try {
-        const token = await fetch('/api/auth/session').then(r => r.json()).then(data => data.token);
+        const token = await fetch(`${CONFIG.API_BASE_URL}/api/auth/session`).then(r => r.json()).then(data => data.token);
         
-        const response = await fetch(`/api/mentees/${menteeId}/cv/history`, {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/api/mentees/${menteeId}/cv/history`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',

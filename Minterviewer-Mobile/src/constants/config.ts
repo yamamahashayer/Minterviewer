@@ -1,5 +1,5 @@
-export const API_BASE_URL = "https://minterviewer.vercel.app"; // Production URL
-// Use "http://localhost:3000" for iOS simulator
+export const API_BASE_URL = "https://minterviewer.vercel.app"; // Production URL on Vercel
+// Use "http://localhost:3000" for local development
 // Use your machine's LAN IP (e.g., http://192.168.1.x:3000) for physical devices
 
 export const CONFIG = {

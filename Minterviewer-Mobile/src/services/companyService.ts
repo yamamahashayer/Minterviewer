@@ -1,4 +1,5 @@
 import { BaseService } from './baseService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface CompanyProfile {
   name?: string;
@@ -48,35 +49,66 @@ export interface Candidate {
 
 export class CompanyService extends BaseService {
   async getProfile(companyId: string): Promise<{ user: any; company: CompanyProfile }> {
-    return this.get(`/api/company/${companyId}/profile`);
+    return this.get(`/api/company/${companyId}`);
   }
 
   async updateProfile(companyId: string, data: Partial<CompanyProfile>): Promise<{ ok: boolean; user: any; company: CompanyProfile }> {
-    return this.put(`/api/company/${companyId}/profile`, data);
+    return this.put(`/api/company/${companyId}`, data);
   }
 
   async getJobs(companyId: string): Promise<{ jobs: Job[] }> {
-    return this.get(`/api/company/jobs`);
+    return this.get(`/api/company/${companyId}/jobs`);
   }
 
   async createJob(companyId: string, jobData: Partial<Job>): Promise<{ ok: boolean; job: Job }> {
-    return this.post('/api/company/jobs', jobData);
+    return this.post(`/api/company/${companyId}/jobs`, jobData);
   }
 
-  async updateJob(jobId: string, jobData: Partial<Job>): Promise<{ ok: boolean; job: Job }> {
-    return this.put(`/api/company/jobs/${jobId}`, jobData);
+  async updateJob(companyId: string, jobId: string, jobData: Partial<Job>): Promise<{ ok: boolean; job: Job }> {
+    return this.put(`/api/company/${companyId}/jobs/${jobId}`, jobData);
   }
 
-  async deleteJob(jobId: string): Promise<{ ok: boolean }> {
-    return this.delete(`/api/company/jobs/${jobId}`);
+  async deleteJob(companyId: string, jobId: string): Promise<{ ok: boolean }> {
+    return this.delete(`/api/company/${companyId}/jobs/${jobId}`);
   }
 
   async getCandidates(companyId: string): Promise<{ candidates: Candidate[] }> {
-    return this.get(`/api/company/candidates`);
+    return this.get(`/api/company/${companyId}/candidates`);
+  }
+
+  async getJobApplicants(companyId: string, jobId: string): Promise<{ applicants: Candidate[] }> {
+    return this.get(`/api/company/${companyId}/jobs/${jobId}/applicants`);
   }
 
   async getAnalytics(companyId: string): Promise<{ analytics: any }> {
-    return this.get(`/api/company/analytics`);
+    console.log('CompanyService: Getting analytics for companyId:', companyId);
+    console.log('CompanyService: API URL:', `/api/company/overview`);
+    console.log('CompanyService: Headers:', { 'x-company-id': companyId });
+    
+    try {
+      const result = await this.get(`/api/company/overview`, {}, { 'x-company-id': companyId });
+      console.log('CompanyService: Analytics result:', result);
+      return result as { analytics: any };
+    } catch (error) {
+      console.error('CompanyService: Analytics error:', error);
+      throw error;
+    }
+  }
+
+  async getMessages(companyId: string): Promise<{ conversations: any[] }> {
+    // This endpoint might not exist yet, return empty for now
+    console.log('Messages endpoint not implemented yet');
+    return { conversations: [] };
+  }
+
+  async getNotifications(companyId: string): Promise<{ notifications: any[] }> {
+    // Get user data to extract userId - same pattern as web version
+    const userStr = await AsyncStorage.getItem('user_data');
+    if (!userStr) throw new Error('User not found');
+    
+    const user = JSON.parse(userStr);
+    console.log('CompanyService getNotifications: User data:', { userId: user._id, companyId });
+    return this.get(`/api/notifications?userId=${user._id}`);
   }
 }
 

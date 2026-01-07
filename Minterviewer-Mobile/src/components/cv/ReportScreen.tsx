@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { CONFIG } from '../../constants/config';
 
 interface Props {
   data?: any;
@@ -40,7 +41,7 @@ export default function ReportScreen({
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/api/mentees/${menteeId}/cv/report/${resumeId}`);
+        const response = await fetch(`${CONFIG.API_BASE_URL}/api/mentees/${menteeId}/cv/report/${resumeId}`);
         const json = await response.json();
         
         if (!response.ok) {
