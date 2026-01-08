@@ -6,14 +6,16 @@ import {
     StyleSheet,
     ActivityIndicator,
     RefreshControl,
-    SafeAreaView,
-    TouchableOpacity
+    TouchableOpacity,
+    ScrollView
 } from 'react-native';
 import api from '../../services/api';
 import { colors } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import AdminLayout from '../../layouts/AdminLayout';
+import { useTheme } from '../../context/ThemeContext';
 
 interface Notification {
     _id: string;
@@ -27,6 +29,7 @@ interface Notification {
 }
 
 const NotificationsScreen = () => {
+    const { isDark } = useTheme();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -76,7 +79,7 @@ const NotificationsScreen = () => {
 
     const renderItem = ({ item }: { item: Notification }) => (
         <TouchableOpacity
-            style={[styles.card, !item.read && styles.unreadCard]}
+            style={[styles.card, !item.read && styles.unreadCard, { backgroundColor: isDark ? colors.background.headerDark : 'white' }]}
             onPress={() => !item.read && markAsRead(item._id, item.firebaseId)}
         >
             <View style={styles.iconContainer}>
@@ -87,9 +90,9 @@ const NotificationsScreen = () => {
                 />
             </View>
             <View style={styles.content}>
-                <Text style={[styles.title, !item.read && styles.unreadText]}>{item.title}</Text>
-                <Text style={styles.message}>{item.message}</Text>
-                <Text style={styles.date}>
+                <Text style={[styles.title, !item.read && styles.unreadText, { color: !item.read ? (isDark ? '#ffffff' : '#111827') : (isDark ? colors.text.secondaryDark : '#374151') }]}>{item.title}</Text>
+                <Text style={[styles.message, { color: isDark ? colors.text.secondaryDark : '#4B5563' }]}>{item.message}</Text>
+                <Text style={[styles.date, { color: isDark ? '#6b7280' : '#9CA3AF' }]}>
                     {new Date(item.createdAt).toLocaleDateString()} • {new Date(item.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </Text>
             </View>
@@ -99,33 +102,46 @@ const NotificationsScreen = () => {
 
     if (loading) {
         return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={colors.primary} />
-            </View>
+            <AdminLayout>
+                <View style={[styles.loadingContainer, { backgroundColor: isDark ? colors.background.dark : '#F3F4F6' }]}>
+                    <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+            </AdminLayout>
         );
     }
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Notifications</Text>
-            </View>
-
-            <FlatList
-                data={notifications}
-                renderItem={renderItem}
-                keyExtractor={(item) => item._id}
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                contentContainerStyle={styles.listContent}
-                ListEmptyComponent={
-                    <View style={styles.emptyContainer}>
-                        <Feather name="bell-off" size={48} color={colors.text.secondary} />
-                        <Text style={styles.emptyText}>No notifications yet</Text>
-                    </View>
+        <AdminLayout>
+            <ScrollView
+                style={[styles.container, { backgroundColor: isDark ? colors.background.dark : '#F3F4F6' }]}
+                refreshControl={
+                    <RefreshControl 
+                        refreshing={refreshing} 
+                        onRefresh={onRefresh}
+                        tintColor={isDark ? colors.text.secondaryDark : colors.text.secondary}
+                        colors={[isDark ? colors.text.secondaryDark : colors.text.secondary]}
+                    />
                 }
-            />
-        </SafeAreaView>
+            >
+                <View style={[styles.header, { backgroundColor: isDark ? colors.background.headerDark : 'white', borderBottomColor: isDark ? colors.border.dark : '#E5E7EB' }]}>
+                    <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#111827' }]}>Notifications</Text>
+                </View>
+
+                <FlatList
+                    data={notifications}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item._id}
+                    contentContainerStyle={styles.listContent}
+                    ListEmptyComponent={
+                        <View style={styles.emptyContainer}>
+                            <Feather name="bell-off" size={48} color={isDark ? colors.text.secondaryDark : colors.text.secondary} />
+                            <Text style={[styles.emptyText, { color: isDark ? colors.text.secondaryDark : '#6B7280' }]}>No notifications yet</Text>
+                        </View>
+                    }
+                    scrollEnabled={false}
+                />
+            </ScrollView>
+        </AdminLayout>
     );
 };
 

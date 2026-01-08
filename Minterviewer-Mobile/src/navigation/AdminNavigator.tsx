@@ -9,6 +9,7 @@ import DashboardScreen from '../screens/admin/DashboardScreen';
 import UsersScreen from '../screens/admin/UsersScreen';
 import CompaniesScreen from '../screens/admin/CompaniesScreen';
 import NotificationsScreen from '../screens/admin/NotificationsScreen';
+import AdminScrollableTabBar from '../components/admin/AdminScrollableTabBar';
 
 const Tab = createBottomTabNavigator();
 
@@ -24,56 +25,46 @@ const AdminNavigator = () => {
 
     return (
         <Tab.Navigator
+            tabBar={(props) => <AdminScrollableTabBar {...props} />}
             screenOptions={{
                 headerRight: () => (
                     <TouchableOpacity onPress={handleLogout} style={{ marginRight: 16 }}>
                         <Feather name="log-out" size={24} color={colors.text.secondary} />
                     </TouchableOpacity>
                 ),
-                tabBarActiveTintColor: colors.primary,
-                tabBarInactiveTintColor: colors.text.secondary,
-                tabBarStyle: {
-                    borderTopColor: '#E5E7EB',
-                    paddingBottom: 5,
-                    paddingTop: 5,
-                },
             }}
         >
             <Tab.Screen
                 name="Dashboard"
                 component={DashboardScreen}
                 options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Feather name="grid" size={size} color={color} />
-                    ),
-                }}
+                    iconName: 'grid',
+                    tabBarLabel: 'Dashboard',
+                } as any}
             />
             <Tab.Screen
                 name="Users"
                 component={UsersScreen}
                 options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Feather name="users" size={size} color={color} />
-                    ),
-                }}
+                    iconName: 'people',
+                    tabBarLabel: 'Users',
+                } as any}
             />
             <Tab.Screen
                 name="Companies"
                 component={CompaniesScreen}
                 options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Feather name="briefcase" size={size} color={color} />
-                    ),
-                }}
+                    iconName: 'business',
+                    tabBarLabel: 'Companies',
+                } as any}
             />
             <Tab.Screen
                 name="Notifications"
                 component={NotificationsScreen}
                 options={{
-                    tabBarIcon: ({ color, size }) => (
-                        <Feather name="bell" size={size} color={color} />
-                    ),
-                }}
+                    iconName: 'notifications',
+                    tabBarLabel: 'Notifications',
+                } as any}
             />
         </Tab.Navigator>
     );

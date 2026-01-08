@@ -9,12 +9,15 @@ import {
     Alert,
     Modal,
     TextInput,
-    SafeAreaView,
+    ScrollView,
+    RefreshControl,
 } from 'react-native';
 import api from '../../services/api';
 import { colors } from '../../theme';
 import { Feather } from '@expo/vector-icons';
 import { User } from '../../types/auth';
+import AdminLayout from '../../layouts/AdminLayout';
+import { useTheme } from '../../context/ThemeContext';
 
 interface Company {
     _id: string;
@@ -32,6 +35,7 @@ interface Company {
 }
 
 const CompaniesScreen = () => {
+    const { isDark } = useTheme();
     const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -124,23 +128,23 @@ const CompaniesScreen = () => {
     };
 
     const renderItem = ({ item }: { item: Company }) => (
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: isDark ? colors.background.headerDark : 'white', borderColor: isDark ? colors.border.dark : 'transparent' }]}>
             <View style={styles.row}>
                 <View style={styles.info}>
-                    <Text style={styles.companyName}>{item.name}</Text>
-                    <Text style={styles.detailText}>📧 {item.workEmail}</Text>
-                    <Text style={styles.detailText}>🏭 {item.industry || 'N/A'}</Text>
-                    <Text style={styles.detailText}>📍 {item.location || 'N/A'}</Text>
+                    <Text style={[styles.companyName, { color: isDark ? '#ffffff' : '#111827' }]}>{item.name}</Text>
+                    <Text style={[styles.detailText, { color: isDark ? colors.text.secondaryDark : '#4B5563' }]}>📧 {item.workEmail}</Text>
+                    <Text style={[styles.detailText, { color: isDark ? colors.text.secondaryDark : '#4B5563' }]}>🏭 {item.industry || 'N/A'}</Text>
+                    <Text style={[styles.detailText, { color: isDark ? colors.text.secondaryDark : '#4B5563' }]}>📍 {item.location || 'N/A'}</Text>
                     {item.user?.full_name && (
-                        <Text style={styles.detailText}>👤 {item.user.full_name}</Text>
+                        <Text style={[styles.detailText, { color: isDark ? colors.text.secondaryDark : '#4B5563' }]}>👤 {item.user.full_name}</Text>
                     )}
 
-                    <Text style={styles.dateText}>
+                    <Text style={[styles.dateText, { color: isDark ? '#6b7280' : '#9CA3AF' }]}>
                         Registered: {new Date(item.createdAt).toLocaleDateString()}
                     </Text>
 
                     {item.approvalStatus === 'rejected' && item.rejectionReason && (
-                        <Text style={styles.rejectionReason}>Reason: {item.rejectionReason}</Text>
+                        <Text style={[styles.rejectionReason, { color: '#DC2626' }]}>Reason: {item.rejectionReason}</Text>
                     )}
                 </View>
 
@@ -165,74 +169,85 @@ const CompaniesScreen = () => {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search companies..."
-                    placeholderTextColor={colors.text.secondary}
-                    value={searchTerm}
-                    onChangeText={setSearchTerm}
-                    onSubmitEditing={() => fetchCompanies()}
-                />
+        <AdminLayout>
+            <ScrollView
+                style={[styles.container, { backgroundColor: isDark ? colors.background.dark : '#F3F4F6' }]}
+                refreshControl={
+                    <RefreshControl 
+                        refreshing={refreshing} 
+                        onRefresh={onRefresh}
+                        tintColor={isDark ? colors.text.secondaryDark : colors.text.secondary}
+                        colors={[isDark ? colors.text.secondaryDark : colors.text.secondary]}
+                    />
+                }
+            >
+                <View style={[styles.header, { backgroundColor: isDark ? colors.background.headerDark : 'white', borderBottomColor: isDark ? colors.border.dark : '#E5E7EB' }]}>
+                    <TextInput
+                        style={[styles.searchInput, { backgroundColor: isDark ? '#1e293b' : '#F9FAFB', borderColor: isDark ? colors.border.dark : '#E5E7EB', color: isDark ? '#ffffff' : '#111827' }]}
+                        placeholder="Search companies..."
+                        placeholderTextColor={isDark ? colors.text.secondaryDark : colors.text.secondary}
+                        value={searchTerm}
+                        onChangeText={setSearchTerm}
+                        onSubmitEditing={() => fetchCompanies()}
+                    />
 
-                <View style={styles.tabs}>
+                    <View style={[styles.tabs, { backgroundColor: isDark ? '#1e293b' : '#F3F4F6' }]}>
                     {(['pending', 'approved', 'rejected'] as const).map((tab) => (
                         <TouchableOpacity
                             key={tab}
-                            style={[styles.tab, activeTab === tab && styles.activeTab]}
+                            style={[styles.tab, activeTab === tab && styles.activeTab, activeTab === tab && { backgroundColor: isDark ? '#0f172a' : 'white' }]}
                             onPress={() => setActiveTab(tab)}
                         >
-                            <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+                            <Text style={[styles.tabText, { color: isDark ? colors.text.secondaryDark : '#6B7280' }, activeTab === tab && styles.activeTabText]}>
                                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
                             </Text>
                         </TouchableOpacity>
                     ))}
                 </View>
-            </View>
+                </View>
 
-            <FlatList
-                data={companies}
-                renderItem={renderItem}
-                keyExtractor={(item) => item._id}
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                contentContainerStyle={styles.listContent}
-                ListEmptyComponent={
-                    !loading ? (
-                        <View style={styles.emptyContainer}>
-                            <Text style={styles.emptyText}>No companies found</Text>
-                        </View>
-                    ) : null
-                }
-            />
+                <FlatList
+                    data={companies}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item._id}
+                    contentContainerStyle={styles.listContent}
+                    ListEmptyComponent={
+                        !loading ? (
+                            <View style={styles.emptyContainer}>
+                                <Text style={[styles.emptyText, { color: isDark ? colors.text.secondaryDark : '#6B7280' }]}>No companies found</Text>
+                            </View>
+                        ) : null
+                    }
+                    scrollEnabled={false}
+                />
 
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <View style={styles.modalOverlay}>
-                    <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Reject Company</Text>
-                        <Text style={styles.modalSubtitle}>Please provide a reason for rejection:</Text>
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={modalVisible}
+                    onRequestClose={() => setModalVisible(false)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={[styles.modalContent, { backgroundColor: isDark ? colors.background.headerDark : 'white' }]}>
+                            <Text style={[styles.modalTitle, { color: isDark ? '#ffffff' : '#111827' }]}>Reject Company</Text>
+                            <Text style={[styles.modalSubtitle, { color: isDark ? colors.text.secondaryDark : '#6B7280' }]}>Please provide a reason for rejection:</Text>
 
-                        <TextInput
-                            style={styles.textArea}
-                            multiline
-                            numberOfLines={4}
-                            placeholder="Rejection reason..."
-                            value={rejectionReason}
-                            onChangeText={setRejectionReason}
-                        />
+                            <TextInput
+                                style={[styles.textArea, { backgroundColor: isDark ? '#1e293b' : 'white', borderColor: isDark ? colors.border.dark : '#D1D5DB', color: isDark ? '#ffffff' : '#111827' }]}
+                                multiline
+                                numberOfLines={4}
+                                placeholder="Rejection reason..."
+                                placeholderTextColor={isDark ? colors.text.secondaryDark : '#6B7280'}
+                                value={rejectionReason}
+                                onChangeText={setRejectionReason}
+                            />
 
                         <View style={styles.modalButtons}>
                             <TouchableOpacity
-                                style={[styles.modalBtn, styles.cancelBtn]}
+                                style={[styles.modalBtn, styles.cancelBtn, { backgroundColor: isDark ? '#374151' : '#F3F4F6' }]}
                                 onPress={() => setModalVisible(false)}
                             >
-                                <Text style={styles.cancelBtnText}>Cancel</Text>
+                                <Text style={[styles.cancelBtnText, { color: isDark ? '#e5e7eb' : '#374151' }]}>Cancel</Text>
                             </TouchableOpacity>
 
                             <TouchableOpacity
@@ -244,9 +259,9 @@ const CompaniesScreen = () => {
                         </View>
                     </View>
                 </View>
-            </Modal>
-
-        </SafeAreaView>
+                </Modal>
+            </ScrollView>
+        </AdminLayout>
     );
 };
 

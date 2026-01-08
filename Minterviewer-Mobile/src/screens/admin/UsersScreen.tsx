@@ -8,13 +8,16 @@ import {
     StyleSheet,
     ActivityIndicator,
     Alert,
-    SafeAreaView,
+    ScrollView,
+    RefreshControl,
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import api from '../../services/api';
 import { colors } from '../../theme';
 import { Feather } from '@expo/vector-icons';
 import { User, UserRole } from '../../types/auth'; // Ensure this type exists or define locally
+import AdminLayout from '../../layouts/AdminLayout';
+import { useTheme } from '../../context/ThemeContext';
 
 interface AdminUser extends User {
     _id: string; // The API returns _id
@@ -23,6 +26,7 @@ interface AdminUser extends User {
 }
 
 const UsersScreen = () => {
+    const { isDark } = useTheme();
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -121,10 +125,10 @@ const UsersScreen = () => {
     };
 
     const renderItem = ({ item }: { item: AdminUser }) => (
-        <View style={styles.userCard}>
+        <View style={[styles.userCard, { backgroundColor: isDark ? colors.background.headerDark : 'white' }]}>
             <View style={styles.userInfo}>
-                <Text style={styles.userName}>{item.full_name || 'N/A'}</Text>
-                <Text style={styles.userEmail}>{item.email}</Text>
+                <Text style={[styles.userName, { color: isDark ? '#ffffff' : '#111827' }]}>{item.full_name || 'N/A'}</Text>
+                <Text style={[styles.userEmail, { color: isDark ? colors.text.secondaryDark : '#6B7280' }]}>{item.email}</Text>
                 <View style={styles.badges}>
                     <View style={[styles.badge, getRoleBadgeStyle(item.role)]}>
                         <Text style={styles.badgeText}>{item.role}</Text>
@@ -164,25 +168,36 @@ const UsersScreen = () => {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TextInput
-                    style={styles.searchInput}
-                    placeholder="Search items..."
-                    placeholderTextColor={colors.text.secondary}
-                    value={search}
-                    onChangeText={setSearch}
-                />
-            </View>
+        <AdminLayout>
+            <ScrollView
+                style={[styles.container, { backgroundColor: isDark ? colors.background.dark : '#F3F4F6' }]}
+                refreshControl={
+                    <RefreshControl 
+                        refreshing={refreshing} 
+                        onRefresh={onRefresh}
+                        tintColor={isDark ? colors.text.secondaryDark : colors.text.secondary}
+                        colors={[isDark ? colors.text.secondaryDark : colors.text.secondary]}
+                    />
+                }
+            >
+                <View style={[styles.header, { backgroundColor: isDark ? colors.background.headerDark : 'white', borderBottomColor: isDark ? colors.border.dark : '#E5E7EB' }]}>
+                    <TextInput
+                        style={[styles.searchInput, { backgroundColor: isDark ? '#1e293b' : '#F9FAFB', borderColor: isDark ? colors.border.dark : '#E5E7EB', color: isDark ? '#ffffff' : '#111827' }]}
+                        placeholder="Search items..."
+                        placeholderTextColor={isDark ? colors.text.secondaryDark : colors.text.secondary}
+                        value={search}
+                        onChangeText={setSearch}
+                    />
+                </View>
 
-            <View style={styles.filterContainer}>
-                <Text style={styles.filterLabel}>Filter Role:</Text>
+                <View style={[styles.filterContainer, { backgroundColor: isDark ? colors.background.headerDark : 'white', borderBottomColor: isDark ? colors.border.dark : '#E5E7EB' }]}>
+                    <Text style={[styles.filterLabel, { color: isDark ? colors.text.secondaryDark : '#374151' }]}>Filter Role:</Text>
                 <View style={styles.pickerWrapper}>
                     <Picker
                         selectedValue={roleFilter}
                         onValueChange={(itemValue) => setRoleFilter(itemValue)}
-                        style={styles.picker}
-                        dropdownIconColor={colors.text.primaryLight}
+                        style={[styles.picker, { color: isDark ? '#ffffff' : '#111827' }]}
+                        dropdownIconColor={isDark ? '#ffffff' : colors.text.primaryLight}
                     >
                         <Picker.Item label="All Roles" value="all" />
                         <Picker.Item label="Mentee" value="mentee" />
@@ -193,24 +208,24 @@ const UsersScreen = () => {
                 </View>
             </View>
 
-            <FlatList
-                data={users}
-                renderItem={renderItem}
-                keyExtractor={(item) => item._id}
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                onEndReached={loadMore}
-                onEndReachedThreshold={0.5}
-                contentContainerStyle={styles.listContent}
-                ListEmptyComponent={
-                    !loading ? (
-                        <View style={styles.emptyContainer}>
-                            <Text style={styles.emptyText}>No users found</Text>
-                        </View>
-                    ) : null
-                }
-            />
-        </SafeAreaView>
+                <FlatList
+                    data={users}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item._id}
+                    onEndReached={loadMore}
+                    onEndReachedThreshold={0.5}
+                    contentContainerStyle={styles.listContent}
+                    ListEmptyComponent={
+                        !loading ? (
+                            <View style={styles.emptyContainer}>
+                                <Text style={[styles.emptyText, { color: isDark ? colors.text.secondaryDark : '#6B7280' }]}>No users found</Text>
+                            </View>
+                        ) : null
+                    }
+                    scrollEnabled={false}
+                />
+            </ScrollView>
+        </AdminLayout>
     );
 };
 
