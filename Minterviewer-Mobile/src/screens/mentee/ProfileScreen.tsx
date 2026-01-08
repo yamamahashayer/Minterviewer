@@ -275,7 +275,7 @@ export default function ProfileScreen() {
       <MenteeLayout>
         <View style={styles.center}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={{ marginTop: 12 }}>Loading...</Text>
+          <Text style={[styles.loadingText, themedText(isDark)]}>Loading...</Text>
         </View>
       </MenteeLayout>
     );
@@ -285,7 +285,7 @@ export default function ProfileScreen() {
     return (
       <MenteeLayout>
         <View style={styles.center}>
-          <Text style={{ color: colors.danger }}>
+          <Text style={[styles.errorText, { color: colors.danger }]}>
             Failed to load profile: {error}
           </Text>
         </View>
@@ -298,7 +298,7 @@ export default function ProfileScreen() {
   return (
     <MenteeLayout>
       <ScrollView 
-        style={styles.container} 
+        style={[styles.container, { backgroundColor: isDark ? '#0f172a' : '#f5f3ff' }]} 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}
       >
@@ -309,12 +309,13 @@ export default function ProfileScreen() {
               <View style={styles.profileInfo}>
                 {isEditing ? (
                   <TextInput
-                    style={[styles.profileName, themedText(isDark)]}
+                    style={[styles.profileName, themedText(isDark), { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', borderRadius: 8, paddingHorizontal: 12 }]}
                     value={editedProfile.name}
                     onChangeText={(v) =>
                       setEditedProfile({ ...editedProfile, name: v })
                     }
                     placeholder="Your name"
+                    placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
                   />
                 ) : (
                   <Text style={[styles.profileName, themedText(isDark)]}>
@@ -345,13 +346,14 @@ export default function ProfileScreen() {
               <Text style={[styles.sectionLabel, themedText(isDark)]}>Bio</Text>
               {isEditing ? (
                 <TextInput
-                  style={[styles.bioText, themedText(isDark)]}
+                  style={[styles.bioText, themedText(isDark), { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', borderRadius: 8, paddingHorizontal: 12, textAlignVertical: 'top' }]}
                   multiline
                   value={editedProfile.bio}
                   onChangeText={(v) =>
                     setEditedProfile({ ...editedProfile, bio: v })
                   }
                   placeholder="Tell us about yourself..."
+                  placeholderTextColor={isDark ? '#9ca3af' : '#6b7280'}
                 />
               ) : (
                 <Text style={[styles.bioText, themedText(isDark)]}>
@@ -440,7 +442,7 @@ export default function ProfileScreen() {
                       {skill.level}%
                     </Text>
                   </View>
-                  <View style={styles.skillBar}>
+                  <View style={[styles.skillBar, { backgroundColor: isDark ? '#374151' : '#e5e7eb' }]}>
                     <View
                       style={[
                         styles.skillBarFill,
@@ -453,7 +455,7 @@ export default function ProfileScreen() {
             </View>
           ) : (
             <View style={styles.emptyState}>
-              <Ionicons name="code-outline" size={40} color="#9ca3af" />
+              <Ionicons name="code-outline" size={40} color={isDark ? '#6b7280' : '#9ca3af'} />
               <Text style={[styles.emptyText, themedText(isDark)]}>
                 No skills added yet
               </Text>
@@ -467,7 +469,7 @@ export default function ProfileScreen() {
             <Text style={[styles.sectionTitle, themedText(isDark)]}>Areas of Expertise</Text>
             <View style={styles.expertiseContainer}>
               {profile.area_of_expertise.map((area, i) => (
-                <View key={i} style={[styles.expertiseTag, { backgroundColor: `${colors.primary}20` }]}>
+                <View key={i} style={[styles.expertiseTag, { backgroundColor: `${colors.primary}20`, borderColor: isDark ? `${colors.primary}40` : `${colors.primary}30` }]}>
                   <Text style={[styles.expertiseText, { color: colors.primary }]}>
                     {area}
                   </Text>
@@ -518,13 +520,13 @@ export default function ProfileScreen() {
           ) : activities.length ? (
             <View style={styles.timelineContainer}>
               {/* Timeline Line */}
-              <View style={styles.timelineLine} />
+              <View style={[styles.timelineLine, { backgroundColor: isDark ? '#374151' : '#e5e7eb' }]} />
               
               {/* Activity Items */}
               {activities.map((activity, i) => (
                 <View key={i} style={styles.timelineItem}>
                   {/* Timeline Dot */}
-                  <View style={styles.timelineDot}>
+                  <View style={[styles.timelineDot, { backgroundColor: isDark ? '#1f2937' : '#fff', borderColor: isDark ? '#374151' : '#e5e7eb' }]}>
                     <View style={[styles.timelineDotInner, { backgroundColor: colors.primary }]} />
                   </View>
                   
@@ -544,7 +546,7 @@ export default function ProfileScreen() {
                           {activity.title || "New Activity"}
                         </Text>
                         {activity.createdAt && (
-                          <Text style={styles.activityTime}>
+                          <Text style={[styles.activityTime, themedText(isDark)]}>
                             {formatActivityDate(activity.createdAt)}
                           </Text>
                         )}
@@ -561,7 +563,7 @@ export default function ProfileScreen() {
             </View>
           ) : (
             <View style={styles.emptyState}>
-              <Ionicons name="time-outline" size={40} color="#9ca3af" />
+              <Ionicons name="time-outline" size={40} color={isDark ? '#6b7280' : '#9ca3af'} />
               <Text style={[styles.emptyText, themedText(isDark)]}>
                 No recent activity
               </Text>
@@ -728,7 +730,6 @@ const styles = StyleSheet.create({
   },
   skillBar: {
     height: 8,
-    backgroundColor: "#e5e7eb",
     borderRadius: 4,
     overflow: "hidden",
   },
@@ -767,7 +768,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
   },
   socialText: {
     fontSize: 14,
@@ -783,7 +783,13 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
+    marginTop: 12,
     opacity: 0.7,
+  },
+  errorText: {
+    fontSize: 16,
+    fontWeight: '500',
+    textAlign: 'center',
   },
   timelineContainer: {
     position: "relative",
@@ -795,7 +801,6 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     width: 2,
-    backgroundColor: "#e5e7eb",
   },
   timelineItem: {
     position: "relative",
@@ -808,9 +813,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: "#fff",
     borderWidth: 2,
-    borderColor: "#e5e7eb",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -854,8 +857,8 @@ const styles = StyleSheet.create({
   },
   activityTime: {
     fontSize: 12,
-    opacity: 0.6,
     lineHeight: 16,
+    opacity: 0.6,
   },
   activityDescription: {
     fontSize: 14,
