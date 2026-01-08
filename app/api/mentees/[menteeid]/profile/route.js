@@ -61,6 +61,67 @@ export async function GET(req, ctx) {
       ? await User.findById(mentee.user).select("-password_hash").lean()
       : null;
 
+    // Auto-populate skills from AI interviews
+    try {
+      const AiInterview = (await import('@/models/AiInterview')).default;
+
+      const aiInterviews = await AiInterview.find({
+        $or: [
+          { mentee: menteeId },
+          { mentee: mentee.user } // In case User ID was used
+        ]
+      }).lean();
+
+      if (aiInterviews && aiInterviews.length > 0) {
+        // Extract and aggregate skills
+        const skillsMap = new Map();
+
+        aiInterviews.forEach(interview => {
+          const skills = [];
+
+          // Extract from techstack
+          if (interview.techstack && typeof interview.techstack === 'string') {
+            skills.push(...interview.techstack.split(',').map(s => s.trim()));
+          }
+
+          // Add type and role
+          if (interview.type) skills.push(interview.type);
+          if (interview.role) skills.push(interview.role);
+
+          // Aggregate scores for each skill
+          skills.forEach(skill => {
+            if (skill) {
+              if (!skillsMap.has(skill)) {
+                skillsMap.set(skill, { scores: [], attempts: 0 });
+              }
+              const data = skillsMap.get(skill);
+              if (interview.overallScore !== undefined && interview.overallScore !== null) {
+                data.scores.push(interview.overallScore);
+              }
+              data.attempts++;
+            }
+          });
+        });
+
+        // Convert to skills array format
+        const skillsArray = Array.from(skillsMap.entries())
+          .map(([name, data]) => ({
+            name,
+            level: data.scores.length > 0
+              ? Math.round(data.scores.reduce((a, b) => a + b, 0) / data.scores.length)
+              : 0
+          }))
+          .filter(skill => skill.level > 0) // Remove skills with 0% score
+          .sort((a, b) => b.level - a.level); // Sort by level descending
+
+        // Update mentee with skills
+        mentee.skills = skillsArray;
+      }
+    } catch (err) {
+      console.error('Error populating skills from AI interviews:', err);
+      // Continue without skills if there's an error
+    }
+
     return NextResponse.json(
       { user: cleanUser(user), mentee },
       { status: 200 }

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 import {
   Home, User, Target, Calendar, MessageSquare, Settings, FileText, Bell,
   Users, TrendingUp, Award, Search, LogOut,
@@ -26,6 +26,7 @@ export default function Sidebar({
   onCloseMobile: () => void;
   notificationsCount?: number;
 }) {
+  const router = useRouter();
   const params = useSearchParams();
   const pathname = usePathname();
   const activeTab = params.get("tab") || "overview";
@@ -57,8 +58,8 @@ export default function Sidebar({
       {/* Header */}
       <div
         className={`border-b ${isDark
-            ? "border-[rgba(94,234,212,0.1)] bg-[#0b1020]"
-            : "border-[#ddd6fe] bg-white"
+          ? "border-[rgba(94,234,212,0.1)] bg-[#0b1020]"
+          : "border-[#ddd6fe] bg-white"
           } flex-shrink-0`}
       >
         <img
@@ -76,8 +77,8 @@ export default function Sidebar({
             <input
               placeholder="Search..."
               className={`w-full ${isDark
-                  ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.1)] text-white placeholder:text-[#6a7282] focus:border-[rgba(94,234,212,0.3)]"
-                  : "bg-[#f5f3ff] border-[#ddd6fe] text-[#2e1065] placeholder:text-[#7c3aed] focus:border-[#7c3aed]"
+                ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.1)] text-white placeholder:text-[#6a7282] focus:border-[rgba(94,234,212,0.3)]"
+                : "bg-[#f5f3ff] border-[#ddd6fe] text-[#2e1065] placeholder:text-[#7c3aed] focus:border-[#7c3aed]"
                 } border rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none transition-colors`}
             />
           </div>
@@ -183,7 +184,17 @@ export default function Sidebar({
         {isOpen ? (
           <button
             className="w-full bg-[rgba(220,38,38,0.1)] hover:bg-[rgba(220,38,38,0.2)] text-red-400 rounded-lg p-3 text-sm transition-all flex items-center gap-2 border border-[rgba(220,38,38,0.2)]"
-            onClick={() => alert("Implement real logout here")}
+            onClick={async () => {
+              try {
+                // Clear all session storage
+                sessionStorage.clear();
+                // Push to login
+                router.push("/login");
+              } catch (err) {
+                console.error("Logout error:", err);
+                router.push("/login"); // Fallback
+              }
+            }}
           >
             <LogOut size={16} />
             <span>Logout</span>
@@ -194,7 +205,17 @@ export default function Sidebar({
               <TooltipTrigger asChild>
                 <button
                   className="relative w-full bg-[rgba(220,38,38,0.1)] hover:bg-[rgba(220,38,38,0.2)] text-red-400 rounded-lg p-3 text-sm transition-all flex items-center justify-center border border-[rgba(220,38,38,0.2)]"
-                  onClick={() => alert("Implement real logout here")}
+                  onClick={async () => {
+                    try {
+                      // Clear all session storage
+                      sessionStorage.clear();
+                      // Push to login
+                      router.push("/login");
+                    } catch (err) {
+                      console.error("Logout error:", err);
+                      router.push("/login"); // Fallback
+                    }
+                  }}
                 >
                   <LogOut size={20} />
                 </button>

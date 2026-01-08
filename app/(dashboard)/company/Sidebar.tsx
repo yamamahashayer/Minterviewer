@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 
 import {
   Home,
@@ -36,6 +36,7 @@ export default function CompanySidebar({
 }) {
   const params = useSearchParams();
   const pathname = usePathname();
+  const router = useRouter();
   const activeTab = params.get("tab") || "overview";
   const isDark = theme === "dark";
 
@@ -55,21 +56,19 @@ export default function CompanySidebar({
       className={`
         h-full transition-all duration-300 flex flex-col
         ${isOpen ? "w-[280px]" : "w-[80px]"}
-        ${
-          isDark
-            ? "bg-gradient-to-b from-[#0f172b] to-[#0a0f1e] border-r border-[rgba(94,234,212,0.1)]"
-            : "bg-white border-r border-[#ddd6fe] shadow-xl"
+        ${isDark
+          ? "bg-gradient-to-b from-[#0f172b] to-[#0a0f1e] border-r border-[rgba(94,234,212,0.1)]"
+          : "bg-white border-r border-[#ddd6fe] shadow-xl"
         }
       `}
       style={{ overflowY: "auto", overflowX: "visible" }}
     >
       {/* LOGO HEADER */}
       <div
-        className={`border-b ${
-          isDark
+        className={`border-b ${isDark
             ? "border-[rgba(94,234,212,0.1)] bg-[#0b1020]"
             : "border-[#ddd6fe] bg-white"
-        } flex-shrink-0`}
+          } flex-shrink-0`}
       >
         <img
           src="/Covering.png"
@@ -83,19 +82,17 @@ export default function CompanySidebar({
         <div className="p-4">
           <div className="relative">
             <Search
-              className={`absolute left-3 top-1/2 -translate-y-1/2 ${
-                isDark ? "text-[#6a7282]" : "text-[#7c3aed]"
-              }`}
+              className={`absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? "text-[#6a7282]" : "text-[#7c3aed]"
+                }`}
               size={16}
             />
             <input
               placeholder="Search..."
               className={`
                 w-full border rounded-lg pl-10 pr-4 py-2 text-sm transition-colors
-                ${
-                  isDark
-                    ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.1)] text-white placeholder:text-[#6a7282]"
-                    : "bg-[#f5f3ff] border-[#ddd6fe] text-[#2e1065] placeholder:text-[#7c3aed]"
+                ${isDark
+                  ? "bg-[rgba(255,255,255,0.05)] border-[rgba(94,234,212,0.1)] text-white placeholder:text-[#6a7282]"
+                  : "bg-[#f5f3ff] border-[#ddd6fe] text-[#2e1065] placeholder:text-[#7c3aed]"
                 }
               `}
             />
@@ -122,12 +119,11 @@ export default function CompanySidebar({
                   }}
                   className={`
                     w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all
-                    ${
-                      active
-                        ? isDark
-                          ? "bg-[rgba(94,234,212,0.12)] text-teal-300 ring-1 ring-teal-400/40 shadow-[0_0_20px_rgba(94,234,212,0.15)]"
-                          : "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 ring-1 ring-purple-300 shadow-lg"
-                        : isDark
+                    ${active
+                      ? isDark
+                        ? "bg-[rgba(94,234,212,0.12)] text-teal-300 ring-1 ring-teal-400/40 shadow-[0_0_20px_rgba(94,234,212,0.15)]"
+                        : "bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700 ring-1 ring-purple-300 shadow-lg"
+                      : isDark
                         ? "text-[#a8b0bf] hover:bg-white/5 hover:text-white"
                         : "text-[#7c3aed] hover:bg-[#ede9fe] hover:text-[#5b21b6]"
                     }
@@ -140,9 +136,8 @@ export default function CompanySidebar({
 
                   {item.badge ? (
                     <span
-                      className={`text-xs px-2 py-0.5 rounded-full ${
-                        isDark ? "bg-teal-500 text-white" : "bg-purple-500 text-white"
-                      }`}
+                      className={`text-xs px-2 py-0.5 rounded-full ${isDark ? "bg-teal-500 text-white" : "bg-purple-500 text-white"
+                        }`}
                     >
                       {item.badge}
                     </span>
@@ -162,12 +157,11 @@ export default function CompanySidebar({
                     }}
                     className={`
                       relative w-full flex items-center justify-center px-3 py-3 rounded-xl transition-all
-                      ${
-                        active
-                          ? isDark
-                            ? "bg-[rgba(94,234,212,0.12)] text-teal-300 ring-1 ring-teal-400/40"
-                            : "bg-purple-100 text-purple-700 ring-1 ring-purple-300"
-                          : isDark
+                      ${active
+                        ? isDark
+                          ? "bg-[rgba(94,234,212,0.12)] text-teal-300 ring-1 ring-teal-400/40"
+                          : "bg-purple-100 text-purple-700 ring-1 ring-purple-300"
+                        : isDark
                           ? "text-[#a8b0bf] hover:bg-white/5 hover:text-white"
                           : "text-[#7c3aed] hover:bg-[#ede9fe] hover:text-[#5b21b6]"
                       }
@@ -189,10 +183,9 @@ export default function CompanySidebar({
                   className={`
                     rounded-xl px-3 py-2 text-xs font-medium
                     backdrop-blur-xl border shadow-xl
-                    ${
-                      isDark
-                        ? "bg-[#0b1223]/90 text-teal-100 border-teal-400/20"
-                        : "bg-white/95 text-[#2e1065] border-purple-300"
+                    ${isDark
+                      ? "bg-[#0b1223]/90 text-teal-100 border-teal-400/20"
+                      : "bg-white/95 text-[#2e1065] border-purple-300"
                     }
                   `}
                 >
@@ -208,7 +201,10 @@ export default function CompanySidebar({
       <div className={`p-4 mt-auto ${!isOpen ? "px-2" : ""}`}>
         {isOpen ? (
           <button
-            onClick={() => alert("Implement logout")}
+            onClick={async () => {
+              sessionStorage.clear();
+              router.push("/login");
+            }}
             className="
               w-full p-3 text-sm rounded-lg border transition-all
               bg-[rgba(220,38,38,0.1)] text-red-400 border-red-400/30
@@ -223,7 +219,10 @@ export default function CompanySidebar({
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
-                  onClick={() => alert("Implement logout")}
+                  onClick={async () => {
+                    sessionStorage.clear();
+                    router.push("/login");
+                  }}
                   className="
                     w-full p-3 rounded-lg border 
                     bg-[rgba(220,38,38,0.1)] text-red-400 border-red-400/30

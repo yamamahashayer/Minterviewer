@@ -12,4 +12,4 @@ const goalSchema = new mongoose.Schema(
   { timestamps: { createdAt: 'created_at', updatedAt: false } }
 );
 
-export default mongoose.model('Goal', goalSchema);
+export default mongoose.models.Goal || mongoose.model('Goal', goalSchema);

@@ -1,6 +1,6 @@
 'use client';
-import { 
-  TrendingUp, 
+import {
+  TrendingUp,
   Award,
   Target,
   Calendar,
@@ -19,69 +19,195 @@ import {
   FileText,
   Users,
   Play,
-  Upload
+  Upload,
+  LucideIcon,
+  ThumbsUp,
+  Lightbulb
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Badge } from "../../components/ui/badge";
 import { Progress } from "../../components/ui/progress";
-import { 
-  LineChart, 
-  Line, 
+import {
+  LineChart,
+  Line,
   AreaChart,
   Area,
   BarChart,
   Bar,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer
 } from "recharts";
+import { useEffect, useState } from "react";
+
+interface DashboardData {
+  stats: {
+    overallScore: number;
+    totalInterviews: number;
+    hoursThisWeek: number | string;
+    totalHours: number | string;
+    activeDays?: number;
+  };
+  weeklyData: { day: string; score: number; time: number }[];
+  upcomingInterviews: {
+    id: string;
+    title: string;
+    type?: string;
+    time: string;
+    duration: string;
+  }[];
+  currentGoals: {
+    id: string;
+    title: string;
+    progress: number;
+    current: number;
+    target: number;
+  }[];
+  recentAchievements: {
+    id: string;
+    title: string;
+    icon?: string;
+    color?: string;
+    date: string;
+  }[];
+  lastInterviewFeedback?: {
+    id: string;
+    date: string;
+    score: number;
+    strengths: string[];
+    improvements: string[];
+    skills: string[];
+  } | null;
+  monthlyData?: {
+    month: string;
+    avgScore: number;
+    interviewCount: number;
+    sessionHours: number;
+  }[];
+  skillsBreakdown?: {
+    skill: string;
+    avgScore: number;
+    attempts: number;
+  }[];
+  activityPattern?: {
+    date: string;
+    count: number;
+  }[];
+  sessionMetrics?: {
+    completionRate: number;
+    totalBooked: number;
+    totalCompleted: number;
+    avgDuration: number;
+  };
+  progressMetrics?: {
+    improvement: number;
+    consistency: number;
+    currentStreak: number;
+  };
+}
+
+const iconMap: { [key: string]: LucideIcon } = {
+  Trophy,
+  Star,
+  Zap,
+  Award,
+  CheckCircle2,
+  Clock,
+  TrendingUp
+};
 
 export default function OverviewPage({ onNavigate, theme = "dark" }: { onNavigate?: (page: string) => void; theme?: "dark" | "light" }) {
   const isDark = theme === "dark";
-  const weeklyData = [
-    { day: "Mon", score: 8.2, time: 1.5 },
-    { day: "Tue", score: 8.5, time: 2.0 },
-    { day: "Wed", score: 8.3, time: 1.8 },
-    { day: "Thu", score: 8.8, time: 2.2 },
-    { day: "Fri", score: 8.9, time: 2.5 },
-    { day: "Sat", score: 8.7, time: 2.0 },
-    { day: "Sun", score: 9.0, time: 1.5 },
+
+  // State for dashboard data
+  const [loading, setLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const token = sessionStorage.getItem("token");
+        if (!token) {
+          console.log("No token found");
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch("/api/mentee/dashboard", {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setDashboardData(data);
+        } else {
+          const errorText = await res.text();
+          console.error("Failed to fetch dashboard data:", res.status, errorText);
+        }
+      } catch (error) {
+        console.error("Error fetching dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  // Default fallbacks while loading or if data missing
+  const weeklyData = dashboardData?.weeklyData || [
+    { day: "Mon", score: 0, time: 0 },
+    { day: "Tue", score: 0, time: 0 },
+    { day: "Wed", score: 0, time: 0 },
+    { day: "Thu", score: 0, time: 0 },
+    { day: "Fri", score: 0, time: 0 },
+    { day: "Sat", score: 0, time: 0 },
+    { day: "Sun", score: 0, time: 0 },
   ];
 
+  const statsValues = dashboardData?.stats || {
+    overallScore: 0,
+    totalInterviews: 0,
+    hoursThisWeek: 0,
+    totalHours: 0
+  };
+
   const stats = [
-    { 
-      label: "Overall Score", 
-      value: "8.7/10", 
-      change: "+12%", 
+    {
+      label: "Overall Score",
+      value: `${(statsValues.overallScore ? (statsValues.overallScore <= 10 ? statsValues.overallScore : statsValues.overallScore / 10) : 0).toFixed(1)}/10`,
+      change: "",
       trend: "up",
       icon: Award,
       color: "text-teal-300",
       bgGradient: "from-teal-500/20 to-emerald-500/10"
     },
-    { 
-      label: "Total Interviews", 
-      value: "127", 
-      change: "+15", 
+    {
+      label: "Total Interviews",
+      value: (statsValues.totalInterviews || 0).toString(),
+      change: "",
       trend: "up",
       icon: CheckCircle2,
       color: "text-emerald-400",
       bgGradient: "from-emerald-500/20 to-teal-500/10"
     },
-    { 
-      label: "Practice Streak", 
-      value: "15 days", 
-      change: "+3", 
+    {
+      label: "Active Days",
+      value: (statsValues.activeDays || 0).toString(),
+      change: "",
       trend: "up",
       icon: Zap,
       color: "text-amber-400",
       bgGradient: "from-amber-500/20 to-orange-500/10"
     },
-    { 
-      label: "This Week", 
-      value: "12.5h", 
-      change: "+2.5h", 
+    {
+      label: "Total Hours",
+      value: `${statsValues.totalHours || 0}h`,
+      change: "",
       trend: "up",
       icon: Clock,
       color: "text-violet-400",
@@ -89,17 +215,10 @@ export default function OverviewPage({ onNavigate, theme = "dark" }: { onNavigat
     },
   ];
 
-  const upcomingInterviews = [
-    { id: 1, title: "Technical Interview", type: "technical", time: "Today, 10:00 AM", duration: "60 min" },
-    { id: 2, title: "System Design", type: "system-design", time: "Today, 2:00 PM", duration: "90 min" },
-    { id: 3, title: "Behavioral Prep", type: "behavioral", time: "Tomorrow, 11:00 AM", duration: "45 min" },
-  ];
-
-  const recentAchievements = [
-    { id: 1, title: "Interview Master", icon: Trophy, color: "text-amber-400", date: "2 days ago" },
-    { id: 2, title: "Top Performer", icon: Star, color: "text-teal-400", date: "5 days ago" },
-    { id: 3, title: "Streak Champion", icon: Zap, color: "text-emerald-400", date: "1 week ago" },
-  ];
+  const upcomingInterviews = dashboardData?.upcomingInterviews || [];
+  const recentAchievements = dashboardData?.recentAchievements || [];
+  const currentGoals = dashboardData?.currentGoals || [];
+  const lastInterview = dashboardData?.lastInterviewFeedback;
 
   const quickActionsTop = [
     {
@@ -144,24 +263,15 @@ export default function OverviewPage({ onNavigate, theme = "dark" }: { onNavigat
     }
   ];
 
-  const currentGoals = [
-    { id: 1, title: "Complete 50 Technical Interviews", progress: 84, current: 42, target: 50 },
-    { id: 2, title: "Achieve 9.0 Average Score", progress: 72, current: 8.7, target: 9.0 },
-    { id: 3, title: "30-Day Practice Streak", progress: 50, current: 15, target: 30 },
-  ];
-
-  const quickActions = [
-    { id: 1, title: "Start Interview", icon: Video, gradient: "from-teal-500 to-emerald-500" },
-    { id: 2, title: "Practice Coding", icon: Code, gradient: "from-violet-500 to-purple-500" },
-    { id: 3, title: "Review Feedback", icon: MessageSquare, gradient: "from-amber-500 to-orange-500" },
-    { id: 4, title: "Check Schedule", icon: Calendar, gradient: "from-rose-500 to-pink-500" },
-  ];
+  if (loading) {
+    return <div className={`min-h-screen p-8 flex items-center justify-center ${isDark ? "text-white" : "text-purple-900"}`}>Loading Dashboard...</div>;
+  }
 
   return (
     <div className={`min-h-screen p-8 ${isDark ? "bg-gradient-to-b from-[#0a0f1e] to-[#000000]" : "bg-[#f5f3ff]"}`}>
       {/* Header */}
       <div className="mb-8">
-        <h1 className={isDark ? "text-white" : "text-[#2e1065]"} style={{marginBottom: "0.5rem", fontWeight: 700}}>Dashboard Overview 🎯</h1>
+        <h1 className={isDark ? "text-white" : "text-[#2e1065]"} style={{ marginBottom: "0.5rem", fontWeight: 700 }}>Dashboard Overview 🎯</h1>
         <p className={isDark ? "text-[#99a1af]" : "text-[#6b21a8]"}>Your interview preparation journey at a glance</p>
         <div className={`h-1 w-[200px] rounded-full mt-4 ${isDark ? "bg-gradient-to-r from-[#5eead4] to-transparent shadow-[0px_0px_10px_0px_rgba(94,234,212,0.5)]" : "bg-gradient-to-r from-[#7c3aed] via-[#a855f7] to-transparent shadow-[0px_0px_15px_0px_rgba(124,58,237,0.4)]"}`} />
       </div>
@@ -216,7 +326,7 @@ export default function OverviewPage({ onNavigate, theme = "dark" }: { onNavigat
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         {/* Weekly Performance Chart */}
         <div className={`col-span-2 ${isDark ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]" : "bg-white shadow-lg"} border ${isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"} rounded-xl p-6 backdrop-blur-sm`}>
           <div className="flex items-center justify-between mb-6">
@@ -224,152 +334,252 @@ export default function OverviewPage({ onNavigate, theme = "dark" }: { onNavigat
               <TrendingUp className={isDark ? "text-teal-300" : "text-purple-600"} size={20} />
               Weekly Performance
             </h3>
-            <Badge className={isDark ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-green-100 text-green-700 border-green-300 font-semibold"}>
-              +8% vs last week
-            </Badge>
           </div>
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={weeklyData}>
               <defs>
                 <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={isDark ? "#5EEAD4" : "#7c3aed"} stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor={isDark ? "#5EEAD4" : "#7c3aed"} stopOpacity={0}/>
+                  <stop offset="5%" stopColor={isDark ? "#5EEAD4" : "#7c3aed"} stopOpacity={0.3} />
+                  <stop offset="95%" stopColor={isDark ? "#5EEAD4" : "#7c3aed"} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(94,234,212,0.1)" : "rgba(124,58,237,0.1)"} />
               <XAxis dataKey="day" stroke={isDark ? "#99a1af" : "#6b21a8"} style={{ fontSize: '12px', fontWeight: 500 }} />
-              <YAxis stroke={isDark ? "#99a1af" : "#6b21a8"} style={{ fontSize: '12px', fontWeight: 500 }} domain={[7, 10]} />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.98)', 
+              <YAxis stroke={isDark ? "#99a1af" : "#6b21a8"} style={{ fontSize: '12px', fontWeight: 500 }} domain={[0, 10]} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: isDark ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.98)',
                   border: isDark ? '1px solid rgba(94,234,212,0.3)' : '1px solid #ddd6fe',
                   borderRadius: '8px',
                   color: isDark ? '#fff' : '#2e1065',
                   fontWeight: 600
-                }} 
+                }}
               />
-              <Area 
-                type="monotone" 
-                dataKey="score" 
-                stroke={isDark ? "#5EEAD4" : "#7c3aed"} 
+              <Area
+                type="monotone"
+                dataKey="score"
+                stroke={isDark ? "#5EEAD4" : "#7c3aed"}
                 strokeWidth={2}
-                fillOpacity={1} 
-                fill="url(#colorScore)" 
+                fillOpacity={1}
+                fill="url(#colorScore)"
               />
             </AreaChart>
           </ResponsiveContainer>
         </div>
 
-        {/* Quick Actions */}
-        <div className={`${isDark ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]" : "bg-white shadow-lg"} border ${isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"} rounded-xl p-6 backdrop-blur-sm`}>
-          <h3 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-6 flex items-center gap-2 font-semibold`}>
-            <Zap className={isDark ? "text-teal-300" : "text-purple-600"} size={20} />
-            Quick Actions
+        {/* Last Interview Insights (Replaces Quick Actions) */}
+        <div className={`${isDark ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]" : "bg-white shadow-lg"} border ${isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"} rounded-xl p-6 backdrop-blur-sm flex flex-col`}>
+          <h3 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-4 flex items-center gap-2 font-semibold`}>
+            <Brain className={isDark ? "text-teal-300" : "text-purple-600"} size={20} />
+            Latest Insights
           </h3>
-          <div className="space-y-3">
-            {quickActions.map((action) => {
-              const Icon = action.icon;
-              return (
-                <button
-                  key={action.id}
-                  className={`w-full flex items-center gap-3 p-4 rounded-lg ${isDark ? `bg-gradient-to-r ${action.gradient}` : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"} hover:opacity-90 transition-all text-white font-medium shadow-md`}
-                >
-                  <Icon size={20} />
-                  <span>{action.title}</span>
-                </button>
-              );
-            })}
-          </div>
+
+          {lastInterview ? (
+            <div className="flex-1 overflow-y-auto space-y-4 text-sm scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent pr-1">
+              <div className="flex items-center justify-between">
+                <span className={isDark ? "text-gray-400" : "text-gray-600"}>Date: {lastInterview.date}</span>
+                <Badge variant="outline" className={isDark ? "border-teal-500/50 text-teal-300" : "border-purple-500 text-purple-700"}>
+                  Score: {Math.round(lastInterview.score)}%
+                </Badge>
+              </div>
+
+              {lastInterview.strengths && lastInterview.strengths.length > 0 && (
+                <div>
+                  <h4 className={`flex items-center gap-2 font-medium mb-2 ${isDark ? "text-emerald-400" : "text-green-600"}`}>
+                    <ThumbsUp size={14} /> Strengths
+                  </h4>
+                  <ul className={`list-disc list-inside space-y-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                    {lastInterview.strengths.slice(0, 2).map((s, i) => (
+                      <li key={i} className="truncate">{s}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {lastInterview.improvements && lastInterview.improvements.length > 0 && (
+                <div>
+                  <h4 className={`flex items-center gap-2 font-medium mb-2 ${isDark ? "text-amber-400" : "text-amber-600"}`}>
+                    <Lightbulb size={14} /> Suggestions
+                  </h4>
+                  <ul className={`list-disc list-inside space-y-1 ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                    {lastInterview.improvements.slice(0, 2).map((s, i) => (
+                      <li key={i} className="truncate">{s}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div className="pt-2 flex flex-wrap gap-2">
+                {lastInterview.skills.map((skill, k) => (
+                  <Badge key={k} variant="secondary" className={`${isDark ? "bg-white/10 text-white" : "bg-purple-100 text-purple-800"}`}>
+                    {skill}
+                  </Badge>
+                ))}
+              </div>
+
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center opacity-60">
+              <Brain size={40} className="mb-2" />
+              <p>No interview insights yet.</p>
+              <Button variant="link" onClick={() => onNavigate?.("interview-practice")}>Start one now</Button>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Three Column Layout */}
-      <div className="grid grid-cols-3 gap-6">
-        {/* Upcoming Interviews */}
-        <div className={`${isDark ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]" : "bg-white shadow-lg"} border ${isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"} rounded-xl p-6 backdrop-blur-sm`}>
-          <h3 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-6 flex items-center gap-2 font-semibold`}>
-            <Calendar className={isDark ? "text-teal-300" : "text-purple-600"} size={20} />
-            Upcoming Today
-          </h3>
-          <div className="space-y-3">
-            {upcomingInterviews.map((interview) => (
-              <div
-                key={interview.id}
-                className={`${isDark ? "bg-[rgba(255,255,255,0.03)]" : "bg-purple-50"} border ${isDark ? "border-[rgba(94,234,212,0.1)]" : "border-[#ddd6fe]"} rounded-lg p-4 ${isDark ? "hover:border-[rgba(94,234,212,0.3)]" : "hover:border-[#a855f7] hover:shadow-md"} transition-all`}
-              >
-                <h4 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-2 font-semibold`}>{interview.title}</h4>
-                <div className={`flex items-center gap-2 text-xs ${isDark ? "text-[#99a1af]" : "text-[#6b21a8]"} mb-2`}>
-                  <Clock size={12} />
-                  <span className="font-medium">{interview.time}</span>
-                </div>
-                <Badge className={isDark ? "bg-teal-500/20 text-teal-300 border-teal-500/30 text-xs" : "bg-purple-100 text-purple-700 border-purple-300 text-xs font-semibold"}>
-                  {interview.duration}
-                </Badge>
-              </div>
-            ))}
-          </div>
-          <Button className={`w-full mt-4 ${isDark ? "bg-[rgba(94,234,212,0.2)] hover:bg-[rgba(94,234,212,0.3)] text-teal-300 border border-[rgba(94,234,212,0.3)]" : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 font-semibold shadow-md"}`}>
-            View All Schedule
-          </Button>
-        </div>
+      {/* New Analytics Sections */}
 
-        {/* Current Goals */}
-        <div className={`${isDark ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]" : "bg-white shadow-lg"} border ${isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"} rounded-xl p-6 backdrop-blur-sm`}>
-          <h3 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-6 flex items-center gap-2 font-semibold`}>
-            <Target className={isDark ? "text-teal-300" : "text-purple-600"} size={20} />
-            Current Goals
+      {/* Monthly Performance Trend */}
+      {dashboardData?.monthlyData && dashboardData.monthlyData.length > 0 && (
+        <div className={`mt-8 ${isDark ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]" : "bg-white shadow-lg"} border ${isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"} rounded-xl p-6 backdrop-blur-sm mb-8`}>
+          <h3 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-6 flex items-center gap-2 font-semibold text-lg`}>
+            <TrendingUp className={isDark ? "text-teal-300" : "text-purple-600"} size={22} />
+            6-Month Performance Trend
           </h3>
-          <div className="space-y-4">
-            {currentGoals.map((goal) => (
-              <div key={goal.id}>
-                <div className="flex justify-between items-center mb-2">
-                  <span className={isDark ? "text-[#d1d5dc] text-sm font-medium" : "text-[#2e1065] text-sm font-medium"}>{goal.title}</span>
-                  <span className={isDark ? "text-teal-300 text-xs font-bold" : "text-purple-600 text-xs font-bold"}>{goal.progress}%</span>
-                </div>
-                <Progress value={goal.progress} className={isDark ? "h-2 bg-[rgba(255,255,255,0.05)]" : "h-2 bg-purple-100"} />
-                <p className={isDark ? "text-[#6a7282] text-xs mt-1 font-medium" : "text-[#7c3aed] text-xs mt-1 font-medium"}>
-                  {goal.current} / {goal.target}
-                </p>
-              </div>
-            ))}
-          </div>
-          <Button className={isDark ? "w-full mt-4 bg-[rgba(94,234,212,0.2)] hover:bg-[rgba(94,234,212,0.3)] text-teal-300 border border-[rgba(94,234,212,0.3)]" : "w-full mt-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 font-semibold shadow-md"}>
-            Manage Goals
-          </Button>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={dashboardData.monthlyData}>
+              <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "rgba(94,234,212,0.1)" : "rgba(124,58,237,0.1)"} />
+              <XAxis
+                dataKey="month"
+                stroke={isDark ? "#99a1af" : "#6b21a8"}
+                style={{ fontSize: '12px', fontWeight: 500 }}
+                tickFormatter={(value) => {
+                  const [year, month] = value.split('-');
+                  return `${month}/${year.slice(2)}`;
+                }}
+              />
+              <YAxis yAxisId="left" stroke={isDark ? "#99a1af" : "#6b21a8"} style={{ fontSize: '12px' }} />
+              <YAxis yAxisId="right" orientation="right" stroke={isDark ? "#99a1af" : "#6b21a8"} style={{ fontSize: '12px' }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: isDark ? 'rgba(17,24,39,0.95)' : 'rgba(255,255,255,0.95)',
+                  border: isDark ? '1px solid rgba(94,234,212,0.3)' : '1px solid rgba(124,58,237,0.3)',
+                  borderRadius: '8px',
+                  fontSize: '12px'
+                }}
+                labelFormatter={(value) => {
+                  const [year, month] = value.split('-');
+                  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                  return `${monthNames[parseInt(month) - 1]} ${year}`;
+                }}
+              />
+              <Bar yAxisId="left" dataKey="interviewCount" fill={isDark ? "#5EEAD4" : "#7c3aed"} name="Interviews" radius={[8, 8, 0, 0]} />
+              <Bar yAxisId="right" dataKey="sessionHours" fill={isDark ? "#34D399" : "#ec4899"} name="Session Hours" radius={[8, 8, 0, 0]} />
+              <Line yAxisId="left" type="monotone" dataKey="avgScore" stroke={isDark ? "#FCD34D" : "#f59e0b"} strokeWidth={2} name="Avg Score" />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
+      )}
 
-        {/* Recent Achievements */}
-        <div className={`${isDark ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]" : "bg-white shadow-lg"} border ${isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"} rounded-xl p-6 backdrop-blur-sm`}>
-          <h3 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-6 flex items-center gap-2 font-semibold`}>
-            <Award className={isDark ? "text-teal-300" : "text-purple-600"} size={20} />
-            Recent Achievements
-          </h3>
-          <div className="space-y-3">
-            {recentAchievements.map((achievement) => {
-              const Icon = achievement.icon;
-              return (
-                <div
-                  key={achievement.id}
-                  className={`${isDark ? "bg-[rgba(255,255,255,0.03)]" : "bg-purple-50"} border ${isDark ? "border-[rgba(94,234,212,0.1)]" : "border-[#ddd6fe]"} rounded-lg p-4 ${isDark ? "hover:border-[rgba(94,234,212,0.3)]" : "hover:border-[#a855f7] hover:shadow-md"} transition-all`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-full ${isDark ? "bg-gradient-to-br from-[rgba(94,234,212,0.2)] to-[rgba(52,211,153,0.1)]" : "bg-gradient-to-br from-purple-100 to-pink-100"} flex items-center justify-center`}>
-                      <Icon className={isDark ? achievement.color : "text-purple-600"} size={20} />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className={`${isDark ? "text-white" : "text-[#2e1065]"} text-sm mb-1 font-semibold`}>{achievement.title}</h4>
-                      <p className={`${isDark ? "text-[#6a7282]" : "text-[#7c3aed]"} text-xs font-medium`}>{achievement.date}</p>
+      {/* Skills & Session Analytics Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+        {/* Skills Performance Breakdown */}
+        {dashboardData?.skillsBreakdown && dashboardData.skillsBreakdown.length > 0 && (
+          <div className={`${isDark ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]" : "bg-white shadow-lg"} border ${isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"} rounded-xl p-6 backdrop-blur-sm`}>
+            <h3 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-6 flex items-center gap-2 font-semibold`}>
+              <Code className={isDark ? "text-teal-300" : "text-purple-600"} size={20} />
+              Top Skills Performance
+            </h3>
+            <div className="space-y-4">
+              {dashboardData.skillsBreakdown.slice(0, 8).map((skill, idx) => (
+                <div key={idx}>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className={`${isDark ? "text-[#d1d5dc]" : "text-[#2e1065]"} text-sm font-medium truncate`}>{skill.skill}</span>
+                    <div className="flex items-center gap-2">
+                      <span className={`${isDark ? "text-teal-300" : "text-purple-600"} text-xs font-bold`}>{skill.avgScore.toFixed(1)}%</span>
+                      <Badge variant="outline" className={`${isDark ? "border-teal-500/50 text-teal-300" : "border-purple-500 text-purple-700"} text-xs`}>
+                        {skill.attempts}x
+                      </Badge>
                     </div>
                   </div>
+                  <Progress value={skill.avgScore} className={`h-2 ${isDark ? "bg-[rgba(255,255,255,0.05)]" : "bg-purple-100"}`} />
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
-          <Button className={`w-full mt-4 ${isDark ? "bg-[rgba(94,234,212,0.2)] hover:bg-[rgba(94,234,212,0.3)] text-teal-300 border border-[rgba(94,234,212,0.3)]" : "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0 font-semibold shadow-md"}`}>
-            View All Achievements
-          </Button>
-        </div>
+        )}
+
+        {/* Session Analytics */}
+        {dashboardData?.sessionMetrics && (
+          <div className={`${isDark ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)]" : "bg-white shadow-lg"} border ${isDark ? "border-[rgba(94,234,212,0.2)]" : "border-[#ddd6fe]"} rounded-xl p-6 backdrop-blur-sm`}>
+            <h3 className={`${isDark ? "text-white" : "text-[#2e1065]"} mb-6 flex items-center gap-2 font-semibold`}>
+              <Calendar className={isDark ? "text-teal-300" : "text-purple-600"} size={20} />
+              Session Analytics
+            </h3>
+            <div className="space-y-6">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className={`${isDark ? "text-[#d1d5dc]" : "text-[#2e1065]"} text-sm font-medium`}>Completion Rate</span>
+                  <span className={`${isDark ? "text-teal-300" : "text-purple-600"} text-lg font-bold`}>{dashboardData.sessionMetrics.completionRate}%</span>
+                </div>
+                <Progress value={dashboardData.sessionMetrics.completionRate} className={`h-3 ${isDark ? "bg-[rgba(255,255,255,0.05)]" : "bg-purple-100"}`} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className={`${isDark ? "bg-[rgba(94,234,212,0.1)]" : "bg-purple-50"} rounded-lg p-4`}>
+                  <div className={`${isDark ? "text-teal-300" : "text-purple-600"} text-2xl font-bold mb-1`}>{dashboardData.sessionMetrics.totalBooked}</div>
+                  <div className={`${isDark ? "text-gray-400" : "text-gray-600"} text-xs`}>Total Booked</div>
+                </div>
+                <div className={`${isDark ? "bg-[rgba(52,211,153,0.1)]" : "bg-pink-50"} rounded-lg p-4`}>
+                  <div className={`${isDark ? "text-emerald-300" : "text-pink-600"} text-2xl font-bold mb-1`}>{dashboardData.sessionMetrics.totalCompleted}</div>
+                  <div className={`${isDark ? "text-gray-400" : "text-gray-600"} text-xs`}>Completed</div>
+                </div>
+              </div>
+
+              <div className={`${isDark ? "bg-[rgba(251,191,36,0.1)]" : "bg-amber-50"} rounded-lg p-4`}>
+                <div className="flex items-center justify-between">
+                  <span className={`${isDark ? "text-gray-300" : "text-gray-700"} text-sm`}>Avg Duration</span>
+                  <div className="flex items-center gap-2">
+                    <Clock className={isDark ? "text-amber-300" : "text-amber-600"} size={18} />
+                    <span className={`${isDark ? "text-amber-300" : "text-amber-600"} text-lg font-bold`}>{dashboardData.sessionMetrics.avgDuration} min</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Progress Metrics Cards */}
+      {dashboardData?.progressMetrics && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+          <div className={`${isDark ? "bg-gradient-to-br from-[rgba(52,211,153,0.2)] to-[rgba(16,185,129,0.1)]" : "bg-gradient-to-br from-green-50 to-emerald-50"} border ${isDark ? "border-[rgba(52,211,153,0.3)]" : "border-green-200"} rounded-xl p-6`}>
+            <div className="flex items-center justify-between mb-4">
+              <TrendingUp className={isDark ? "text-emerald-300" : "text-green-600"} size={28} />
+              <Badge className={`${isDark ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30" : "bg-green-100 text-green-700 border-green-300"}`}>
+                {dashboardData.progressMetrics.improvement > 0 ? '+' : ''}{dashboardData.progressMetrics.improvement}%
+              </Badge>
+            </div>
+            <div className={`${isDark ? "text-white" : "text-gray-900"} text-2xl font-bold mb-1`}>Improvement</div>
+            <p className={`${isDark ? "text-gray-400" : "text-gray-600"} text-xs`}>Recent vs Initial Performance</p>
+          </div>
+
+          <div className={`${isDark ? "bg-gradient-to-br from-[rgba(251,191,36,0.2)] to-[rgba(245,158,11,0.1)]" : "bg-gradient-to-br from-amber-50 to-yellow-50"} border ${isDark ? "border-[rgba(251,191,36,0.3)]" : "border-amber-200"} rounded-xl p-6`}>
+            <div className="flex items-center justify-between mb-4">
+              <Activity className={isDark ? "text-amber-300" : "text-amber-600"} size={28} />
+              <Badge className={`${isDark ? "bg-amber-500/20 text-amber-300 border-amber-500/30" : "bg-amber-100 text-amber-700 border-amber-300"}`}>
+                {dashboardData.progressMetrics.consistency.toFixed(0)}/100
+              </Badge>
+            </div>
+            <div className={`${isDark ? "text-white" : "text-gray-900"} text-2xl font-bold mb-1`}>Consistency</div>
+            <p className={`${isDark ? "text-gray-400" : "text-gray-600"} text-xs`}>Performance Stability Score</p>
+          </div>
+
+          <div className={`${isDark ? "bg-gradient-to-br from-[rgba(251,113,133,0.2)] to-[rgba(244,63,94,0.1)]" : "bg-gradient-to-br from-rose-50 to-pink-50"} border ${isDark ? "border-[rgba(251,113,133,0.3)]" : "border-rose-200"} rounded-xl p-6`}>
+            <div className="flex items-center justify-between mb-4">
+              <Zap className={isDark ? "text-rose-300" : "text-rose-600"} size={28} />
+              <Badge className={`${isDark ? "bg-rose-500/20 text-rose-300 border-rose-500/30" : "bg-rose-100 text-rose-700 border-rose-300"}`}>
+                {dashboardData.progressMetrics.currentStreak} days
+              </Badge>
+            </div>
+            <div className={`${isDark ? "text-white" : "text-gray-900"} text-2xl font-bold mb-1`}>Current Streak</div>
+            <p className={`${isDark ? "text-gray-400" : "text-gray-600"} text-xs`}>Consecutive Active Days</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

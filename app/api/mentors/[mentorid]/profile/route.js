@@ -45,20 +45,44 @@ export async function GET(req, context) {
     const user = cleanUser(mentor.user);
 
     const reviews = await MentorFeedback.find({ mentor: mentorId }).lean();
+
+    // Calculate real earnings from TimeSlots
+    const TimeSlot = (await import("@/models/TimeSlot")).default;
+    const completedSlots = await TimeSlot.find({
+      mentor: mentorId,
+      status: 'booked',
+      endTime: { $lt: new Date() }
+    }).lean();
+
+    let realEarnings = 0;
+    for (const slot of completedSlots) {
+      // We need to fetch offering details if not populated, but ideally prices should be on slot or offering
+      // Since offerings are on Mentor model, we can find them
+      if (slot.sessionOffering) {
+        const offering = mentor.sessionOfferings.find(o => o._id.toString() === slot.sessionOffering.toString());
+        if (offering && offering.price) {
+          realEarnings += (offering.price / 100);
+        }
+      }
+    }
+    mentor.earnings = realEarnings;
+
     const avgRating = reviews.length
       ? Number(
-          (
-            reviews.reduce((acc, r) => acc + (r.rating ?? 0), 0) /
-            reviews.length
-          ).toFixed(1)
-        )
+        (
+          reviews.reduce((acc, r) => acc + (r.rating ?? 0), 0) /
+          reviews.length
+        ).toFixed(1)
+      )
       : 0;
 
     const stats = {
       rating: avgRating,
       reviewsCount: reviews.length,
-      menteesCount: mentor.menteesCount ?? 0,
-      sessionsCount: mentor.sessionsCount ?? 0,
+      mentees: mentor.menteesCount ?? 0,
+      sessions: mentor.sessionsCount ?? 0,
+      earned: mentor.earnings ?? 0, // Ensure 'earnings' is in Mentor model or calculated
+      responseTime: "<2 hrs" // Mock response time
     };
 
     const frontProfile = {
@@ -96,8 +120,8 @@ export async function GET(req, context) {
         mentor.yearsOfExperience >= 5
           ? 3
           : mentor.yearsOfExperience >= 3
-          ? 2
-          : 1,
+            ? 2
+            : 1,
     };
 
     return NextResponse.json(
