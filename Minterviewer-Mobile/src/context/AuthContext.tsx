@@ -39,21 +39,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (token[1]) {
                 // Use session endpoint to validate token and get fresh user data
                 api.defaults.headers.Authorization = `Bearer ${token[1]}`;
-                
+
                 try {
                     const response = await api.get<SessionResponse>('/api/auth/session');
-                    
+
                     if (response.data.ok && response.data.user) {
                         const user: User = {
                             ...response.data.user,
+                            id: response.data.user.id || (response.data.user as any)._id,
                             menteeId: response.data.mentee?._id,
                             mentorId: response.data.mentor?._id,
                             companyId: response.data.company?._id,
                             isVerified: response.data.company?.isVerified,
                         };
 
-                        console.log('AuthContext Session Debug:', { 
-                            response: response.data, 
+                        console.log('AuthContext Session Debug:', {
+                            response: response.data,
                             user,
                             menteeId: user.menteeId,
                             mentorId: user.mentorId,

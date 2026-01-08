@@ -12,6 +12,7 @@ import SignupScreen from '../screens/auth/SignupScreen';
 import MenteeNavigator from './MenteeNavigator';
 import MentorNavigator from './MentorNavigator';
 import CompanyNavigator from './CompanyNavigator';
+import AdminNavigator from './AdminNavigator';
 
 const Stack = createStackNavigator();
 
@@ -46,6 +47,10 @@ const RootNavigator = () => {
 
             {user?.role === 'company' && (
               <Stack.Screen name="CompanyApp" component={CompanyNavigator} />
+            )}
+
+            {user?.role === 'admin' && (
+              <Stack.Screen name="AdminApp" component={AdminNavigator} />
             )}
           </>
         )}
