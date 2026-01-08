@@ -6,7 +6,6 @@ import {
     StyleSheet,
     ActivityIndicator,
     RefreshControl,
-    SafeAreaView,
     Dimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -14,6 +13,8 @@ import api from '../../services/api';
 import { colors } from '../../theme';
 import { Feather } from '@expo/vector-icons';
 import { LineChart } from 'react-native-chart-kit';
+import AdminLayout from '../../layouts/AdminLayout';
+import { useTheme } from '../../context/ThemeContext';
 
 // Define types for the stats data
 interface AdminStats {
@@ -27,6 +28,7 @@ interface AdminStats {
 }
 
 const DashboardScreen = () => {
+    const { isDark } = useTheme();
     const [stats, setStats] = useState<AdminStats | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -68,14 +70,14 @@ const DashboardScreen = () => {
         color: string;
         bgColor: string;
     }) => (
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: isDark ? colors.background.headerDark : 'white' }]}>
             <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
                 <Feather name={icon as any} size={24} color={color} />
             </View>
             <View style={styles.cardContent}>
-                <Text style={styles.cardTitle}>{title}</Text>
-                <Text style={styles.cardCount}>{count}</Text>
-                {subtitle && <Text style={styles.cardSubtitle}>{subtitle}</Text>}
+                <Text style={[styles.cardTitle, { color: isDark ? colors.text.secondaryDark : '#6B7280' }]}>{title}</Text>
+                <Text style={[styles.cardCount, { color: isDark ? '#ffffff' : '#111827' }]}>{count}</Text>
+                {subtitle && <Text style={[styles.cardSubtitle, { color: isDark ? '#6b7280' : '#9CA3AF' }]}>{subtitle}</Text>}
             </View>
         </View>
     );
@@ -89,16 +91,22 @@ const DashboardScreen = () => {
     }
 
     return (
-        <SafeAreaView style={styles.container}>
+        <AdminLayout>
             <ScrollView
+                style={[styles.container, { backgroundColor: isDark ? colors.background.dark : '#F3F4F6' }]}
                 contentContainerStyle={styles.scrollContent}
                 refreshControl={
-                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                    <RefreshControl 
+                        refreshing={refreshing} 
+                        onRefresh={onRefresh}
+                        tintColor={isDark ? colors.text.secondaryDark : colors.text.secondary}
+                        colors={[isDark ? colors.text.secondaryDark : colors.text.secondary]}
+                    />
                 }
             >
                 <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Admin Dashboard</Text>
-                    <Text style={styles.headerSubtitle}>
+                    <Text style={[styles.headerTitle, { color: isDark ? '#ffffff' : '#111827' }]}>Admin Dashboard</Text>
+                    <Text style={[styles.headerSubtitle, { color: isDark ? colors.text.secondaryDark : '#6B7280' }]}>
                         Platform Analytics & Insights
                     </Text>
                 </View>
@@ -113,8 +121,8 @@ const DashboardScreen = () => {
                         bgColor="#D1FAE5"
                     />
 
-                    <View style={styles.chartContainer}>
-                        <Text style={styles.chartTitle}>Earnings Overview</Text>
+                    <View style={[styles.chartContainer, { backgroundColor: isDark ? colors.background.headerDark : 'white' }]}>
+                        <Text style={[styles.chartTitle, { color: isDark ? '#ffffff' : '#374151' }]}>Earnings Overview</Text>
                         {stats?.earnings?.chart && stats.earnings.chart.length > 0 ? (
                             <LineChart
                                 data={{
@@ -148,7 +156,7 @@ const DashboardScreen = () => {
                                 }}
                             />
                         ) : (
-                            <Text style={styles.noDataText}>No chart data available</Text>
+                            <Text style={[styles.noDataText, { color: isDark ? colors.text.secondaryDark : '#9CA3AF' }]}>No chart data available</Text>
                         )}
                     </View>
 
@@ -180,7 +188,7 @@ const DashboardScreen = () => {
                     />
                 </View>
             </ScrollView>
-        </SafeAreaView>
+        </AdminLayout>
     );
 };
 
