@@ -20,7 +20,14 @@ import ApplicationProcessTab from "./ApplicationProcessTab";
 
 type Theme = "dark" | "light";
 
-export default function CreateJobInlineForm({ onCancel, onSaved, theme }) {
+interface Props {
+  onCancel: () => void;
+  onSaved: () => void;
+  theme: Theme;
+  job?: any;
+}
+
+export default function CreateJobInlineForm({ onCancel, onSaved, theme, job }: Props) {
   const isDark = theme === "dark";
 
   const [activeTab, setActiveTab] = useState("basic");
