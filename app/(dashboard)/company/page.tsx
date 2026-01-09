@@ -42,7 +42,7 @@ export default function CompanyPage() {
         return <ProfilePage theme={theme} />;
       case "jobs":
         return <JobsPage theme={theme} />;
-      case "candidates":
+      case "talent":
         return <CandidatesPage theme={theme} />;
       case "messages":
         return <MessagesPage theme={theme} />;

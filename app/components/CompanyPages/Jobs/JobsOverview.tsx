@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import DashboardJobsTable from "./DashboardJobsTable";
 import ApplicantsBarChart from "./ApplicantsBarChart";
+import TalentRecommendations from "./TalentRecommendations";
 
 type Theme = "dark" | "light";
 
@@ -194,8 +195,11 @@ export default function JobsOverview({
         onSelectJob={onSelectJob}
       />
 
+  
       {/* ================= CHART ================= */}
       <ApplicantsBarChart jobs={jobs} theme={theme} />
+
+    
 
       {/* ================= MOST / LEAST ================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

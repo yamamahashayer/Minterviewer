@@ -25,6 +25,7 @@ import {
   Award,
 } from "lucide-react";
 import JobsTimelineChart from "./JobsTimelineChart";
+import TalentRecommendations from "./TalentRecommendations";
 
 type Theme = "dark" | "light";
 
@@ -173,41 +174,42 @@ export default function JobsPageComponent({
         isDark ? "bg-[#020617] text-white" : "bg-[#f8fafc] text-black"
       }`}
     >
-{/* ================= HEADER ================= */}
-<div
-  className={`relative rounded-2xl px-8 py-10 border mb-10 overflow-hidden
-    ${isDark
-      ? "bg-[#020617] border-[#1e293b]"
-      : "bg-white border-gray-200"
-    }
-  `}
->
-  {/* very subtle accent */}
-  <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-transparent" />
+      {/* ================= HEADER ================= */}
+      <div
+        className={`relative rounded-2xl px-8 py-10 border mb-10 overflow-hidden
+          ${isDark
+            ? "bg-[#020617] border-[#1e293b]"
+            : "bg-white border-gray-200"
+          }
+        `}
+      >    
+      {/* very subtle accent */}
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-transparent" />
 
-  <div className="relative space-y-4 animate-fade-in">
-    <h1
-      className={`text-4xl font-extrabold tracking-tight
-        ${isDark ? "text-white" : "text-gray-900"}
-      `}
-    >
-      Hire with{" "}
-      <span className="text-purple-500">confidence</span>
-    </h1>
+      <div className="relative space-y-4 animate-fade-in">
+        <h1
+          className={`text-4xl font-extrabold tracking-tight
+            ${isDark ? "text-white" : "text-gray-900"}
+          `}
+        >
+          Hire with{" "}
+          <span className="text-purple-500">confidence</span>
+        </h1>
 
-    <p
-      className={`max-w-2xl text-base
-        ${isDark ? "text-slate-400" : "text-gray-600"}
-      `}
-    >
-      Analyze CVs, run interviews, and focus on the
-      <span className="text-purple-500 font-medium"> top candidates </span>
-      — without the noise.
-    </p>
-  </div>
-</div>
+        <p
+          className={`max-w-2xl text-base
+            ${isDark ? "text-slate-400" : "text-gray-600"}
+          `}
+        >
+          Analyze CVs, run interviews, and focus on the
+          <span className="text-purple-500 font-medium"> top candidates </span>
+          — without the noise.
+        </p>
+      </div>
+    </div>
 
 
+      
 
       {/* ================= CHART ================= */}
       <JobsTimelineChart jobs={jobs} theme={theme} />
@@ -259,6 +261,7 @@ export default function JobsPageComponent({
             Create Job
           </TabsTrigger>
         </TabsList>
+        
 
         {/* OVERVIEW */}
         <TabsContent value="overview">

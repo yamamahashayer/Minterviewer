@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { Mail, Phone, FileText, User, Video, Award } from "lucide-react";
+import { Mail, Phone, FileText, User, Video, Award, Brain } from "lucide-react";
+import TalentRecommendations from "./TalentRecommendations";
 
 type Theme = "dark" | "light";
 
@@ -21,24 +22,75 @@ export default function ApplicantsList({
   onBack, // 🔙 NEW
 }: Props) {
   const isDark = theme === "dark";
-  const [sortBy, setSortBy] = useState<"cv" | "ats" | "interview">(() => {
-    return job.interviewType === "ai" ? "interview" : "cv";
+  const [sortBy, setSortBy] = useState<"performance" | "cv" | "interview">(() => {
+    return "performance";
   });
 
-  /* ================= SORT ================= */
-  const sortedApplicants = useMemo(() => {
-    return [...applicants].sort((a, b) => {
-      if (sortBy === "ats")
-        return (b.atsScore || 0) - (a.atsScore || 0);
-      if (sortBy === "interview")
-        return (b.interviewScore || 0) - (a.interviewScore || 0);
-      return (b.cvScore || 0) - (a.cvScore || 0);
+  // Dynamic column visibility based on job configuration
+  const showCV = job?.enableCVAnalysis === true;
+  const showInterview = job?.interviewType && job.interviewType !== "none";
+
+  /* ================= PERFORMANCE SCORE CALCULATION ================= */
+  const applicantsWithScores = useMemo(() => {
+    return applicants.map(applicant => {
+      const cvScore = applicant.cvScore || 0;
+      const interviewScore = applicant.evaluation?.interviewScore || 0;
+      
+      // Calculate unified performance score
+      let performanceScore = 0;
+      let scoreComponents = 0;
+      
+      if (showCV) {
+        performanceScore += cvScore * 0.4;
+        scoreComponents += 0.4;
+      }
+      
+      if (showInterview) {
+        performanceScore += interviewScore * 0.6;
+        scoreComponents += 0.6;
+      }
+      
+      // If only one type of evaluation is available, use it as 100%
+      if (scoreComponents === 0) {
+        performanceScore = 0;
+      } else if (scoreComponents < 1) {
+        performanceScore = performanceScore / scoreComponents;
+      }
+      
+      return {
+        ...applicant,
+        performanceScore: Math.round(performanceScore),
+        cvScore,
+        interviewScore
+      };
     });
-  }, [applicants, sortBy]);
+  }, [applicants, showCV, showInterview]);
+
+  /* ================= TOP CANDIDATES ================= */
+  const topCandidates = useMemo(() => {
+    return applicantsWithScores
+      .sort((a, b) => b.performanceScore - a.performanceScore)
+      .slice(0, 5)
+      .map((candidate, index) => ({
+        ...candidate,
+        rank: index + 1
+      }));
+  }, [applicantsWithScores]);
+
+  /* ================= SORTED APPLICANTS ================= */
+  const sortedApplicants = useMemo(() => {
+    return [...applicantsWithScores].sort((a, b) => {
+      if (sortBy === "performance")
+        return b.performanceScore - a.performanceScore;
+      if (sortBy === "interview")
+        return b.interviewScore - a.interviewScore;
+      return b.cvScore - a.cvScore;
+    });
+  }, [applicantsWithScores, sortBy]);
 
   return (
     <div
-      className={`p-8 rounded-2xl space-y-6 ${
+      className={`p-6 rounded-2xl space-y-4 ${
         isDark ? "bg-[#1b2333] text-white" : "bg-white text-black"
       }`}
     >
@@ -66,11 +118,217 @@ export default function ApplicantsList({
           onChange={(e) => setSortBy(e.target.value as any)}
           className="px-4 py-2 rounded-lg border bg-transparent text-sm"
         >
+          <option value="performance">Sort by Performance</option>
           <option value="cv">Sort by CV</option>
-          <option value="ats">Sort by ATS</option>
           <option value="interview">Sort by Interview</option>
         </select>
       </div>
+
+      {/* ================= JOB SUMMARY ================= */}
+      {job && (
+        <div
+          className={`rounded-xl p-4 border ${
+            isDark
+              ? "bg-gradient-to-br from-[rgba(255,255,255,0.05)] to-[rgba(255,255,255,0.01)] border-[rgba(94,234,212,0.2)]"
+              : "bg-gray-50 border-[#ddd6fe]"
+          }`}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Job Title */}
+            <div>
+              <p className="text-xs font-semibold mb-1 opacity-70">Job Title</p>
+              <p className={`font-medium ${isDark ? "text-white" : "text-gray-900"}`}>
+                {job.title || "—"}
+              </p>
+            </div>
+
+            {/* Interview Type */}
+            <div>
+              <p className="text-xs font-semibold mb-1 opacity-70">Interview Type</p>
+              <div>
+                {job.interviewType === "ai" ? (
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full font-medium ${
+                      isDark
+                        ? "bg-emerald-500/20 text-emerald-300"
+                        : "bg-indigo-100 text-indigo-700"
+                    }`}
+                  >
+                    AI Interview
+                  </span>
+                ) : job.interviewType === "human" ? (
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full font-medium ${
+                      isDark
+                        ? "bg-white/10 text-gray-300"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    Human Interview
+                  </span>
+                ) : (
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full font-medium ${
+                      isDark
+                        ? "bg-gray-600/30 text-gray-400"
+                        : "bg-gray-100 text-gray-500"
+                    }`}
+                  >
+                    None
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* CV Analysis */}
+            <div>
+              <p className="text-xs font-semibold mb-1 opacity-70">CV Analysis</p>
+              <div>
+                {job.enableCVAnalysis ? (
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full font-medium ${
+                      isDark
+                        ? "bg-teal-500/20 text-teal-300"
+                        : "bg-purple-100 text-purple-700"
+                    }`}
+                  >
+                    Enabled
+                  </span>
+                ) : (
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full font-medium ${
+                      isDark
+                        ? "bg-gray-600/30 text-gray-400"
+                        : "bg-gray-100 text-gray-500"
+                    }`}
+                  >
+                    Disabled
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Required Skills */}
+            <div>
+              <p className="text-xs font-semibold mb-1 opacity-70">Required Skills</p>
+              <div className="flex flex-wrap gap-1">
+                {job.skills?.length > 0 ? (
+                  job.skills.slice(0, 3).map((skill: string, idx: number) => (
+                    <span
+                      key={idx}
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        isDark
+                          ? "bg-gray-700 text-gray-100 border border-gray-600"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {skill}
+                    </span>
+                  ))
+                ) : (
+                  <span className={isDark ? "text-gray-400" : "text-gray-500"}>
+                    —
+                  </span>
+                )}
+                {job.skills?.length > 3 && (
+                  <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                    +{job.skills.length - 3} more
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================= TOP CANDIDATES ================= */}
+      {topCandidates.length > 0 && (
+        <div className="space-y-3">
+          <h3 className="text-lg font-semibold">Top Candidates</h3>
+          <div className="flex gap-3 overflow-x-auto pb-2">
+            {topCandidates.map((candidate) => {
+              const mentee = candidate.mentee;
+              return (
+                <div
+                  key={candidate._id}
+                  className={`flex-shrink-0 w-64 rounded-xl p-4 border transition-all duration-200 hover:shadow-lg ${
+                    isDark
+                      ? "bg-gradient-to-br from-[rgba(255,255,255,0.05)] to-[rgba(255,255,255,0.01)] border-[rgba(94,234,212,0.2)] hover:border-[rgba(94,234,212,0.4)]"
+                      : "bg-white border-[#ddd6fe] hover:border-purple-300 shadow-md"
+                  }`}
+                >
+                  {/* Rank and Name */}
+                  <div className="flex items-center gap-3 mb-3">
+                    <div
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                        candidate.rank === 1
+                          ? isDark
+                            ? "bg-yellow-500/20 text-yellow-300"
+                            : "bg-yellow-100 text-yellow-700"
+                          : candidate.rank === 2
+                          ? isDark
+                            ? "bg-gray-500/20 text-gray-300"
+                            : "bg-gray-100 text-gray-700"
+                          : candidate.rank === 3
+                          ? isDark
+                            ? "bg-orange-500/20 text-orange-300"
+                            : "bg-orange-100 text-orange-700"
+                          : isDark
+                          ? "bg-gray-600/20 text-gray-400"
+                          : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {candidate.rank}
+                    </div>
+                    <div>
+                      <div className="font-semibold">
+                        {mentee?.full_name || "Unknown"}
+                      </div>
+                      <div className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                        {mentee?.Country || "—"}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Performance Score */}
+                  <div className="mb-3">
+                    <div className={`text-2xl font-bold ${
+                      candidate.performanceScore >= 80
+                        ? "text-green-600"
+                        : candidate.performanceScore >= 60
+                        ? "text-yellow-600"
+                        : "text-red-600"
+                    }`}>
+                      {candidate.performanceScore}%
+                    </div>
+                    <div className="text-xs opacity-60">Performance</div>
+                  </div>
+                  
+                  {/* Component Scores */}
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    {showCV && (
+                      <div className={`text-center p-2 rounded-lg ${
+                        isDark ? "bg-[rgba(255,255,255,0.05)]" : "bg-gray-50"
+                      }`}>
+                        <div className="font-medium">{candidate.cvScore}</div>
+                        <div className="text-xs opacity-60">CV</div>
+                      </div>
+                    )}
+                    {showInterview && (
+                      <div className={`text-center p-2 rounded-lg ${
+                        isDark ? "bg-[rgba(255,255,255,0.05)]" : "bg-gray-50"
+                      }`}>
+                        <div className="font-medium">{candidate.interviewScore}</div>
+                        <div className="text-xs opacity-60">Interview</div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ================= TABLE ================= */}
       <div className="overflow-x-auto rounded-xl border">
@@ -83,13 +341,13 @@ export default function ApplicantsList({
             }`}
           >
             <tr>
-              <Th>#</Th>
               <Th>Candidate</Th>
               <Th>Contact</Th>
-              <Th>CV</Th>
-              <Th>ATS</Th>
-              <Th>Interview</Th>
-              <Th>Interview Score</Th>
+              <Th>Performance</Th>
+              {showCV && <Th>CV Score</Th>}
+              {showCV && <Th>ATS</Th>}
+              {showInterview && <Th>Interview Status</Th>}
+              {showInterview && <Th>Interview Score</Th>}
               <Th className="text-center">Actions</Th>
             </tr>
           </thead>
@@ -107,8 +365,6 @@ export default function ApplicantsList({
                       : "border-gray-200 hover:bg-gray-50"
                   }`}
                 >
-                  <Td>{i + 1}</Td>
-
                   <Td>
                     <div className="font-medium">
                       {m?.full_name || "Unknown"}
@@ -129,40 +385,58 @@ export default function ApplicantsList({
                     </div>
                   </Td>
 
-                  <Td className="font-medium">{a.cvScore ?? "—"}</Td>
-                  <Td>{a.atsScore != null ? `${a.atsScore}%` : "—"}</Td>
                   <Td>
-                    {a.status === "interview_completed" ? (
-                      <span className="text-green-600 dark:text-green-400 font-medium">
-                        ✓ Completed
-                      </span>
-                    ) : a.status === "interview_pending" ? (
-                      <span className="text-yellow-600 dark:text-yellow-400">
-                        Pending
-                      </span>
-                    ) : a.interviewId ? (
-                      <span className="text-blue-600 dark:text-blue-400">
-                        In Progress
-                      </span>
-                    ) : (
-                      <span className="opacity-50">Not started</span>
-                    )}
+                    <div className={`font-bold text-lg ${
+                      a.performanceScore >= 80
+                        ? "text-green-600"
+                        : a.performanceScore >= 60
+                        ? "text-yellow-600"
+                        : "text-red-600"
+                    }`}>
+                      {a.performanceScore}%
+                    </div>
                   </Td>
 
-                  <Td>
-                    {a.evaluation?.interviewScore ? (
-                      <div className="flex items-center gap-2">
-                        <Award size={14} className="text-yellow-500" />
-                        <span className="font-bold">
-                          {a.evaluation.interviewScore}
+                  {showCV && (
+                    <Td className="font-medium">{a.cvScore ?? "—"}</Td>
+                  )}
+                  {showCV && (
+                    <Td>{a.atsScore != null ? `${a.atsScore}%` : "—"}</Td>
+                  )}
+                  {showInterview && (
+                    <Td>
+                      {a.status === "interview_completed" ? (
+                        <span className="text-green-600 dark:text-green-400 font-medium">
+                          ✓ Completed
                         </span>
-                      </div>
-                    ) : (
-                      "—"
-                    )}
-                  </Td>
+                      ) : a.status === "interview_pending" ? (
+                        <span className="text-yellow-600 dark:text-yellow-400">
+                          Pending
+                        </span>
+                      ) : a.interviewId ? (
+                        <span className="text-blue-600 dark:text-blue-400">
+                          In Progress
+                        </span>
+                      ) : (
+                        <span className="opacity-50">Not started</span>
+                      )}
+                    </Td>
+                  )}
+                  {showInterview && (
+                    <Td>
+                      {a.evaluation?.interviewScore ? (
+                        <div className="flex items-center gap-2">
+                          <Award size={14} className="text-yellow-500" />
+                          <span className="font-bold">
+                            {a.evaluation.interviewScore}
+                          </span>
+                        </div>
+                      ) : (
+                        "—"
+                      )}
+                    </Td>
+                  )}
 
-                  {/* ================= ACTIONS ================= */}
                   <Td className="space-y-2 text-center">
                     <button
                       onClick={() => onViewProfile(m?._id)}
@@ -207,7 +481,15 @@ export default function ApplicantsList({
 
             {sortedApplicants.length === 0 && (
               <tr>
-                <td colSpan={8} className="text-center py-10 opacity-60">
+                <td 
+                  colSpan={
+                    3 + // Candidate, Contact, Performance
+                    (showCV ? 2 : 0) + // CV Score, ATS
+                    (showInterview ? 2 : 0) + // Interview Status, Interview Score
+                    1 // Actions
+                  } 
+                  className="text-center py-10 opacity-60"
+                >
                   No applicants yet
                 </td>
               </tr>
@@ -229,12 +511,12 @@ function Th({
   className?: string;
 }) {
   return (
-    <th className={`px-5 py-4 font-semibold ${className}`}>
+    <th className={`px-5 py-3 font-semibold text-left ${className}`}>
       {children}
     </th>
   );
 }
 
-function Td({ children }: { children: React.ReactNode }) {
-  return <td className="px-5 py-4 align-top">{children}</td>;
+function Td({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return <td className={`px-5 py-3 align-top text-left ${className}`}>{children}</td>;
 }
