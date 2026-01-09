@@ -70,6 +70,11 @@ const JobSchema = new Schema(
       default: "active",
     },
 
+    // Deadline reminder flags
+    reminder3DaysSent: { type: Boolean, default: false },
+    reminder1DaySent: { type: Boolean, default: false },
+    autoCloseNotificationSent: { type: Boolean, default: false },
+
     applicants: { type: [ApplicantSchema], default: [] },
   },
   { timestamps: true }
