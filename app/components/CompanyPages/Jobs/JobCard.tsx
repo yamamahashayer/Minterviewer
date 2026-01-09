@@ -13,6 +13,7 @@ export default function JobCard({
   theme,
   onEdit,
   onClose,
+  onReopen,
   onDelete,
   onViewApplicants,
   onViewProfile,
@@ -23,6 +24,7 @@ export default function JobCard({
   theme: "dark" | "light";
   onEdit: () => void;
   onClose: () => void;
+  onReopen: () => void;
   onDelete: () => void;
   onViewApplicants: (job: any) => void; // ✅ FIX
   onViewProfile: (menteeId: string) => void;
@@ -78,7 +80,7 @@ return (
     {/* MENU */}
     <div className="absolute top-4 right-4">
       <DropdownMenu>
-        <DropdownMenuTrigger>
+        <DropdownMenuTrigger onClick={(e) => e.stopPropagation()}>
           <MoreVertical
             className={`w-5 h-5 cursor-pointer ${
               isDark ? "text-teal-300" : "text-purple-600"
@@ -93,9 +95,39 @@ return (
               : "bg-white border border-[#ddd6fe] text-[#2e1065]"
           }`}
         >
-          <DropdownMenuItem onClick={onEdit}>Edit</DropdownMenuItem>
-          <DropdownMenuItem onClick={onClose}>Close</DropdownMenuItem>
-          <DropdownMenuItem className="text-red-500" onClick={onDelete}>
+          <DropdownMenuItem onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}>Edit</DropdownMenuItem>
+          {job.status === "closed" ? (
+            <DropdownMenuItem 
+              onClick={async (e) => {
+                e.stopPropagation();
+                console.log('Reopen button clicked for job:', job._id);
+                // Small delay to ensure dropdown closes properly
+                await new Promise(resolve => setTimeout(resolve, 100));
+                onReopen();
+              }}
+              className="text-green-600"
+            >
+              Reopen
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={async (e) => {
+              e.stopPropagation();
+              console.log('Close button clicked for job:', job._id);
+              // Small delay to ensure dropdown closes properly
+              await new Promise(resolve => setTimeout(resolve, 100));
+              onClose();
+            }}>Close</DropdownMenuItem>
+          )}
+          <DropdownMenuItem 
+            className="text-red-500" 
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+          >
             Delete
           </DropdownMenuItem>
         </DropdownMenuContent>

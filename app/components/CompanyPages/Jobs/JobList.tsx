@@ -8,6 +8,7 @@ export default function JobList({
   theme,
   onEdit,
   onClose,
+  onReopen,
   onDelete,
   onViewApplicants,
   onViewProfile,
@@ -18,6 +19,7 @@ export default function JobList({
   theme: "dark" | "light";
   onEdit: (job: any) => void;
   onClose: (id: string) => void;
+  onReopen: (id: string) => void;
   onDelete: (id: string) => void;
   onViewApplicants: (job: any) => void;
   onViewProfile: (menteeId: string) => void;
@@ -41,6 +43,7 @@ export default function JobList({
           theme={theme}
           onEdit={() => onEdit(job)}
           onClose={() => onClose(job._id)}
+          onReopen={() => onReopen(job._id)}
           onDelete={() => onDelete(job._id)}
           onViewApplicants={() => onViewApplicants(job)}
           onViewProfile={onViewProfile}
