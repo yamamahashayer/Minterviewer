@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import ApplicantsList from "@/app/components/CompanyPages/Jobs/ApplicantsList";
 import PublicMenteeProfile from "@/app/components/PublicProfiles/PublicMenteeProfile";
+import TalentRecommendations from "@/app/components/CompanyPages/Jobs/TalentRecommendations";
 
 type Theme = "dark" | "light";
 
@@ -77,7 +78,7 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
           onClick={() => setSelectedMenteeId(null)}
           className="mb-6 text-sm underline opacity-80 hover:opacity-100"
         >
-          ← Back to candidates
+          ← Back to talent
         </button>
 
         <PublicMenteeProfile menteeId={selectedMenteeId} />
@@ -90,17 +91,78 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
      ====================================================== */
   return (
     <div
-      className={`min-h-screen p-8 space-y-6 ${
+      className={`min-h-screen p-6 space-y-8 ${
         isDark ? "bg-[#020617] text-white" : "bg-[#f8fafc] text-black"
       }`}
     >
-      {/* HEADER */}
-      <div>
-        <h1 className="text-3xl font-bold">Candidates</h1>
-        <p className="opacity-70 mt-1">
-          Review applicants grouped by job position.
-        </p>
+     {/* ================= TALENT PAGE HEADER ================= */}
+      <div
+        className={`relative rounded-2xl px-8 py-10 border mb-10 overflow-hidden
+          ${isDark
+            ? "bg-[#020617] border-[#1e293b]"
+            : "bg-white border-gray-200"
+          }
+        `}
+      >
+        {/* subtle accent */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-transparent" />
+
+        <div className="relative space-y-4 animate-fade-in">
+          
+          {/* PAGE NAME (light label, not a second header) */}
+          <span
+          className={`inline-flex items-center gap-2 text-3xl font-semibold uppercase tracking-wide
+            ${isDark ? "text-purple-400/80" : "text-purple-600"}
+          `}
+        >
+          Talent
+          <span className="opacity-50">•</span>
+          Applicants & AI Recommendations
+        </span>
+
+
+          {/* MAIN HERO TITLE */}
+          <h1
+            className={`text-4xl font-extrabold tracking-tight
+              ${isDark ? "text-white" : "text-gray-900"}
+            `}
+          >
+            Build your team with{" "}
+            <span className="text-purple-500">confidence</span>
+          </h1>
+
+          {/* SUBTITLE */}
+          <p
+            className={`max-w-2xl text-base
+              ${isDark ? "text-slate-400" : "text-gray-600"}
+            `}
+          >
+            Discover{" "}
+            <span className="text-purple-500 font-medium">
+              AI-recommended talent
+            </span>{" "}
+            and review applicants based on performance, skills, and interview insights.
+          </p>
+        </div>
       </div>
+
+      {/* PAGE CONTENT */}
+      <div className="space-y-6">
+      {/* ================= TALENT RECOMMENDATIONS ================= */}
+              {jobs.length > 0 && (
+                <TalentRecommendations
+                  job={jobs[0]} // Show recommendations for the most recent/first job
+                  theme={theme}
+                  onViewProfile={(menteeId) => {
+                    // TODO: Navigate to mentee profile
+                    console.log('View mentee profile:', menteeId);
+                  }}
+                  onInviteToApply={(menteeId) => {
+                    // TODO: Implement invite to apply functionality
+                    console.log('Invite to apply:', menteeId);
+                  }}
+                />
+              )}
 
       {/* JOBS LIST */}
       {jobs.map((job) => {
@@ -148,6 +210,7 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
           </div>
         );
       })}
+      </div>
     </div>
   );
 }

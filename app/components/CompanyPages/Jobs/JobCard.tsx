@@ -15,6 +15,9 @@ export default function JobCard({
   onClose,
   onDelete,
   onViewApplicants,
+  onViewProfile,
+  onViewSuggested,
+  onJobClick,
 }: {
   job: any;
   theme: "dark" | "light";
@@ -22,6 +25,9 @@ export default function JobCard({
   onClose: () => void;
   onDelete: () => void;
   onViewApplicants: (job: any) => void; // ✅ FIX
+  onViewProfile: (menteeId: string) => void;
+  onViewSuggested: (job: any) => void;
+  onJobClick: (job: any) => void;
 }) {
   const isDark = theme === "dark";
 
@@ -58,8 +64,9 @@ export default function JobCard({
 
 return (
   <div
+    onClick={() => onJobClick(job)}
     className={`
-      relative rounded-2xl p-5 transition-all duration-200 backdrop-blur-sm
+      relative rounded-2xl p-5 transition-all duration-200 backdrop-blur-sm cursor-pointer
       ${
         isDark
           ? "bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)] border border-[rgba(94,234,212,0.2)] shadow-[0_0_25px_rgba(0,0,0,0.6)] text-white"
@@ -224,6 +231,19 @@ return (
       >
         View Applicants →
       </button>
+
+      <button
+        onClick={() => onViewSuggested(job)}
+        className={`font-semibold underline transition ${
+          isDark
+            ? "text-emerald-300 hover:text-emerald-200"
+            : "text-green-600 hover:text-green-500"
+        }`}
+      >
+        View Suggested Mentees →
+      </button>
+
+     
     </div>
   </div>
 );

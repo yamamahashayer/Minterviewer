@@ -10,6 +10,9 @@ export default function JobList({
   onClose,
   onDelete,
   onViewApplicants,
+  onViewProfile,
+  onViewSuggested,
+  onJobClick,
 }: {
   jobs: any[];
   theme: "dark" | "light";
@@ -17,6 +20,9 @@ export default function JobList({
   onClose: (id: string) => void;
   onDelete: (id: string) => void;
   onViewApplicants: (job: any) => void;
+  onViewProfile: (menteeId: string) => void;
+  onViewSuggested: (job: any) => void;
+  onJobClick: (job: any) => void;
 }) {
   if (jobs.length === 0) {
     return (
@@ -37,6 +43,9 @@ export default function JobList({
           onClose={() => onClose(job._id)}
           onDelete={() => onDelete(job._id)}
           onViewApplicants={() => onViewApplicants(job)}
+          onViewProfile={onViewProfile}
+          onViewSuggested={() => onViewSuggested(job)}
+          onJobClick={() => onJobClick(job)}
         />
       ))}
     </div>

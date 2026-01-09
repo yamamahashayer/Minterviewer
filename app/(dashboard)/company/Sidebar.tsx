@@ -45,7 +45,7 @@ export default function CompanySidebar({
     { id: "overview", label: "Overview", icon: Home },
     { id: "profile", label: "Company Profile", icon: User },
     { id: "jobs", label: "Jobs", icon: FileText },
-    { id: "candidates", label: "Candidates", icon: Users },
+    { id: "Talent", label: "Talent", icon: Users },
     { id: "messages", label: "Messages", icon: MessageSquare, badge: 0 },
     { id: "notifications", label: "Notifications", icon: Bell, badge: notificationsCount },
     { id: "settings", label: "Settings", icon: Settings },

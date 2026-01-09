@@ -6,6 +6,7 @@ import JobCard from "./JobCard";
 import CreateJobInlineForm from "./CreateJobInlineForm";
 import JobsOverview from "./JobsOverview";
 import ApplicantsList from "./ApplicantsList";
+import SuggestedMenteesList from "./SuggestedMenteesList";
 import PublicMenteeProfile from "@/app/components/PublicProfiles/PublicMenteeProfile";
 
 import {
@@ -25,6 +26,7 @@ import {
   Award,
 } from "lucide-react";
 import JobsTimelineChart from "./JobsTimelineChart";
+import TalentRecommendations from "./TalentRecommendations";
 
 type Theme = "dark" | "light";
 
@@ -49,14 +51,14 @@ export default function JobsPageComponent({
 
   /* ================= JOB STATES ================= */
   const [focusedJob, setFocusedJob] = useState<any | null>(null);
-  const [showApplicants, setShowApplicants] = useState(false);
+  const [viewMode, setViewMode] = useState<"jobs" | "applicants" | "suggested" | "single-job">("jobs");
   const [selectedJob, setSelectedJob] = useState<any | null>(null);
   const [applicants, setApplicants] = useState<any[]>([]);
 
   /* ================= PROFILE VIEW ================= */
   const [viewingMenteeId, setViewingMenteeId] = useState<string | null>(null);
 
-  const isJobsListView = !focusedJob && !showApplicants;
+  const isJobsListView = viewMode === "jobs";
 
   /* ================= FILTERED JOBS ================= */
   const filteredJobs = useMemo(() => {
@@ -134,7 +136,7 @@ export default function JobsPageComponent({
 
   const handleViewApplicants = async (job: any) => {
     setSelectedJob(job);
-    setShowApplicants(true);
+    setViewMode("applicants");
 
     const companyId = getCompanyId();
     if (!companyId) return;
@@ -144,6 +146,22 @@ export default function JobsPageComponent({
     );
     const data = await res.json();
     setApplicants(data.ok ? data.applicants : []);
+  };
+
+  const handleViewSuggested = (job: any) => {
+    setSelectedJob(job);
+    setViewMode("suggested");
+  };
+
+  const handleBackToJobs = () => {
+    setViewMode("jobs");
+    setSelectedJob(null);
+    setFocusedJob(null);
+  };
+
+  const handleBackToJobsFromSingle = () => {
+    setViewMode("jobs");
+    setFocusedJob(null);
   };
 
   /* ================= PROFILE MODE ================= */
@@ -173,44 +191,43 @@ export default function JobsPageComponent({
         isDark ? "bg-[#020617] text-white" : "bg-[#f8fafc] text-black"
       }`}
     >
-{/* ================= HEADER ================= */}
-<div
-  className={`relative rounded-2xl px-8 py-10 border mb-10 overflow-hidden
-    ${isDark
-      ? "bg-[#020617] border-[#1e293b]"
-      : "bg-white border-gray-200"
-    }
-  `}
->
-  {/* very subtle accent */}
-  <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-transparent" />
+      {/* ================= HEADER ================= */}
+      <div
+        className={`relative rounded-2xl px-8 py-10 border mb-10 overflow-hidden
+          ${isDark
+            ? "bg-[#020617] border-[#1e293b]"
+            : "bg-white border-gray-200"
+          }
+        `}
+      >    
+      {/* very subtle accent */}
+      <div className="absolute inset-0 bg-gradient-to-r from-purple-600/5 to-transparent" />
 
-  <div className="relative space-y-4 animate-fade-in">
-    <h1
-      className={`text-4xl font-extrabold tracking-tight
-        ${isDark ? "text-white" : "text-gray-900"}
-      `}
-    >
-      Hire with{" "}
-      <span className="text-purple-500">confidence</span>
-    </h1>
+      <div className="relative space-y-4 animate-fade-in">
+        <h1
+          className={`text-4xl font-extrabold tracking-tight
+            ${isDark ? "text-white" : "text-gray-900"}
+          `}
+        >
+          Hire with{" "}
+          <span className="text-purple-500">confidence</span>
+        </h1>
 
-    <p
-      className={`max-w-2xl text-base
-        ${isDark ? "text-slate-400" : "text-gray-600"}
-      `}
-    >
-      Analyze CVs, run interviews, and focus on the
-      <span className="text-purple-500 font-medium"> top candidates </span>
-      — without the noise.
-    </p>
-  </div>
-</div>
+        <p
+          className={`max-w-2xl text-base
+            ${isDark ? "text-slate-400" : "text-gray-600"}
+          `}
+        >
+          Analyze CVs, run interviews, and focus on the
+          <span className="text-purple-500 font-medium"> top candidates </span>
+          — without the noise.
+        </p>
+      </div>
+    </div>
 
 
+      
 
-      {/* ================= CHART ================= */}
-      <JobsTimelineChart jobs={jobs} theme={theme} />
 
 
       {/* NAV TABS */}
@@ -259,6 +276,7 @@ export default function JobsPageComponent({
             Create Job
           </TabsTrigger>
         </TabsList>
+        
 
         {/* OVERVIEW */}
         <TabsContent value="overview">
@@ -269,13 +287,14 @@ export default function JobsPageComponent({
             onSelectJob={(job) => {
               setFocusedJob(job);
               setMainTab("jobs");
+              setViewMode("single-job"); 
             }}
           />
         </TabsContent>
 
         {/* JOBS */}
         <TabsContent value="jobs">
-          {/* 🔍 FILTER BAR (رجعت كاملة 👇) */}
+          {/* 🔍 FILTER BAR) */}
           {isJobsListView && (
             <div
               className={`mb-6 flex flex-wrap gap-3 items-center rounded-xl p-4 border
@@ -342,10 +361,10 @@ export default function JobsPageComponent({
           )}
 
           {/* SINGLE JOB */}
-          {focusedJob && !showApplicants && (
+          {focusedJob && viewMode === "single-job" && (
             <>
               <button
-                onClick={() => setFocusedJob(null)}
+                onClick={handleBackToJobs}
                 className="mb-4 underline"
               >
                 ← Back to all jobs
@@ -358,6 +377,11 @@ export default function JobsPageComponent({
                 onClose={() => handleCloseJob(focusedJob._id)}
                 onDelete={() => handleDeleteJob(focusedJob._id)}
                 onViewApplicants={handleViewApplicants}
+                onViewProfile={(menteeId) =>
+                  setViewingMenteeId(menteeId)             
+                }
+                onViewSuggested={handleViewSuggested}
+                onJobClick={() => {}}
               />
             </>
           )}
@@ -371,11 +395,19 @@ export default function JobsPageComponent({
               onClose={handleCloseJob}
               onDelete={handleDeleteJob}
               onViewApplicants={handleViewApplicants}
+              onViewProfile={(menteeId) =>
+                setViewingMenteeId(menteeId)             
+              }
+              onViewSuggested={handleViewSuggested}
+              onJobClick={(job) => {
+                setFocusedJob(job);
+                setViewMode("single-job");
+              }}
             />
           )}
 
           {/* APPLICANTS */}
-          {showApplicants && selectedJob && (
+          {viewMode === "applicants" && selectedJob && (
             <ApplicantsList
               applicants={applicants}
               job={selectedJob}
@@ -383,10 +415,23 @@ export default function JobsPageComponent({
               onViewProfile={(menteeId) =>
                 setViewingMenteeId(menteeId)             
               }
-               onBack={() => {
-                  setShowApplicants(false);
-                  setSelectedJob(null);
-                }}
+               onBack={handleBackToJobs}
+            />
+          )}
+
+          {/* SUGGESTED MENTEES */}
+          {viewMode === "suggested" && selectedJob && (
+            <SuggestedMenteesList
+              job={selectedJob}
+              theme={theme}
+              onViewProfile={(menteeId) =>
+                setViewingMenteeId(menteeId)             
+              }
+              onBack={handleBackToJobs}
+              onInviteToApply={(menteeId) => {
+                // TODO: Implement invite to apply functionality
+                console.log('Invite mentee:', menteeId);
+              }}
             />
           )}
         </TabsContent>
