@@ -111,14 +111,73 @@ export default function JobsPageComponent({
   };
 
   const handleCloseJob = async (jobId: string) => {
+    console.log('Closing job:', jobId);
     const companyId = getCompanyId();
-    if (!companyId) return;
+    if (!companyId) {
+      console.error('No companyId found');
+      return;
+    }
 
-    await fetch(`/api/company/${companyId}/jobs/${jobId}`, {
-      method: "PATCH",
-    });
+    try {
+      console.log('Sending PATCH request to:', `/api/company/${companyId}/jobs/${jobId}`);
+      const response = await fetch(`/api/company/${companyId}/jobs/${jobId}`, {
+        method: "PATCH",
+      });
+      
+      console.log('Response status:', response.status);
+      const result = await response.json();
+      console.log('Response result:', result);
 
-    refreshJobs();
+      if (!response.ok) {
+        console.error('Failed to close job:', result);
+        return;
+      }
+
+      console.log('Job closed successfully, refreshing jobs...');
+      // Small delay to ensure database update is complete
+      setTimeout(() => {
+        refreshJobs();
+      }, 200);
+    } catch (error) {
+      console.error('Error closing job:', error);
+    }
+  };
+
+  const handleReopenJob = async (jobId: string) => {
+    console.log('Reopening job:', jobId);
+    const companyId = getCompanyId();
+    if (!companyId) {
+      console.error('No companyId found');
+      return;
+    }
+
+    try {
+      console.log('Sending PUT request to reopen job:', `/api/company/${companyId}/jobs/${jobId}`);
+      const response = await fetch(`/api/company/${companyId}/jobs/${jobId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "active" }),
+      });
+      
+      console.log('Response status:', response.status);
+      const result = await response.json();
+      console.log('Response result:', result);
+
+      if (!response.ok) {
+        console.error('Failed to reopen job:', result);
+        return;
+      }
+
+      console.log('Job reopened successfully, refreshing jobs...');
+      // Small delay to ensure database update is complete
+      setTimeout(() => {
+        refreshJobs();
+      }, 200);
+    } catch (error) {
+      console.error('Error reopening job:', error);
+    }
   };
 
   const handleDeleteJob = async (jobId: string) => {
@@ -375,6 +434,7 @@ export default function JobsPageComponent({
                 theme={theme}
                 onEdit={() => handleEditJob(focusedJob)}
                 onClose={() => handleCloseJob(focusedJob._id)}
+                onReopen={() => handleReopenJob(focusedJob._id)}
                 onDelete={() => handleDeleteJob(focusedJob._id)}
                 onViewApplicants={handleViewApplicants}
                 onViewProfile={(menteeId) =>
@@ -393,6 +453,7 @@ export default function JobsPageComponent({
               theme={theme}
               onEdit={handleEditJob}
               onClose={handleCloseJob}
+              onReopen={handleReopenJob}
               onDelete={handleDeleteJob}
               onViewApplicants={handleViewApplicants}
               onViewProfile={(menteeId) =>
