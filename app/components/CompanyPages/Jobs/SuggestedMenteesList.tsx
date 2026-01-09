@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { User, MapPin, Star, Send, Brain } from "lucide-react";
 
 type Theme = "dark" | "light";
@@ -14,15 +14,14 @@ interface Props {
 }
 
 interface RecommendedMentee {
-  _id: string;
-  full_name: string;
-  Country?: string;
+  menteeId: string;
+  userId: string;
   skills: string[];
-  performanceScore: number;
   matchScore: number;
   matchedSkills: string[];
-  cvAnalysis?: any;
-  interviewAnalysis?: any;
+  performanceScore: number;
+  full_name?: string;
+  Country?: string;
 }
 
 export default function SuggestedMenteesList({
@@ -36,97 +35,58 @@ export default function SuggestedMenteesList({
   const [sortBy, setSortBy] = useState<"match" | "performance">(() => {
     return "match";
   });
+  const [suggestions, setSuggestions] = useState<RecommendedMentee[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data for demonstration - replace with actual API call
-  const mockRecommendations: RecommendedMentee[] = [
-    {
-      _id: "1",
-      full_name: "Sarah Johnson",
-      Country: "United States",
-      skills: ["React", "TypeScript", "Node.js", "AWS"],
-      performanceScore: 92,
-      matchScore: 88,
-      matchedSkills: ["React", "TypeScript", "Node.js"],
-      cvAnalysis: { skills: ["React", "TypeScript", "Node.js", "AWS"] },
-      interviewAnalysis: { skills: ["React", "TypeScript", "Node.js"] }
-    },
-    {
-      _id: "2",
-      full_name: "Michael Chen",
-      Country: "Canada",
-      skills: ["React", "Python", "Docker", "PostgreSQL"],
-      performanceScore: 85,
-      matchScore: 75,
-      matchedSkills: ["React", "Python"],
-      cvAnalysis: { skills: ["React", "Python", "Docker", "PostgreSQL"] },
-      interviewAnalysis: { skills: ["React", "Python"] }
-    },
-    {
-      _id: "3",
-      full_name: "Emily Rodriguez",
-      Country: "Mexico",
-      skills: ["JavaScript", "React", "MongoDB", "Express"],
-      performanceScore: 78,
-      matchScore: 82,
-      matchedSkills: ["JavaScript", "React", "MongoDB"],
-      cvAnalysis: { skills: ["JavaScript", "React", "MongoDB", "Express"] },
-      interviewAnalysis: { skills: ["JavaScript", "React"] }
-    },
-    {
-      _id: "4",
-      full_name: "David Kim",
-      Country: "South Korea",
-      skills: ["TypeScript", "React", "GraphQL", "PostgreSQL"],
-      performanceScore: 89,
-      matchScore: 91,
-      matchedSkills: ["TypeScript", "React", "GraphQL"],
-      cvAnalysis: { skills: ["TypeScript", "React", "GraphQL", "PostgreSQL"] },
-      interviewAnalysis: { skills: ["TypeScript", "React", "GraphQL"] }
-    },
-    {
-      _id: "5",
-      full_name: "Ana Silva",
-      Country: "Brazil",
-      skills: ["React", "Node.js", "MongoDB", "AWS"],
-      performanceScore: 81,
-      matchScore: 79,
-      matchedSkills: ["React", "Node.js"],
-      cvAnalysis: { skills: ["React", "Node.js", "MongoDB", "AWS"] },
-      interviewAnalysis: { skills: ["React", "Node.js"] }
-    }
-  ];
+  // Fetch suggestions from API when job is available
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!job?._id || !job?.companyId) return;
 
-  // Calculate recommendations based on job requirements
+      setLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(
+          `/api/company/${job.companyId}/jobs/${job._id}/suggestions`
+        );
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch suggestions');
+        }
+
+        const data = await response.json();
+
+        if (data.ok && data.suggestions) {
+          // Map API response to component format
+          const mappedSuggestions = data.suggestions.map((suggestion: any) => ({
+            ...suggestion,
+            _id: suggestion.menteeId, // Add _id for compatibility with existing code
+            full_name: suggestion.full_name || `User ${suggestion.menteeId.slice(-6)}`, // Use API name or fallback
+          }));
+          setSuggestions(mappedSuggestions);
+        } else {
+          setSuggestions([]);
+        }
+      } catch (err) {
+        console.error('Error fetching suggestions:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        setSuggestions([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSuggestions();
+  }, [job?._id, job?.companyId]);
+
+  // Calculate recommendations based on API suggestions
   const calculateRecommendations = useMemo(() => {
     if (!job?.skills || !Array.isArray(job.skills)) return [];
 
-    const jobSkills = job.skills.map((skill: string) => skill.toLowerCase());
-    
-    return mockRecommendations.map(mentee => {
-      // Calculate skill match score
-      const menteeSkills = mentee.skills.map(skill => skill.toLowerCase());
-      const matchedSkills = menteeSkills.filter((skill: string) => 
-        jobSkills.some((jobSkill: string) => 
-          jobSkill.includes(skill) || skill.includes(jobSkill)
-        )
-      );
-      
-      const skillMatchScore = jobSkills.length > 0 
-        ? (matchedSkills.length / jobSkills.length) * 100
-        : 0;
-      
-      // Weighted score: 60% skill match, 40% performance
-      const weightedScore = (skillMatchScore * 0.6) + (mentee.performanceScore * 0.4);
-      
-      return {
-        ...mentee,
-        matchScore: Math.round(skillMatchScore),
-        matchedSkills: matchedSkills.map(skill => 
-          mentee.skills.find(s => s.toLowerCase() === skill) || skill
-        )
-      };
-    }).sort((a, b) => b.matchScore - a.matchScore);
-  }, [job?.skills]);
+    return suggestions;
+  }, [job?.skills, suggestions]);
 
   const sortedRecommendations = useMemo(() => {
     return [...calculateRecommendations].sort((a, b) => {
@@ -143,6 +103,64 @@ export default function SuggestedMenteesList({
     }));
   }, [sortedRecommendations]);
 
+  // Show loading state
+  if (loading) {
+    return (
+      <div
+        className={`p-6 rounded-2xl space-y-4 ${
+          isDark ? "bg-[#1b2333] text-white" : "bg-white text-black"
+        }`}
+      >
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 text-sm opacity-70 hover:opacity-100 transition"
+            >
+              ← Back to all jobs
+            </button>
+            <h2 className="text-3xl font-bold">Suggested Mentees</h2>
+          </div>
+        </div>
+        
+        <div className="text-center py-10 opacity-60">
+          <Brain size={48} className="mx-auto mb-4 opacity-50 animate-pulse" />
+          <p>Loading suggestions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div
+        className={`p-6 rounded-2xl space-y-4 ${
+          isDark ? "bg-[#1b2333] text-white" : "bg-white text-black"
+        }`}
+      >
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 text-sm opacity-70 hover:opacity-100 transition"
+            >
+              ← Back to all jobs
+            </button>
+            <h2 className="text-3xl font-bold">Suggested Mentees</h2>
+          </div>
+        </div>
+        
+        <div className="text-center py-10 opacity-60">
+          <Brain size={48} className="mx-auto mb-4 opacity-50" />
+          <p>Error loading suggestions</p>
+          <p className="text-sm">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show empty state
   if (!job?.skills || job.skills.length === 0) {
     return (
       <div
@@ -166,6 +184,35 @@ export default function SuggestedMenteesList({
           <Brain size={48} className="mx-auto mb-4 opacity-50" />
           <p>No skills specified for this job</p>
           <p className="text-sm">Add required skills to see AI-powered recommendations</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show no suggestions state
+  if (calculateRecommendations.length === 0) {
+    return (
+      <div
+        className={`p-6 rounded-2xl space-y-4 ${
+          isDark ? "bg-[#1b2333] text-white" : "bg-white text-black"
+        }`}
+      >
+        <div className="flex justify-between items-center">
+          <div className="space-y-2">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 text-sm opacity-70 hover:opacity-100 transition"
+            >
+              ← Back to all jobs
+            </button>
+            <h2 className="text-3xl font-bold">Suggested Mentees</h2>
+          </div>
+        </div>
+        
+        <div className="text-center py-10 opacity-60">
+          <Brain size={48} className="mx-auto mb-4 opacity-50" />
+          <p>No suggestions yet</p>
+          <p className="text-sm">No mentees found matching the required skills</p>
         </div>
       </div>
     );
@@ -330,7 +377,7 @@ export default function SuggestedMenteesList({
           <div className="flex gap-3 overflow-x-auto pb-2">
             {topRecommendations.map((recommendation) => (
               <div
-                key={recommendation._id}
+                key={recommendation.menteeId}
                 className={`flex-shrink-0 w-64 rounded-xl p-4 border transition-all duration-200 hover:shadow-lg ${
                   isDark
                     ? "bg-gradient-to-br from-[rgba(255,255,255,0.05)] to-[rgba(255,255,255,0.01)] border-[rgba(94,234,212,0.2)] hover:border-[rgba(94,234,212,0.4)]"
@@ -409,7 +456,7 @@ export default function SuggestedMenteesList({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {sortedRecommendations.map((mentee) => (
           <div
-            key={mentee._id}
+            key={mentee.menteeId}
             className={`rounded-xl p-4 border transition-all duration-200 hover:shadow-lg ${
               isDark
                 ? "bg-gradient-to-br from-[rgba(255,255,255,0.05)] to-[rgba(255,255,255,0.01)] border-[rgba(94,234,212,0.2)] hover:border-[rgba(94,234,212,0.4)]"
@@ -477,7 +524,7 @@ export default function SuggestedMenteesList({
             {/* Actions */}
             <div className="space-y-2">
               <button
-                onClick={() => onViewProfile(mentee._id)}
+                onClick={() => onViewProfile(mentee.menteeId)}
                 className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition ${
                   isDark
                     ? "border-gray-600 hover:bg-white/10 text-white"
@@ -490,7 +537,7 @@ export default function SuggestedMenteesList({
               
               {onInviteToApply && (
                 <button
-                  onClick={() => onInviteToApply(mentee._id)}
+                  onClick={() => onInviteToApply(mentee.menteeId)}
                   className={`w-full flex items-center justify-center gap-2 px-3 py-2 text-sm rounded-lg border transition ${
                     isDark
                       ? "bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20 text-purple-300"

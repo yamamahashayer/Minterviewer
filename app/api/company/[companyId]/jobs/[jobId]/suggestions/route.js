@@ -38,7 +38,7 @@ export async function GET(req, { params }) {
     /* ================= GET JOB ================= */
     const job = await Job.findOne({
       _id: jobId,
-      companyId: companyId,
+      companyId,
     }).lean();
 
     if (!job) {
@@ -54,12 +54,13 @@ export async function GET(req, { params }) {
     const mentees = await Mentee.find({
       skills: { $exists: true, $ne: [] },
       active: true,
-    }).lean();
+    })
+      .populate("user", "full_name Country profile_photo")
+      .lean();
 
     /* ================= BUILD SUGGESTIONS ================= */
     const suggestions = mentees
       .map((mentee) => {
-        // ✅ skills مخزّنة كـ objects
         const menteeSkillNames = (mentee.skills || [])
           .map((s) => s.name)
           .filter(Boolean);
@@ -71,11 +72,17 @@ export async function GET(req, { params }) {
 
         return {
           menteeId: mentee._id,
-          userId: mentee.user,
+          userId: mentee.user?._id,
+
+          // ✅ الاسم والمكان الصح
+          full_name: mentee.user?.full_name || "Unknown",
+          Country: mentee.user?.Country || "Not specified",
+          profile_photo: mentee.user?.profile_photo || null,
+
           skills: menteeSkillNames,
           matchScore: score,
           matchedSkills: matched,
-          performanceScore: 0,
+          performanceScore: mentee.overall_score || 0,
         };
       })
       .filter((m) => m.matchScore > 0)
