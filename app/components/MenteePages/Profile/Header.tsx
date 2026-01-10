@@ -108,7 +108,8 @@ export default function Header({
             ) : (
               data.area_of_expertise?.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {data.area_of_expertise.map((tag: string) => (
+                  {console.log('Type of data.area_of_expertise:', typeof data.area_of_expertise, 'Value:', data.area_of_expertise)}
+                  {(Array.isArray(data.area_of_expertise) ? data.area_of_expertise : []).map((tag: string) => (
                     <Badge
                       key={tag}
                       className={

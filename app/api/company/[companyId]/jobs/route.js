@@ -36,72 +36,10 @@ export async function GET(req, ctx) {
       );
     }
 
-    const userId = companyExists.user.toString();
-
-    let jobs = await Job.find({ companyId }).sort({ createdAt: -1 });
-    const now = new Date();
-
-    for (const job of jobs) {
-      /* ============================================
-         🔔 Deadline Reminders
-      ===============================================*/
-      if (job.deadline && job.status === "active") {
-        const deadline = new Date(job.deadline);
-        const diffMs = deadline.getTime() - now.getTime();
-        const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-        // 🔔 3 days before
-        if (diffDays === 3 && !job.reminder3DaysSent) {
-          await sendNotification({
-            userId,
-            title: "Job Deadline Coming Soon",
-            message: `Your job "${job.title}" will expire in 3 days.`,
-            type: "job",
-            redirectTo: "/company?tab=jobs",
-          });
-
-          job.reminder3DaysSent = true;
-          await job.save();
-        }
-
-        // 🔔 1 day before
-        if (diffDays === 1 && !job.reminder1DaySent) {
-          await sendNotification({
-            userId,
-            title: "Job Ending Tomorrow",
-            message: `Your job "${job.title}" will expire tomorrow.`,
-            type: "job",
-            redirectTo: "/company?tab=jobs",
-          });
-
-          job.reminder1DaySent = true;
-          await job.save();
-        }
-      }
-
-      /* ============================================
-         ⛔ Auto Close Expired Jobs
-      ===============================================*/
-      const expired =
-        job.deadline &&
-        new Date(job.deadline) < now &&
-        job.status === "active";
-
-      if (expired) {
-        job.status = "closed";
-        await job.save();
-
-        await sendNotification({
-          userId,
-          title: "Job Closed Automatically",
-          message: `Your job "${job.title}" has expired and was automatically closed.`,
-          type: "job",
-          redirectTo: "/company?tab=jobs",
-        });
-      }
-    }
-
-    jobs = await Job.find({ companyId }).sort({ createdAt: -1 });
+    // Simply return jobs without any deadline checking
+    // Deadline notifications are now handled by the cron job
+    const jobs = await Job.find({ companyId }).sort({ createdAt: -1 });
+    
     return NextResponse.json({ ok: true, jobs });
   } catch (err) {
     console.error("Get Jobs Error:", err);

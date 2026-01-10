@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import DashboardJobsTable from "./DashboardJobsTable";
 import ApplicantsBarChart from "./ApplicantsBarChart";
+import TalentRecommendations from "./TalentRecommendations";
+import JobsTimelineChart from "./JobsTimelineChart";
 
 type Theme = "dark" | "light";
 
@@ -102,8 +104,13 @@ export default function JobsOverview({
 
   return (
     <div className="space-y-10">
+       {/* ================= CHART ================= */}
+              <JobsTimelineChart jobs={jobs} theme={theme} />
+        
       {/* ================= TOP STATS ================= */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+         
         {/* Active Jobs */}
         <div className={card}>
           <div className="flex gap-3 items-center">
@@ -194,8 +201,11 @@ export default function JobsOverview({
         onSelectJob={onSelectJob}
       />
 
+  
       {/* ================= CHART ================= */}
       <ApplicantsBarChart jobs={jobs} theme={theme} />
+
+    
 
       {/* ================= MOST / LEAST ================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
