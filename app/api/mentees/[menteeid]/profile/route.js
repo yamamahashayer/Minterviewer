@@ -61,7 +61,7 @@ export async function GET(req, ctx) {
       ? await User.findById(mentee.user).select("-password_hash").lean()
       : null;
 
-    // Auto-populate skills from AI interviews
+    // Sync skills from AI interviews (adds old interview skills + new ones and persists)
     try {
       const AiInterview = (await import('@/models/AiInterview')).default;
 
@@ -109,13 +109,28 @@ export async function GET(req, ctx) {
             name,
             level: data.scores.length > 0
               ? Math.round(data.scores.reduce((a, b) => a + b, 0) / data.scores.length)
-              : 0
+              : 0,
+            samples: data.attempts,
+            updated_at: new Date()
           }))
-          .filter(skill => skill.level > 0) // Remove skills with 0% score
           .sort((a, b) => b.level - a.level); // Sort by level descending
 
-        // Update mentee with skills
-        mentee.skills = skillsArray;
+        const stored = Array.isArray(mentee.skills) ? mentee.skills : [];
+        const storedNames = new Set(stored.map(s => String(s?.name || '').toLowerCase()).filter(Boolean));
+        const computedNames = new Set(skillsArray.map(s => String(s?.name || '').toLowerCase()).filter(Boolean));
+        const shouldSync = stored.length === 0 || skillsArray.length > stored.length || [...computedNames].some(n => !storedNames.has(n));
+
+        if (shouldSync) {
+          // Update mentee with skills
+          mentee.skills = skillsArray;
+
+          // Persist synced skills so previous interviews are stored in Mentees collection
+          await safeUpdate(
+            Mentee,
+            { _id: menteeId },
+            { $set: { skills: skillsArray } }
+          );
+        }
       }
     } catch (err) {
       console.error('Error populating skills from AI interviews:', err);
