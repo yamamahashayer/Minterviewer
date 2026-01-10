@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronRight, BarChart3, Users, Briefcase } from "lucide-react";
 import ApplicantsList from "@/app/components/CompanyPages/Jobs/ApplicantsList";
+import ApplicationManager from "@/app/components/CompanyPages/Jobs/ApplicationManager";
+import ApplicationAnalytics from "@/app/components/CompanyPages/Jobs/ApplicationAnalytics";
+import JobInfoCard from "@/app/components/CompanyPages/Jobs/JobInfoCard";
 import PublicMenteeProfile from "@/app/components/PublicProfiles/PublicMenteeProfile";
 import TalentRecommendations from "@/app/components/CompanyPages/Jobs/TalentRecommendations";
 
@@ -15,6 +18,8 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
   const [openJobId, setOpenJobId] = useState<string | null>(null);
   const [applicants, setApplicants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"applicants" | "analytics">("applicants");
+  const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set());
 
   // ⭐⭐ أهم state
   const [selectedMenteeId, setSelectedMenteeId] = useState<string | null>(null);
@@ -62,6 +67,32 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
 
     const data = await res.json();
     setApplicants(data.ok ? data.applicants : []);
+  };
+
+  const refreshApplicants = () => {
+    if (openJobId) {
+      const job = jobs.find(j => j._id === openJobId);
+      if (job) handleOpenJob(job);
+    }
+  };
+
+  const getCompanyId = () => {
+    const raw = sessionStorage.getItem("user");
+    if (!raw) return null;
+    const user = JSON.parse(raw);
+    return user.companyId;
+  };
+
+  const toggleJobExpansion = (jobId: string) => {
+    setExpandedJobs(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(jobId)) {
+        newSet.delete(jobId);
+      } else {
+        newSet.add(jobId);
+      }
+      return newSet;
+    });
   };
 
   /* ======================================================
@@ -146,70 +177,134 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
         </div>
       </div>
 
-      {/* PAGE CONTENT */}
-      <div className="space-y-6">
-      {/* ================= TALENT RECOMMENDATIONS ================= */}
-              {jobs.length > 0 && (
-                <TalentRecommendations
-                  job={jobs[0]} // Show recommendations for the most recent/first job
-                  theme={theme}
-                  onViewProfile={(menteeId) => {
-                    // TODO: Navigate to mentee profile
-                    console.log('View mentee profile:', menteeId);
-                  }}
-                  onInviteToApply={(menteeId) => {
-                    // TODO: Implement invite to apply functionality
-                    console.log('Invite to apply:', menteeId);
-                  }}
-                />
-              )}
-
-      {/* JOBS LIST */}
-      {jobs.map((job) => {
-        const isOpen = openJobId === job._id;
-
-        return (
-          <div
-            key={job._id}
-            className={`rounded-xl border overflow-hidden ${
-              isDark
-                ? "bg-[#020617] border-[#1e293b]"
-                : "bg-white border-gray-200"
+      {/* TAB NAVIGATION */}
+      <div className="mb-8">
+        <div
+          className={`inline-flex rounded-xl p-1 gap-1 ${
+            isDark
+              ? "bg-white/5 border border-white/10"
+              : "bg-gray-100 border border-gray-200"
+          }`}
+        >
+          <button
+            onClick={() => setViewMode("applicants")}
+            className={`px-6 py-3 rounded-lg font-medium transition-all ${
+              viewMode === "applicants"
+                ? isDark
+                  ? "bg-purple-500 text-white"
+                  : "bg-purple-600 text-white"
+                : isDark
+                ? "text-gray-300 hover:text-white hover:bg-white/5"
+                : "text-gray-600 hover:text-black hover:bg-gray-200"
             }`}
           >
-            <button
-              onClick={() => handleOpenJob(job)}
-              className={`w-full flex items-center justify-between p-5 text-left ${
-                isDark ? "hover:bg-[#1e293b]" : "hover:bg-gray-50"
-              }`}
-            >
-              <div>
-                <p className="font-semibold">{job.title}</p>
-                <p className="text-sm opacity-60">
-                  {job.applicants?.length || 0} applicant(s)
-                </p>
-              </div>
+            <Users className="w-4 h-4 inline mr-2" />
+            Applicants Management
+          </button>
+          
+          <button
+            onClick={() => setViewMode("analytics")}
+            className={`px-6 py-3 rounded-lg font-medium transition-all ${
+              viewMode === "analytics"
+                ? isDark
+                  ? "bg-purple-500 text-white"
+                  : "bg-purple-600 text-white"
+                : isDark
+                ? "text-gray-300 hover:text-white hover:bg-white/5"
+                : "text-gray-600 hover:text-black hover:bg-gray-200"
+            }`}
+          >
+            <BarChart3 className="w-4 h-4 inline mr-2" />
+            Analytics Dashboard
+          </button>
+        </div>
+      </div>
 
-              {isOpen ? <ChevronDown /> : <ChevronRight />}
-            </button>
+      {/* PAGE CONTENT */}
+      <div className="space-y-6">
+        {/* ================= ANALYTICS VIEW ================= */}
+        {viewMode === "analytics" && (
+          <ApplicationAnalytics jobs={jobs} theme={theme} />
+        )}
 
-            {isOpen && (
-              <div className="p-6">
-                <ApplicantsList
-                  applicants={applicants}
-                  job={job}
-                  theme={theme}
-                  onViewProfile={(id) => setSelectedMenteeId(id)}
-                  onBack={() => {
-                    setOpenJobId(null);
-                    setApplicants([]);
-                  }}
-                />
-              </div>
-            )}
-          </div>
-        );
-      })}
+        {/* ================= APPLICANTS MANAGEMENT VIEW ================= */}
+        {viewMode === "applicants" && (
+          <>
+            {/* ================= TALENT RECOMMENDATIONS ================= */}
+            {/* {jobs.length > 0 && (
+              <TalentRecommendations
+                job={jobs[0]} // Show recommendations for the most recent/first job
+                theme={theme}
+                onViewProfile={(menteeId) => {
+                  setSelectedMenteeId(menteeId);
+                }}
+                onInviteToApply={(menteeId) => {
+                  console.log('Invite to apply:', menteeId);
+                }}
+              />
+            )} */}
+
+            {/* JOBS LIST */}
+            {jobs.map((job) => {
+              const isOpen = openJobId === job._id;
+              const isExpanded = expandedJobs.has(job._id);
+
+              return (
+                <div key={job._id} className="space-y-4">
+                  <JobInfoCard
+                    job={job}
+                    theme={theme}
+                    onToggle={() => toggleJobExpansion(job._id)}
+                    isExpanded={isExpanded}
+                    showFullLink={true}
+                  />
+
+                  {/* Only show "Manage Applicants" button when job is expanded */}
+                  {isExpanded && (
+                    <div className="ml-6">
+                      <div className="flex items-center gap-3 mb-4">
+                        <button
+                          onClick={() => handleOpenJob(job)}
+                          className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+                            isOpen
+                              ? isDark
+                                ? "bg-purple-500/20 border-purple-500 text-purple-300"
+                                : "bg-purple-100 border-purple-300 text-purple-700"
+                              : isDark
+                              ? "border-white/20 hover:bg-white/10"
+                              : "border-gray-300 hover:bg-gray-50"
+                          }`}
+                        >
+                          {isOpen ? "Hide Applicants" : "Manage Applicants"}
+                        </button>
+                        
+                        {isOpen && (
+                          <span className={`text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
+                            {applicants.length} applicants
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Only show ApplicationManager when "Manage Applicants" is clicked */}
+                      {isOpen && (
+                        <div className="border-t border-gray-200/20 pt-4">
+                          <ApplicationManager
+                            applicants={applicants}
+                            job={job}
+                            theme={theme}
+                            onViewProfile={(id) => setSelectedMenteeId(id)}
+                            onStatusUpdate={refreshApplicants}
+                            companyId={getCompanyId() || ""}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </>
+        )}
       </div>
     </div>
   );

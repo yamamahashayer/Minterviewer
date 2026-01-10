@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import Job from "@/models/Job";
+import Mentee from "@/models/Mentee";
 
 const unwrapParams = async (ctx) => {
   const p = ctx?.params;
@@ -17,17 +18,39 @@ export async function GET(req, ctx) {
     const p = await unwrapParams(ctx);
     const { companyId, jobId } = p;
 
-    const job = await Job.findOne({
+    // Check if this is for company view (all jobs) or mentee view (active only)
+    const url = new URL(req.url);
+    const view = url.searchParams.get('view'); // 'company' or 'mentee'
+
+    const query = {
       _id: jobId,
       companyId,
-      status: "active", // ✅ لا نرجّع closed jobs
-    });
+      ...(view === 'mentee' && { status: "active" }) // Only filter active for mentee view
+    };
+
+    const job = await Job.findOne(query).populate('companyId');
 
     if (!job) {
       return NextResponse.json(
-        { ok: false, message: "Job not found or closed" },
+        { ok: false, message: "Job not found" },
         { status: 404 }
       );
+    }
+
+    // Populate applicants with mentee information
+    if (job.applicants && job.applicants.length > 0) {
+      const menteeIds = job.applicants.map(applicant => applicant.menteeId).filter(Boolean);
+      const mentees = await Mentee.find({ _id: { $in: menteeIds } });
+      
+      const menteeMap = mentees.reduce((map, mentee) => {
+        map[mentee._id.toString()] = mentee;
+        return map;
+      }, {});
+      
+      job.applicants = job.applicants.map(applicant => ({
+        ...applicant.toObject(),
+        mentee: applicant.menteeId ? menteeMap[applicant.menteeId.toString()] : null
+      }));
     }
 
     return NextResponse.json({ ok: true, job });
