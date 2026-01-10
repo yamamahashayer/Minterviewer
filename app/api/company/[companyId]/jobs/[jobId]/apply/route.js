@@ -120,7 +120,7 @@ export async function POST(req, ctx) {
       ownerModel: "Mentee",
       owner: menteeId,
       type: "achievement",
-      title: `Applied for ${job.title} at ${companyName}`,
+      title: `Applied for ${job.title}`,
     });
 
     return NextResponse.json({ ok: true });
