@@ -30,11 +30,62 @@ export default function ApplicantsList({
   const showCV = job?.enableCVAnalysis === true;
   const showInterview = job?.interviewType && job.interviewType !== "none";
 
+  /* ================= SCORE READING HELPERS ================= */
+  const getInterviewScore = (applicant: any): number => {
+    // The API now returns interviewScore from interview.overallScore
+    if (applicant.interviewScore !== undefined && applicant.interviewScore !== null) {
+      return applicant.interviewScore;
+    }
+    // Check for overallScore at the root level (as seen in MongoDB document)
+    if (applicant.overallScore !== undefined && applicant.overallScore !== null) {
+      return applicant.overallScore;
+    }
+    // Check for interview object with overallScore (if populated)
+    if (applicant.interview?.overallScore !== undefined && applicant.interview?.overallScore !== null) {
+      return applicant.interview.overallScore;
+    }
+    // Check for evaluation.interviewScore (new structure)
+    if (applicant.evaluation?.interviewScore !== undefined && applicant.evaluation?.interviewScore !== null) {
+      return applicant.evaluation.interviewScore;
+    }
+    return 0;
+  };
+
+  const getCVScore = (applicant: any): number => {
+    // CV scores were read directly in the working version
+    if (applicant.cvScore !== undefined && applicant.cvScore !== null) {
+      return applicant.cvScore;
+    }
+    // Fallback to evaluation.cvScore for new structure
+    if (applicant.evaluation?.cvScore !== undefined && applicant.evaluation?.cvScore !== null) {
+      return applicant.evaluation.cvScore;
+    }
+    return 0;
+  };
+
+  const getATSScore = (applicant: any): number | null => {
+    // ATS scores were read directly in the working version
+    if (applicant.atsScore !== undefined && applicant.atsScore !== null) {
+      return applicant.atsScore;
+    }
+    // Fallback to evaluation.atsScore for new structure
+    if (applicant.evaluation?.atsScore !== undefined && applicant.evaluation?.atsScore !== null) {
+      return applicant.evaluation.atsScore;
+    }
+    return null;
+  };
+
+  const hasInterviewScore = (applicant: any): boolean => {
+    return applicant.evaluation?.interviewScore !== undefined && applicant.evaluation?.interviewScore !== null ||
+           applicant.interviewScore !== undefined && applicant.interviewScore !== null;
+  };
+
   /* ================= PERFORMANCE SCORE CALCULATION ================= */
   const applicantsWithScores = useMemo(() => {
     return applicants.map(applicant => {
-      const cvScore = applicant.cvScore || 0;
-      const interviewScore = applicant.evaluation?.interviewScore || 0;
+      const cvScore = getCVScore(applicant);
+      const interviewScore = getInterviewScore(applicant);
+      const atsScore = getATSScore(applicant);
       
       // Calculate unified performance score
       let performanceScore = 0;
@@ -52,7 +103,7 @@ export default function ApplicantsList({
       
       // If only one type of evaluation is available, use it as 100%
       if (scoreComponents === 0) {
-        performanceScore = 0;
+        performanceScore = 0; // No scores available
       } else if (scoreComponents < 1) {
         performanceScore = performanceScore / scoreComponents;
       }
@@ -61,7 +112,8 @@ export default function ApplicantsList({
         ...applicant,
         performanceScore: Math.round(performanceScore),
         cvScore,
-        interviewScore
+        interviewScore,
+        atsScore
       };
     });
   }, [applicants, showCV, showInterview]);
@@ -424,11 +476,11 @@ export default function ApplicantsList({
                   )}
                   {showInterview && (
                     <Td>
-                      {a.evaluation?.interviewScore ? (
+                      {hasInterviewScore(a) ? (
                         <div className="flex items-center gap-2">
                           <Award size={14} className="text-yellow-500" />
                           <span className="font-bold">
-                            {a.evaluation.interviewScore}
+                            {getInterviewScore(a)}
                           </span>
                         </div>
                       ) : (

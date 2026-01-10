@@ -204,7 +204,7 @@ export default function ApplyJobPage() {
     setLoading(false);
 
     if (res.ok) {
-      router.push("/mentee/jobs?applied=true");
+     router.push("/mentee?tab=explore-jobs&applied=true");
     } else {
       const j = await res.json();
       setError(j?.message || "Failed to submit application");

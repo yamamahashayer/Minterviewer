@@ -4,6 +4,8 @@ import connectDB from "@/lib/mongodb";
 import Job from "@/models/Job";
 import Mentee from "@/models/Mentee";
 import CvAnalysis from "@/models/CvAnalysis";
+import JobInterview from "@/models/JobInterview";
+import AiInterview from "@/models/AiInterview";
 import "@/models/User";
 
 export const dynamic = "force-dynamic";
@@ -40,6 +42,9 @@ export async function GET(req, ctx) {
     const analysisIds = job.applicants
       .map((a) => a.analysisId)
       .filter(Boolean);
+    const interviewIds = job.applicants
+      .map((a) => a.interviewId)
+      .filter(Boolean);
 
     /* ================= MENTEES ================= */
     const mentees = await Mentee.find({ _id: { $in: menteeIds } })
@@ -53,6 +58,19 @@ export async function GET(req, ctx) {
       _id: { $in: analysisIds },
     }).lean();
 
+    // Fetch interviews
+    const interviews = await JobInterview.find({
+      _id: { $in: interviewIds }
+    }).lean();
+    
+    // Fallback to AiInterview for older records
+    const legacyInterviews = await AiInterview.find({
+      _id: { $in: interviewIds }
+    }).lean();
+
+    // Combine interviews
+    const allInterviews = [...interviews, ...legacyInterviews];
+
     /* ================= MAPS ================= */
     const menteeMap = new Map(
       mentees.map((m) => [m._id.toString(), m])
@@ -62,11 +80,18 @@ export async function GET(req, ctx) {
       analyses.map((a) => [a._id.toString(), a])
     );
 
+    const interviewMap = new Map(
+      allInterviews.map((i) => [i._id.toString(), i])
+    );
+
     /* ================= RESPONSE ================= */
     const applicants = job.applicants.map((app) => {
       const mentee = menteeMap.get(app.menteeId.toString());
       const analysis = app.analysisId
         ? analysisMap.get(app.analysisId.toString())
+        : null;
+      const interview = app.interviewId
+        ? interviewMap.get(app.interviewId.toString())
         : null;
 
       return {
@@ -86,7 +111,7 @@ export async function GET(req, ctx) {
 
         cvScore: analysis?.score ?? null,
         atsScore: analysis?.atsScore ?? null,
-        interviewScore: app.evaluation?.interviewScore ?? null,
+        interviewScore: app.evaluation?.interviewScore ?? interview?.overallScore ?? null,
 
         analysisId: app.analysisId || null,
         interviewId: app.interviewId || null,
