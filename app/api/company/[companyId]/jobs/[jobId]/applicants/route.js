@@ -106,6 +106,7 @@ export async function GET(req, ctx) {
             email: mentee.user?.email || "",
             phoneNumber: mentee.user?.phoneNumber || "",
             Country: mentee.user?.Country || "",
+            overall_score: mentee.overall_score || 0,
           }
           : null,
 

@@ -87,26 +87,8 @@ export default function ApplicantsList({
       const interviewScore = getInterviewScore(applicant);
       const atsScore = getATSScore(applicant);
       
-      // Calculate unified performance score
-      let performanceScore = 0;
-      let scoreComponents = 0;
-      
-      if (showCV) {
-        performanceScore += cvScore * 0.4;
-        scoreComponents += 0.4;
-      }
-      
-      if (showInterview) {
-        performanceScore += interviewScore * 0.6;
-        scoreComponents += 0.6;
-      }
-      
-      // If only one type of evaluation is available, use it as 100%
-      if (scoreComponents === 0) {
-        performanceScore = 0; // No scores available
-      } else if (scoreComponents < 1) {
-        performanceScore = performanceScore / scoreComponents;
-      }
+      // Use mentee's overall_score instead of calculated performance
+      const performanceScore = applicant.mentee?.overall_score || 0;
       
       return {
         ...applicant,
