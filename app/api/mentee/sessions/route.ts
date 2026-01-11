@@ -5,6 +5,7 @@ import Session from '@/models/Session';
 import Mentor from '@/models/Mentor';
 import Mentee from '@/models/Mentee';
 import User from '@/models/User';
+import CompanyInterview from '@/models/CompanyInterview';
 import mongoose from 'mongoose';
 
 export async function GET(req: Request) {
@@ -100,7 +101,7 @@ export async function GET(req: Request) {
             }
         }
 
-        const events = timeSlots.map(slot => {
+        const timeSlotEvents = timeSlots.map(slot => {
             const validDate = slot.startTime ? new Date(slot.startTime) : new Date();
 
             return {
@@ -115,9 +116,55 @@ export async function GET(req: Request) {
                 description: slot.notes || '',
                 status: slot.status === 'booked' ? 'upcoming' : 'available',
                 reminder: false,
-                meetingLink: null // TimeSlot doesn't have meeting link
+                meetingLink: null, // TimeSlot doesn't have meeting link
+                startTime: validDate.toISOString()
             };
         });
+
+        // Company interviews (scheduled between company and mentee)
+        let companyInterviewEvents: any[] = [];
+        if (mongoose.isValidObjectId(menteeId)) {
+            const companyInterviews = await CompanyInterview.find({
+                menteeId: new mongoose.Types.ObjectId(menteeId)
+            })
+                .populate({ path: 'companyId', select: 'name' })
+                .populate({ path: 'jobId', select: 'title' })
+                .sort({ scheduledStart: 1 })
+                .lean();
+
+            companyInterviewEvents = companyInterviews.map((i: any) => {
+                const start = i.scheduledStart ? new Date(i.scheduledStart) : new Date();
+                const status = i.status === 'cancelled'
+                    ? 'cancelled'
+                    : i.status === 'completed'
+                        ? 'completed'
+                        : 'upcoming';
+
+                const title = `Company Interview: ${i.jobId?.title || 'Interview'}`;
+                const interviewer = i.companyId?.name || 'Company';
+
+                return {
+                    id: i._id,
+                    title,
+                    type: 'behavioral',
+                    date: start.toLocaleDateString('en-CA'),
+                    time: start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    duration: (i.duration || 60) + ' min',
+                    interviewer,
+                    interviewerId: undefined,
+                    description: i.notes || '',
+                    status,
+                    reminder: false,
+                    meetingLink: i.meetingLink || null,
+                    startTime: start.toISOString()
+                };
+            });
+        }
+
+        const events = [...timeSlotEvents, ...companyInterviewEvents]
+            .sort((a, b) => {
+                return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+            });
 
         return NextResponse.json({ success: true, events });
     } catch (error: any) {

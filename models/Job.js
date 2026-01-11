@@ -4,6 +4,7 @@ const ApplicantSchema = new Schema({
   menteeId: { type: Schema.Types.ObjectId, ref: "Mentee", required: true },
   analysisId: { type: Schema.Types.ObjectId, ref: "CvAnalysis" },
   interviewId: { type: Schema.Types.ObjectId, ref: "JobInterview" },
+  companyInterviewId: { type: Schema.Types.ObjectId, ref: "CompanyInterview" },
 
   status: {
     type: String,
