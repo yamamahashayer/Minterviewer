@@ -91,8 +91,19 @@ export async function GET(req: Request) {
             }
         });
 
-        const averageScore = validScoreCount > 0 ? (totalScoreSum / validScoreCount).toFixed(1) : 0;
+        const averageScore = validScoreCount > 0 ? Number((totalScoreSum / validScoreCount).toFixed(1)) : 0;
         const totalHours = (totalDurationSeconds / 3600).toFixed(1);
+
+        const storedOverallScore = typeof (mentee as any).overall_score === "number"
+            ? Number(((mentee as any).overall_score as number).toFixed(1))
+            : 0;
+
+        if (averageScore !== storedOverallScore) {
+            await Mentee.updateOne(
+                { _id: menteeId },
+                { $set: { overall_score: averageScore } }
+            );
+        }
 
         // Fetch TimeSlots for this mentee to calculate session-based stats
         const TimeSlot = (await import('@/models/TimeSlot')).default;
