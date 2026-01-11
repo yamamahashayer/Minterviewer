@@ -28,10 +28,10 @@ export default function PublicMenteeProfile({
       .then(setData);
   }, [menteeId]);
 
-  if (!data) return <div className="p-6">Loading…</div>;
+  if (!data) return <div className={`p-6 ${isDark ? "text-white bg-gray-900" : "text-gray-900 bg-gray-50"}`}>Loading…</div>;
 
 return (
-  <div className="max-w-6xl mx-auto p-6 space-y-6">
+  <div className={`max-w-6xl mx-auto p-6 space-y-6 ${isDark ? "text-white bg-gray-900" : "text-gray-900 bg-gray-50"}`}>
 
     {/* 🔙 BACK */}
     {onBack && (
@@ -51,19 +51,21 @@ return (
     )}
 
     {/* Header */}
-    <Header
-      profile={data.profile}
-      editedProfile={data.profile}
-      isDark={isDark}
-      readOnly
-      targetUserId={data.profile.userId}
-    />
+    {data?.profile && (
+      <Header
+        profile={data.profile}
+        editedProfile={data.profile}
+        isDark={isDark}
+        readOnly
+        targetUserId={data.profile.userId}
+      />
+    )}
 
     {/* Stats */}
     {/* <StatsSection stats={stats} isDark={isDark} /> */}
 
     {/* Skills */}
-    <SkillsSection profile={data.profile} isDark={isDark} />
+    {data?.profile && <SkillsSection profile={data.profile} isDark={isDark} />}
 
   </div>
 );
