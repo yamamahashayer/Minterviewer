@@ -15,4 +15,8 @@ const aiReportSchema = new mongoose.Schema(
   { timestamps: { createdAt: 'created_at', updatedAt: false } }
 );
 
-export default mongoose.model('AiReport', aiReportSchema);
+// Fix: Check if model exists before creating it
+// This prevents the "Cannot overwrite model" error in development
+const AiReport = mongoose.models.AiReport || mongoose.model('AiReport', aiReportSchema);
+
+export default AiReport;

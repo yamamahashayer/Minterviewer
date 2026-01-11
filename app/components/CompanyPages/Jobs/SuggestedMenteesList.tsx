@@ -22,6 +22,8 @@ interface RecommendedMentee {
   performanceScore: number;
   full_name?: string;
   Country?: string;
+  email?: string | null;
+  phoneNumber?: string | null;
 }
 
 export default function SuggestedMenteesList({
@@ -56,7 +58,17 @@ export default function SuggestedMenteesList({
         );
 
         if (!response.ok) {
-          throw new Error('Failed to fetch suggestions');
+          // Try to get error details from response
+          let errorMessage = 'Failed to fetch suggestions';
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+            console.error('Server error:', errorData);
+          } catch (parseError) {
+            console.error('Response not JSON, status:', response.status, response.statusText);
+            errorMessage = `Server error: ${response.status} ${response.statusText}`;
+          }
+          throw new Error(errorMessage);
         }
 
         const data = await response.json();
@@ -169,8 +181,8 @@ export default function SuggestedMenteesList({
         _id: suggestion.menteeId,
         full_name: suggestion.full_name,
         Country: suggestion.Country,
-        email: null, // AI suggestions don't have email
-        phoneNumber: null, // AI suggestions don't have phone
+        email: suggestion.email,
+        phoneNumber: suggestion.phoneNumber,
       },
       cvScore: null, // AI suggestions don't have CV analysis yet
       interviewScore: null, // AI suggestions don't have interviews yet
@@ -187,6 +199,71 @@ export default function SuggestedMenteesList({
       return b.performanceScore - a.performanceScore;
     });
   }, [calculateRecommendations, sortBy]);
+
+  // Helper function to generate reason for suggestion
+  const generateSuggestionReason = (recommendation: any) => {
+    const { matchScore, matchedSkills, interviewReadiness, aiInsights, totalInterviews } = recommendation;
+    const reasons = [];
+    
+    // Skill matching reason
+    if (matchedSkills.length > 0) {
+      if (matchScore >= 70) {
+        reasons.push(`Strong skill alignment with ${matchedSkills.length} key skills`);
+      } else if (matchScore >= 50) {
+        reasons.push(`Good skill match with ${matchedSkills.length} relevant skills`);
+      } else {
+        reasons.push(`Partial skill match with ${matchedSkills.length} skills`);
+      }
+    }
+    
+    // Interview data reasons
+    if (interviewReadiness?.interviewCount > 0) {
+      if (interviewReadiness.readinessScore >= 70) {
+        reasons.push(`Proven interview readiness with ${interviewReadiness.interviewCount} completed interviews`);
+      } else if (interviewReadiness.readinessScore >= 50) {
+        reasons.push(`Demonstrated interview capability across ${interviewReadiness.interviewCount} interviews`);
+      } else {
+        reasons.push(`Has completed ${interviewReadiness.interviewCount} interviews`);
+      }
+      
+      // Add average performance details
+      if (interviewReadiness.avgOverallScore >= 80) {
+        reasons.push(`Excellent interview performance (${interviewReadiness.avgOverallScore}% average)`);
+      } else if (interviewReadiness.avgOverallScore >= 60) {
+        reasons.push(`Good interview performance (${interviewReadiness.avgOverallScore}% average)`);
+      }
+      
+      // Add relevance info if available
+      if (interviewReadiness.relevanceInfo?.relevantInterviews > 0) {
+        const { relevantInterviews, totalInterviews, avgRelevanceScore } = interviewReadiness.relevanceInfo;
+        if (avgRelevanceScore >= 70) {
+          reasons.push(`${relevantInterviews} highly relevant interviews (${avgRelevanceScore}% relevance)`);
+        } else if (avgRelevanceScore >= 50) {
+          reasons.push(`${relevantInterviews} relevant interviews (${avgRelevanceScore}% relevance)`);
+        }
+      }
+    } else {
+      reasons.push('No interview history yet');
+    }
+    
+    // AI insights reason
+    if (aiInsights?.reportCount > 0) {
+      if (aiInsights.aiInsightScore >= 70) {
+        reasons.push(`Strong AI assessment results from ${aiInsights.reportCount} reports`);
+      } else if (aiInsights.aiInsightScore >= 50) {
+        reasons.push(`Positive AI insights from ${aiInsights.reportCount} reports`);
+      } else {
+        reasons.push(`${aiInsights.reportCount} AI analysis reports available`);
+      }
+    }
+    
+    // If no specific reasons, provide a default
+    if (reasons.length === 0) {
+      reasons.push('Potential candidate based on profile analysis');
+    }
+    
+    return reasons.join('. ') + '.';
+  };
 
   // Helper components for table (matching ApplicantsList)
   function Th({ children, className = "" }: { children: React.ReactNode; className?: string }) {
@@ -568,11 +645,11 @@ export default function SuggestedMenteesList({
             }`}
           >
             <tr>
-              <Th>Candidate</Th>
+              <Th>Mentee</Th>
               <Th>Contact</Th>
               <Th>Match Score</Th>
-              <Th>Performance</Th>
               <Th>Matched Skills</Th>
+              <Th>Reason for Suggestion</Th>
               <Th className="text-center">Actions</Th>
             </tr>
           </thead>
@@ -600,13 +677,21 @@ export default function SuggestedMenteesList({
                   </Td>
 
                   <Td className="text-xs space-y-1">
-                    <div className="flex items-center gap-2 opacity-40">
+                    <div className="flex items-center gap-2">
                       <Mail size={13} />
-                      Email not available
+                      {m?.email ? (
+                        <span className="truncate">{m.email}</span>
+                      ) : (
+                        <span className="opacity-40">Email not available</span>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 opacity-40">
+                    <div className="flex items-center gap-2">
                       <Phone size={13} />
-                      Phone not available
+                      {m?.phoneNumber ? (
+                        <span>{m.phoneNumber}</span>
+                      ) : (
+                        <span className="opacity-40">Phone not available</span>
+                      )}
                     </div>
                   </Td>
 
@@ -621,16 +706,6 @@ export default function SuggestedMenteesList({
                       {recommendation.matchScore}%
                     </div>
                     <div className="text-xs opacity-60">Skill Match</div>
-                  </Td>
-
-                  <Td>
-                    <div className="flex items-center gap-2">
-                      <Star size={14} className="text-yellow-500" />
-                      <span className="font-bold">
-                        {recommendation.performanceScore}%
-                      </span>
-                    </div>
-                    <div className="text-xs opacity-60">Performance</div>
                   </Td>
 
                   <Td>
@@ -658,6 +733,12 @@ export default function SuggestedMenteesList({
                           +{recommendation.matchedSkills.length - 3} more
                         </span>
                       )}
+                    </div>
+                  </Td>
+
+                  <Td>
+                    <div className={`text-sm ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+                      {generateSuggestionReason(recommendation)}
                     </div>
                   </Td>
 
