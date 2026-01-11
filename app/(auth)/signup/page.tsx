@@ -280,16 +280,22 @@ export default function SignUp() {
         transition={{ duration: 0.6 }}
         className="relative z-10 w-full max-w-lg"
       >
+
+
+          <div className="relative z-10 w-full max-w-lg pt-4">
+          <img
+            src="/Covring2.png"
+            alt="Minterviewer Logo"
+            className="mx-auto mb-8 w-80  h-auto opacity-95"
+          />
+          </div>
         <Card className="bg-[#0d1425]/90 backdrop-blur-xl border border-[#00FFB2]/20 shadow-2xl rounded-2xl p-8">
 
+
+         
           {/* HEADER */}
           <div className="text-center mb-6">
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[#00FFB2] to-[#00d4a0] flex items-center justify-center">
-                <Sparkles className="w-6 h-6 text-[#0d1425]" />
-              </div>
-              <h1 className="text-white text-3xl tracking-tight">Minterviewer</h1>
-            </div>
+            
             <p className="text-gray-300 text-sm">
               Create your account — Step {currentStep} of 3
             </p>

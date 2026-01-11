@@ -99,16 +99,15 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-md">
 
-        <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-[#00FFB2] blur-xl opacity-50 rounded-full" />
-              <div className="relative bg-gradient-to-br from-[#00FFB2] to-teal-500 p-3 rounded-2xl">
-                <Brain className="w-8 h-8 text-[#0a192f]" />
-              </div>
-            </div>
-            <h1 className="text-white text-3xl tracking-tight">Minterviewer</h1>
-          </div>
+        <div className="relative z-10 w-full max-w-md pt-20">
+  
+          <img
+            src="/Covring2.png"
+            alt="Minterviewer Logo"
+            className="mx-auto mb-8 w-72 h-auto opacity-95"
+          />
+
+
         </div>
 
         <Card className="border-[#00FFB2]/20 bg-[#0a192f]/80 backdrop-blur-xl shadow-2xl shadow-[#00FFB2]/10">
@@ -129,7 +128,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-[#112240] border-gray-700 text-white"
+                  className="bg-[#112240] border-gray-700 text-white focus:bg-[#112240]/70 focus:border-[#00FFB2]"
                 />
               </div>
 
@@ -145,7 +144,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-[#112240] border-gray-700 text-white"
+                  className="bg-[#112240] border-gray-700 text-white focus:bg-[#112240]/70 focus:border-[#00FFB2]"
                 />
               </div>
 
@@ -153,7 +152,7 @@ export default function LoginPage() {
 
               <Button
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-[#00FFB2] to-teal-500 text-[#0a192f]"
+                className="w-full bg-gradient-to-r from-[#00FFB2] to-teal-500 text-[#0a192f] hover:from-[#00cc8f] hover:to-teal-600"
               >
                 {loading ? 'Signing in…' : 'Sign In'}
               </Button>
