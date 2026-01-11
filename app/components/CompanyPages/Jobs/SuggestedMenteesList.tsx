@@ -193,7 +193,7 @@ export default function SuggestedMenteesList({
   }, [job?.skills, suggestions]);
 
   const sortedRecommendations = useMemo(() => {
-    return [...calculateRecommendations].sort((a, b) => {
+    return [...calculateRecommendations].filter(mentee => mentee.matchScore > 30).sort((a, b) => {
       if (sortBy === "match")
         return b.matchScore - a.matchScore;
       return b.performanceScore - a.performanceScore;
@@ -202,7 +202,7 @@ export default function SuggestedMenteesList({
 
   // Helper function to generate reason for suggestion
   const generateSuggestionReason = (recommendation: any) => {
-    const { matchScore, matchedSkills, interviewReadiness, aiInsights, totalInterviews } = recommendation;
+    const { matchScore, matchedSkills, interviewReadiness, aiInsights } = recommendation;
     const reasons = [];
     
     // Skill matching reason
