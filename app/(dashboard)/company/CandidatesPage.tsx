@@ -8,6 +8,7 @@ import ApplicationAnalytics from "@/app/components/CompanyPages/Jobs/Application
 import JobInfoCard from "@/app/components/CompanyPages/Jobs/JobInfoCard";
 import PublicMenteeProfile from "@/app/components/PublicProfiles/PublicMenteeProfile";
 import TalentRecommendations from "@/app/components/CompanyPages/Jobs/TalentRecommendations";
+import GeneralSuggestedMenteesList from "@/app/components/CompanyPages/Jobs/GeneralSuggestedMenteesList";
 
 type Theme = "dark" | "light";
 
@@ -15,10 +16,11 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
   const isDark = theme === "dark";
 
   const [jobs, setJobs] = useState<any[]>([]);
+  const [company, setCompany] = useState<any>(null);
   const [openJobId, setOpenJobId] = useState<string | null>(null);
   const [applicants, setApplicants] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<"applicants" | "analytics">("applicants");
+  const [viewMode, setViewMode] = useState<"applicants" | "analytics" | "suggestions">("applicants");
   const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set());
 
   // ⭐⭐ أهم state
@@ -34,6 +36,14 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
         const user = JSON.parse(raw);
         const companyId = user.companyId;
 
+        // Fetch company data
+        const companyRes = await fetch(`/api/company/${companyId}`);
+        const companyData = await companyRes.json();
+        if (companyData.ok) {
+          setCompany(companyData.company);
+        }
+
+        // Fetch jobs data
         const res = await fetch(`/api/company/${companyId}/jobs`);
         const data = await res.json();
 
@@ -217,6 +227,22 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
             <BarChart3 className="w-4 h-4 inline mr-2" />
             Analytics Dashboard
           </button>
+
+          <button
+            onClick={() => setViewMode("suggestions")}
+            className={`px-6 py-3 rounded-lg font-medium transition-all ${
+              viewMode === "suggestions"
+                ? isDark
+                  ? "bg-purple-500 text-white"
+                  : "bg-purple-600 text-white"
+                : isDark
+                ? "text-gray-300 hover:text-white hover:bg-white/5"
+                : "text-gray-600 hover:text-black hover:bg-gray-200"
+            }`}
+          >
+            <Users className="w-4 h-4 inline mr-2" />
+            General Suggestions
+          </button>
         </div>
       </div>
 
@@ -225,6 +251,17 @@ export default function CandidatesPage({ theme }: { theme: Theme }) {
         {/* ================= ANALYTICS VIEW ================= */}
         {viewMode === "analytics" && (
           <ApplicationAnalytics jobs={jobs} theme={theme} />
+        )}
+
+        {/* ================= GENERAL SUGGESTIONS VIEW ================= */}
+        {viewMode === "suggestions" && company && (
+          <GeneralSuggestedMenteesList
+            company={company}
+            theme={theme}
+            onViewProfile={(menteeId) => {
+              setSelectedMenteeId(menteeId);
+            }}
+          />
         )}
 
         {/* ================= APPLICANTS MANAGEMENT VIEW ================= */}
