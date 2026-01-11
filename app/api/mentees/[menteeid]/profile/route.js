@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Mentee from "@/models/Mentee";
+import { classifyMenteeSkills } from "@/lib/skills/classifyMenteeSkills";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -50,7 +51,7 @@ export async function GET(req, ctx) {
 
     await connectDB();
 
-    const mentee = await Mentee.findById(menteeId).lean();
+    let mentee = await Mentee.findById(menteeId).lean();
     if (!mentee)
       return NextResponse.json(
         { message: "Mentee not found" },
@@ -122,14 +123,47 @@ export async function GET(req, ctx) {
 
         if (shouldSync) {
           // Update mentee with skills
-          mentee.skills = skillsArray;
-
           // Persist synced skills so previous interviews are stored in Mentees collection
-          await safeUpdate(
+          mentee = await safeUpdate(
             Mentee,
             { _id: menteeId },
             { $set: { skills: skillsArray } }
           );
+        }
+
+        try {
+          const nextSource = skillsArray
+            .map((s) => String(s?.name || "").trim())
+            .filter(Boolean);
+
+          const prevSource = Array.isArray(mentee?.classified_skills?.source)
+            ? mentee.classified_skills.source.map((s) => String(s || "").trim()).filter(Boolean)
+            : [];
+
+          const nextKey = nextSource.map((s) => s.toLowerCase()).sort().join("|");
+          const prevKey = prevSource.map((s) => s.toLowerCase()).sort().join("|");
+
+          const shouldClassify = nextSource.length > 0 && nextKey !== prevKey;
+
+          if (shouldClassify) {
+            const classified = await classifyMenteeSkills({ skills: nextSource });
+
+            mentee = await safeUpdate(
+              Mentee,
+              { _id: menteeId },
+              {
+                $set: {
+                  classified_skills: {
+                    categories: classified.categories,
+                    source: nextSource,
+                    updated_at: new Date(),
+                  },
+                },
+              }
+            );
+          }
+        } catch (err) {
+          console.error("Error classifying mentee skills:", err);
         }
       }
     } catch (err) {

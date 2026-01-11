@@ -3,6 +3,14 @@
 import { Target } from "lucide-react";
 
 export default function SkillsSection({ profile, isDark }: any) {
+  const classifiedCategories = Array.isArray(profile?.classified_skills?.categories)
+    ? profile.classified_skills.categories
+    : [];
+
+  const hasClassified = classifiedCategories.some(
+    (c: any) => String(c?.category || "").trim() && Array.isArray(c?.skills) && c.skills.length > 0
+  );
+
   return (
     <div
       className={`${
@@ -23,7 +31,47 @@ export default function SkillsSection({ profile, isDark }: any) {
       </h3>
 
       <div className="space-y-4">
-        {Array.isArray(profile.skills) && profile.skills.length > 0 ? (
+        {hasClassified ? (
+          <div className="space-y-5">
+            {classifiedCategories.map((c: any, idx: number) => {
+              const title = String(c?.category || "").trim();
+              const skills = Array.isArray(c?.skills) ? c.skills : [];
+              if (!title || skills.length === 0) return null;
+
+              return (
+                <div key={`${title}-${idx}`} className="space-y-2">
+                  <div
+                    className={`${
+                      isDark ? "text-[#d1d5dc]" : "text-[#2e1065]"
+                    } font-semibold`}
+                  >
+                    {title}
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {skills.map((s: any, sIdx: number) => {
+                      const label = String(s || "").trim();
+                      if (!label) return null;
+
+                      return (
+                        <span
+                          key={`${label}-${sIdx}`}
+                          className={`${
+                            isDark
+                              ? "bg-[rgba(255,255,255,0.06)] text-[#e5e7eb] border-[rgba(94,234,212,0.18)]"
+                              : "bg-purple-50 text-[#2e1065] border-purple-200"
+                          } border px-3 py-1 rounded-full text-sm`}
+                        >
+                          {label}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : Array.isArray(profile.skills) && profile.skills.length > 0 ? (
           profile.skills.map((skill: any, index: number) => {
             const lvl = Math.max(0, Math.min(100, Number(skill.level) || 0));
 

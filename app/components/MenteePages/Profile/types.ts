@@ -24,6 +24,11 @@ export type ApiMentee = {
   education?: string;
   company?: string;
   skills?: { name: string; level: number; samples?: number; updated_at?: string }[];
+  classified_skills?: {
+    categories: { category: string; skills: string[] }[];
+    source?: string[];
+    updated_at?: string;
+  };
   time_invested_minutes?: number;
 };
 

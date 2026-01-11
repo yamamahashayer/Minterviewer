@@ -4,6 +4,7 @@ import mongoose, { isValidObjectId } from "mongoose";
 import dbConnect from "@/lib/mongodb";
 import AiInterview from "@/models/AiInterview";
 import Mentee from "@/models/Mentee";
+import { classifyMenteeSkills } from "@/lib/skills/classifyMenteeSkills";
 
 function extractInterviewSkills(interview: any): string[] {
     const raw: string[] = [];
@@ -125,7 +126,7 @@ export async function POST(req: NextRequest) {
         const userObjId = new mongoose.Types.ObjectId(userId);
 
         // Fetch mentee profile (needed to update Mentee.skills and to support both UserID/MenteeID in AiInterview.mentee)
-        let menteeProfile: any = await Mentee.findOne({ user: userObjId }).select("skills").lean();
+        let menteeProfile: any = await Mentee.findOne({ user: userObjId }).select("skills classified_skills").lean();
         if (!menteeProfile) {
             const created = await Mentee.create({ user: userObjId });
             menteeProfile = { _id: created._id, skills: [] };
@@ -202,6 +203,40 @@ export async function POST(req: NextRequest) {
                 { _id: new mongoose.Types.ObjectId(String(menteeProfile._id)) },
                 { $set: { skills: aggregatedSkills } }
             );
+
+            try {
+                const nextSource = aggregatedSkills
+                    .map((s) => String((s as any)?.name || "").trim())
+                    .filter(Boolean);
+
+                const prevSource = Array.isArray(menteeProfile?.classified_skills?.source)
+                    ? (menteeProfile.classified_skills.source as any[]).map((s) => String(s || "").trim()).filter(Boolean)
+                    : [];
+
+                const nextKey = nextSource.map((s) => s.toLowerCase()).sort().join("|");
+                const prevKey = prevSource.map((s) => s.toLowerCase()).sort().join("|");
+
+                const shouldClassify = nextSource.length > 0 && nextKey !== prevKey;
+
+                if (shouldClassify) {
+                    const classified = await classifyMenteeSkills({ skills: nextSource });
+
+                    await Mentee.updateOne(
+                        { _id: new mongoose.Types.ObjectId(String(menteeProfile._id)) },
+                        {
+                            $set: {
+                                classified_skills: {
+                                    categories: classified.categories,
+                                    source: nextSource,
+                                    updated_at: new Date(),
+                                }
+                            }
+                        }
+                    );
+                }
+            } catch (err) {
+                console.error("Error classifying mentee skills:", err);
+            }
         }
 
         /* ========================= Handle Job Application ========================= */
