@@ -62,11 +62,21 @@ export default function Sidebar({
           : "border-[#ddd6fe] bg-white"
           } flex-shrink-0`}
       >
-        <img
-          src="/Covering.png"
-          alt="Minterviewer Cover"
-          className="w-full h-24 object-contain"
-        />
+        {isOpen ? (
+          <img
+            src={isDark ? "/Covering.png" : "/CoveringLight.png"}
+            alt="Minterviewer"
+            className="w-full h-24 object-contain"
+          />
+        ) : (
+          <div className="h-24 flex items-center justify-center">
+            <img
+              src={isDark ? "/MentorHubLogo.png" : "/LogoLight.png"}
+              alt="Minterviewer"
+              className="w-10 h-10 object-contain"
+            />
+          </div>
+        )}
       </div>
 
       {/* Search (شكل فقط) */}

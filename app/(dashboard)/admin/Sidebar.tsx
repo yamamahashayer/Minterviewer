@@ -46,12 +46,22 @@ export default function Sidebar({
                 className={`border-b ${isDark
                     ? "border-[rgba(239,68,68,0.1)] bg-[#0b1020]"
                     : "border-[#fecaca] bg-white"
-                    } flex-shrink-0 flex items-center justify-center p-4`}
+                    } flex-shrink-0`}
             >
                 {isOpen ? (
-                    <h1 className={`text-xl font-bold ${isDark ? "text-red-400" : "text-red-600"}`}>Admin Panel</h1>
+                    <img
+                        src={isDark ? "/Covering.png" : "/CoveringLight.png"}
+                        alt="Minterviewer"
+                        className="w-full h-24 object-contain"
+                    />
                 ) : (
-                    <h1 className={`text-xl font-bold ${isDark ? "text-red-400" : "text-red-600"}`}>A</h1>
+                    <div className="h-24 flex items-center justify-center">
+                        <img
+                            src={isDark ? "/MentorHubLogo.png" : "/LogoLight.png"}
+                            alt="Minterviewer"
+                            className="w-10 h-10 object-contain"
+                        />
+                    </div>
                 )}
             </div>
 
