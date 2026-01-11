@@ -11,6 +11,7 @@ import CandidatesPage from "@/app/(dashboard)/company/CandidatesPage";
 import MessagesPage from "@/app/(dashboard)/company/MessagesPage";
 import SettingsPage from "@/app/(dashboard)/company/SettingsPage";
 import CompanyNotifications from "@/app/(dashboard)/company/NotificationsPage";
+import SchedulePage from "@/app/(dashboard)/company/SchedulePage";
 
 type Theme = "dark" | "light";
 
@@ -44,6 +45,8 @@ export default function CompanyPage() {
         return <JobsPage theme={theme} />;
       case "talent":
         return <CandidatesPage theme={theme} />;
+      case "schedule":
+        return <SchedulePage theme={theme} />;
       case "messages":
         return <MessagesPage theme={theme} />;
       case "notifications":
