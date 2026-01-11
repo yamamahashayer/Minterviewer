@@ -98,11 +98,15 @@ export default function InterviewScheduler({
       };
 
       // Call API to schedule interview
+      const token = sessionStorage.getItem('token');
       const res = await fetch(
         `/api/company/${companyId}/jobs/${job._id}/applicants/${selectedApplicant}/interview/schedule`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({
             date: selectedDate,
             time: selectedTime,
@@ -130,7 +134,10 @@ export default function InterviewScheduler({
   };
 
   const eligibleApplicants = applicants.filter(
-    applicant => applicant.status === "pending" || applicant.status === "interview_pending"
+    applicant =>
+      applicant.status === "pending" ||
+      applicant.status === "interview_pending" ||
+      applicant.status === "shortlisted"
   );
 
   return (
