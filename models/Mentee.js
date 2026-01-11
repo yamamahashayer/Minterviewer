@@ -25,6 +25,17 @@ const menteeSchema = new mongoose.Schema(
       },
     ],
 
+    classified_skills: {
+      categories: [
+        {
+          category: String,
+          skills: [String],
+        },
+      ],
+      source: [String],
+      updated_at: Date,
+    },
+
 
     active: { type: Boolean, default: true },
   },

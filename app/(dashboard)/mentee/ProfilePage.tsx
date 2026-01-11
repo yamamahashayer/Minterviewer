@@ -5,7 +5,6 @@ import { useRouter, useParams } from "next/navigation";
 import { CheckCircle2, TrendingUp, Clock } from "lucide-react";
 
 import Header from "@/app/components/MenteePages/Profile/Header";
-import StatsSection from "@/app/components/MenteePages/Profile/StatsSection";
 import SkillsSection from "@/app/components/MenteePages/Profile/SkillsSection";
 import ActivitySection from "@/app/components/MenteePages/Profile/ActivitySection";
 import MenteeBackgroundSection from "@/app/components/Background/MenteeBackgroundSection";
@@ -35,6 +34,11 @@ type ApiMentee = {
   education?: string;
   company?: string;
   skills?: { name: string; level: number }[];
+  classified_skills?: {
+    categories: { category: string; skills: string[] }[];
+    source?: string[];
+    updated_at?: string;
+  };
   time_invested_minutes?: number;
 };
 
@@ -61,6 +65,7 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
   education: "—",
   active: true,
   skills: [] as { name: string; level: number }[],
+  classified_skills: null as any,
   area_of_expertise: [] as string[], // ✅ جديد
   linkedin: "",     // ✅
   github: "",       // ✅
@@ -170,6 +175,7 @@ export default function ProfilePage({ theme = "dark" }: { theme?: Theme }) {
         company: mentee?.company ?? "—",
         education: mentee?.education ?? "—",
         skills: mentee?.skills ?? [],
+        classified_skills: mentee?.classified_skills ?? null,
         active: mentee?.active ?? true,
         area_of_expertise: user?.area_of_expertise ?? [], // ✅ الجديد
         linkedin: user?.linkedin_url ?? "",   // ✅
