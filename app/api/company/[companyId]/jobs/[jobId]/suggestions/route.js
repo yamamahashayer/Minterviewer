@@ -84,22 +84,108 @@ function calculateExperienceMatch(jobLevel = "", menteePerformance = 0, menteeIn
   return 50; // default for unspecified levels
 }
 
+// Enhanced skill matching with normalization and synonyms
+const DOMAIN_CATEGORIES = {
+  FRONTEND: {
+    keywords: ['react', 'vue', 'angular', 'javascript', 'typescript', 'html', 'css', 'sass', 'webpack', 'next.js', 'nuxt.js', 'frontend', 'ui', 'ux', 'web', 'browser', 'dom', 'component', 'state', 'redux', 'mobx', 'styled-components', 'tailwind', 'bootstrap', 'jquery'],
+    skills: ['JavaScript', 'TypeScript', 'React', 'Vue.js', 'Angular', 'HTML', 'CSS', 'SASS', 'Webpack', 'Next.js', 'UI/UX', 'Frontend Development']
+  },
+  BACKEND: {
+    keywords: ['node', 'express', 'python', 'django', 'flask', 'java', 'spring', 'c#', '.net', 'php', 'laravel', 'ruby', 'rails', 'go', 'rust', 'api', 'rest', 'graphql', 'microservices', 'database', 'sql', 'nosql', 'mongodb', 'postgresql', 'mysql', 'redis', 'backend', 'server', 'cloud', 'aws', 'azure', 'gcp'],
+    skills: ['Node.js', 'Express', 'Python', 'Django', 'Java', 'Spring Boot', 'C#', '.NET', 'PHP', 'Go', 'API Design', 'REST', 'GraphQL', 'Databases', 'SQL', 'NoSQL', 'MongoDB', 'PostgreSQL', 'AWS', 'Azure']
+  },
+  DATA: {
+    keywords: ['data', 'analytics', 'science', 'machine learning', 'ml', 'artificial intelligence', 'ai', 'deep learning', 'tensorflow', 'pytorch', 'pandas', 'numpy', 'scikit-learn', 'spark', 'hadoop', 'tableau', 'power bi', 'sql', 'statistics', 'python', 'r', 'jupyter', 'notebook', 'visualization', 'etl', 'data engineering', 'big data'],
+    skills: ['Data Science', 'Machine Learning', 'Python', 'R', 'SQL', 'TensorFlow', 'PyTorch', 'Pandas', 'NumPy', 'Data Analysis', 'Statistics', 'Tableau', 'Power BI', 'Spark', 'Big Data']
+  },
+  MOBILE: {
+    keywords: ['mobile', 'ios', 'android', 'react native', 'flutter', 'swift', 'kotlin', 'xamarin', 'cordova', 'ionic', 'native', 'app', 'smartphone', 'tablet'],
+    skills: ['React Native', 'Flutter', 'Swift', 'Kotlin', 'iOS Development', 'Android Development', 'Mobile Development']
+  },
+  DEVOPS: {
+    keywords: ['devops', 'docker', 'kubernetes', 'jenkins', 'ci/cd', 'terraform', 'ansible', 'puppet', 'chef', 'gitlab', 'github actions', 'aws', 'azure', 'gcp', 'cloud', 'infrastructure', 'deployment', 'monitoring', 'logging', 'container', 'containers', 'containerization', 'dockerfile', 'dockerfiles', 'containerized', 'container networking', 'docker networking', 'container orchestration'],
+    skills: ['Docker', 'Kubernetes', 'Jenkins', 'CI/CD', 'Terraform', 'Ansible', 'AWS', 'Azure', 'Cloud Computing', 'DevOps']
+  }
+};
+
+const SKILL_SYNONYMS = {
+  'node.js': ['node', 'nodejs', 'node.js'],
+  'javascript': ['javascript', 'js', 'ecmascript'],
+  'typescript': ['typescript', 'ts'],
+  'react': ['react', 'reactjs', 'react.js'],
+  'python': ['python', 'py'],
+  'java': ['java', 'jvm'],
+  'sql': ['sql', 'structured query language'],
+  'mongodb': ['mongodb', 'mongo'],
+  'aws': ['aws', 'amazon web services', 'amazon'],
+  'azure': ['azure', 'microsoft azure'],
+  'docker': ['docker', 'containerization', 'docker fundamentals', 'dockerfile', 'dockerfiles', 'containerized', 'containers', 'container networking', 'docker networking', 'container orchestration'],
+  'kubernetes': ['kubernetes', 'k8s', 'kube'],
+  'machine learning': ['machine learning', 'ml'],
+  'artificial intelligence': ['artificial intelligence', 'ai'],
+  'data science': ['data science', 'ds'],
+  'html': ['html', 'hypertext markup language'],
+  'css': ['css', 'cascading style sheets', 'sass', 'scss'],
+  'tailwind': ['tailwind', 'tailwind css'],
+  'frontend': ['frontend', 'front-end', 'client side'],
+  'backend': ['backend', 'back-end', 'server side'],
+  'fullstack': ['fullstack', 'full stack', 'full-stack'],
+  'devops': ['devops', 'dev ops'],
+  'microservices': ['microservices', 'micro-service', 'micro service']
+};
+
+function normalizeSkill(skill) {
+  if (!skill) return '';
+  const normalized = normalize(skill);
+  
+  for (const [canonical, synonyms] of Object.entries(SKILL_SYNONYMS)) {
+    if (synonyms.some(syn => normalized.includes(syn))) {
+      return canonical;
+    }
+  }
+  
+  return normalized;
+}
+
+function extractNormalizedSkills(skills) {
+  if (!Array.isArray(skills)) return [];
+  
+  return skills
+    .map(skill => {
+      if (typeof skill === 'object' && skill.name) {
+        return normalizeSkill(skill.name);
+      } else if (typeof skill === 'string') {
+        return normalizeSkill(skill);
+      }
+      return null;
+    })
+    .filter(Boolean);
+}
+
 function calculateMatch(jobSkills = [], menteeSkills = []) {
   // Ensure both parameters are arrays
-  const normalizedJobSkills = Array.isArray(jobSkills) ? jobSkills : [];
-  const normalizedMenteeSkills = Array.isArray(menteeSkills) ? menteeSkills : [];
+  const normalizedJobSkills = extractNormalizedSkills(jobSkills);
+  const normalizedMenteeSkills = extractNormalizedSkills(menteeSkills);
   
   if (!normalizedJobSkills.length || !normalizedMenteeSkills.length) {
     return { score: 0, matched: [] };
   }
 
-  const job = normalizedJobSkills.map(normalize);
-  const mentee = normalizedMenteeSkills.map(normalize);
-
-  const matched = job.filter((js) => mentee.includes(js));
+  const matched = [];
+  normalizedJobSkills.forEach(jobSkill => {
+    const menteeSkillIndex = normalizedMenteeSkills.findIndex(menteeSkill => 
+      menteeSkill === jobSkill || 
+      menteeSkill.includes(jobSkill) || 
+      jobSkill.includes(menteeSkill)
+    );
+    
+    if (menteeSkillIndex !== -1) {
+      matched.push(jobSkill);
+    }
+  });
 
   const score = Math.round(
-    (matched.length / job.length) * 100
+    (matched.length / normalizedJobSkills.length) * 100
   );
 
   return { score, matched };
@@ -350,12 +436,8 @@ function calculateComprehensiveScore(job, mentee, user, interviews = [], reports
     };
   }
   
-  // Skills matching
-  const menteeSkillNames = Array.isArray(mentee.skills)
-    ? mentee.skills
-        .map((s) => s && typeof s === 'object' ? s.name : s)
-        .filter(Boolean)
-    : [];
+  // Skills matching - use enhanced skill extraction
+  const menteeSkillNames = extractNormalizedSkills(mentee.skills);
   
   const jobSkills = Array.isArray(job.skills) ? job.skills : [];
   const skillMatch = calculateMatch(jobSkills, menteeSkillNames);
@@ -498,12 +580,8 @@ export async function GET(req, { params }) {
           // Skip if no user data
           if (!mentee.user) return null;
 
-          // Ensure skills is properly extracted and is an array
-          const menteeSkillNames = Array.isArray(mentee.skills)
-            ? mentee.skills
-                .map((s) => s && typeof s === 'object' ? s.name : s)
-                .filter(Boolean)
-            : [];
+          // Skills matching - use enhanced skill extraction
+          const menteeSkillNames = extractNormalizedSkills(mentee.skills);
 
           // Get interviews for this mentee
           const menteeInterviews = interviewsByMentee[mentee._id.toString()] || [];
