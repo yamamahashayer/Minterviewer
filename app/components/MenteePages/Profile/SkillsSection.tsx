@@ -58,9 +58,9 @@ export default function SkillsSection({ profile, isDark }: any) {
                           key={`${label}-${sIdx}`}
                           className={`${
                             isDark
-                              ? "bg-[rgba(255,255,255,0.06)] text-[#e5e7eb] border-[rgba(94,234,212,0.18)]"
-                              : "bg-purple-50 text-[#2e1065] border-purple-200"
-                          } border px-3 py-1 rounded-full text-sm`}
+                              ? "bg-[rgba(139,92,246,0.15)] text-[#a5b4fc] border-[rgba(139,92,246,0.25)]"
+                              : "bg-purple-100 text-purple-800 border-purple-300"
+                          } border px-3 py-1.5 rounded-full text-sm font-medium`}
                         >
                           {label}
                         </span>

@@ -15,6 +15,14 @@ interface RecommendedMentee {
   menteeId: string;
   userId: string;
   skills: string[];
+  classified_skills?: {
+    categories: {
+      category: string;
+      skills: string[];
+    }[];
+    source: string[];
+    updated_at: Date;
+  };
   matchScore: number;
   matchedSkills: string[];
   performanceScore: number;
@@ -71,6 +79,7 @@ export default function GeneralSuggestedMenteesList({
             ...suggestion,
             _id: suggestion.menteeId,
             full_name: suggestion.full_name || `User ${suggestion.menteeId.slice(-6)}`,
+            classified_skills: suggestion.classified_skills,
           }));
           setSuggestions(mappedSuggestions);
         } else {
@@ -98,6 +107,7 @@ export default function GeneralSuggestedMenteesList({
         Country: suggestion.Country,
         email: suggestion.email,
         phoneNumber: suggestion.phoneNumber,
+        classified_skills: suggestion.classified_skills,
       },
       cvScore: null,
       interviewScore: null,
@@ -241,10 +251,10 @@ export default function GeneralSuggestedMenteesList({
       <div className="flex justify-between items-center">
         <div className="space-y-2">
           <h2 className="text-3xl font-bold">
-            General Mentee Suggestions ({sortedRecommendations.length})
+            General Mentee Suggestions ({Math.min(sortedRecommendations.length, 6)})
           </h2>
           <p className="text-sm opacity-60">
-            AI-powered recommendations based on overall profile and skills
+            Top 6 special AI-powered recommendations based on overall profile and skills
           </p>
         </div>
 
@@ -272,14 +282,17 @@ export default function GeneralSuggestedMenteesList({
               <Th>Mentee</Th>
               <Th>Contact</Th>
               <Th>Match Score</Th>
-              <Th>Matched Skills</Th>
+              <Th className="w-48">Matched Skills</Th>
               <Th>Reason for Suggestion</Th>
               <Th className="text-center">Actions</Th>
             </tr>
           </thead>
 
           <tbody>
-            {sortedRecommendations.map((recommendation) => {
+            {sortedRecommendations
+              .filter(recommendation => recommendation.matchScore >= 30)
+              .slice(0, 6)
+              .map((recommendation) => {
               const m = recommendation.mentee;
 
               return (
@@ -333,28 +346,32 @@ export default function GeneralSuggestedMenteesList({
                   </Td>
 
                   <Td>
-                    <div className="flex flex-wrap gap-1">
-                      {recommendation.matchedSkills.length > 0 ? (
-                        recommendation.matchedSkills.slice(0, 3).map((skill, idx) => (
-                          <span
-                            key={idx}
-                            className={`px-2 py-1 text-xs rounded-full ${
-                              isDark
-                                ? "bg-green-500/20 text-green-300 border border-green-500/30"
-                                : "bg-green-100 text-green-700 border border-green-300"
-                            }`}
-                          >
-                            {skill}
-                          </span>
-                        ))
+                    <div className="flex flex-wrap gap-1 max-w-48">
+                      {m?.classified_skills?.categories && m.classified_skills.categories.length > 0 ? (
+                        <>
+                          {m.classified_skills.categories.flatMap((category: any, catIdx: number) => 
+                            category.skills.slice(0, 2).map((skill: string, skillIdx: number) => (
+                              <span
+                                key={`${catIdx}-${skillIdx}`}
+                                className={`px-1.5 py-0.5 text-xs rounded-full whitespace-nowrap ${
+                                  isDark
+                                    ? "bg-green-500/20 text-green-300 border border-green-500/30"
+                                    : "bg-green-100 text-green-700 border border-green-300"
+                                }`}
+                              >
+                                {skill}
+                              </span>
+                            ))
+                          ).slice(0, 3)}
+                          {m.classified_skills.categories.reduce((total: number, cat: any) => total + cat.skills.length, 0) > 3 && (
+                            <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+                              +{m.classified_skills.categories.reduce((total: number, cat: any) => total + cat.skills.length, 0) - 3} more
+                            </span>
+                          )}
+                        </>
                       ) : (
                         <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                          No matches
-                        </span>
-                      )}
-                      {recommendation.matchedSkills.length > 3 && (
-                        <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-                          +{recommendation.matchedSkills.length - 3} more
+                          No skills
                         </span>
                       )}
                     </div>

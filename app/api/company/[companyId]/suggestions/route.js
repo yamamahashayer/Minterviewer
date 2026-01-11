@@ -760,6 +760,7 @@ export async function GET(req, { params }) {
 
             // Skills and matching
             skills: menteeSkillNames,
+            classified_skills: mentee.classified_skills || null,
             matchScore: matchResult.totalScore,
             matchedSkills: matchResult.matchedSkills || [],
             
