@@ -66,18 +66,18 @@ Your task is to analyze the resume JSON below and return a COMPLETE structured J
 Return JSON in this EXACT schema:
 
 {
-  "score": number,                    
-  "atsScore": number,                 
-  "strengths": [string],              
-  "weaknesses": [string],             
-  "improvements": [string],           
-  "redFlags": [string],               
-  "recommendedJobTitles": [string],   
-  "keywordCoverage": {                
+  "score": number,
+  "atsScore": number,
+  "strengths": [string],
+  "weaknesses": [string],
+  "improvements": [string],
+  "redFlags": [string],
+  "recommendedJobTitles": [string],
+  "keywordCoverage": {
     "matched": [string],
     "missing": [string]
   },
-  "categories": {                     
+  "categories": {
     "formatting": {
       "title": "Formatting & Structure",
       "score": number,
@@ -101,13 +101,29 @@ Return JSON in this EXACT schema:
   }
 }
 
-💡 EVALUATION GUIDELINES:
+💡 EVALUATION GUIDELINES (IMPORTANT – READ CAREFULLY):
 - "score": overall CV quality (0–100).
+
+SCORING CALIBRATION:
+- A CV that meets basic professional standards SHOULD score between 68–75.
+- A well-structured CV with relevant skills and clear content SHOULD score between 75–85.
+- Strong CVs may score above 85.
+- Only very weak or problematic CVs should score below 60.
+- Do NOT be overly strict or conservative with scoring.
+- Lightly penalize missing experience for junior or early-career candidates.
+- Reward clarity, structure, and relevance even if experience is limited.
+
+CONSISTENCY RULE:
+- The overall "score" MUST be CONSISTENT with the category scores.
+- As a guideline, the overall score should approximately reflect the average
+  of the four category scores multiplied by 10, with small adjustments allowed.
+- Keyword relevance should influence the score but MUST NOT dominate it.
+
 - "atsScore": ATS compatibility (0–100).
 - "recommendedJobTitles": MUST align with detected role or user notes.
-- "keywordCoverage": reflect ATS relevance for the target role.
+- "keywordCoverage": reflect ATS relevance but should NOT dominate the overall score.
 - Category scores range from 0–10.
-- Insights must be specific, practical, and clear.
+- Insights must be specific, practical, and actionable.
 
 ${rolePart}
 

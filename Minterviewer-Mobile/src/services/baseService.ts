@@ -26,8 +26,7 @@ export class BaseService {
       const response = await this.api.get(url, config);
       return response.data;
     } catch (error) {
-      this.handleError(error);
-      throw error;
+      throw this.handleError(error);
     }
   }
 
@@ -36,8 +35,7 @@ export class BaseService {
       const response = await this.api.post(url, data);
       return response.data;
     } catch (error) {
-      this.handleError(error);
-      throw error;
+      throw this.handleError(error);
     }
   }
 
@@ -46,8 +44,7 @@ export class BaseService {
       const response = await this.api.put(url, data);
       return response.data;
     } catch (error) {
-      this.handleError(error);
-      throw error;
+      throw this.handleError(error);
     }
   }
 
@@ -56,8 +53,7 @@ export class BaseService {
       const response = await this.api.delete(url);
       return response.data;
     } catch (error) {
-      this.handleError(error);
-      throw error;
+      throw this.handleError(error);
     }
   }
 }
