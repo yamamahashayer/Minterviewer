@@ -74,6 +74,18 @@ export async function PUT(req, ctx) {
 
     const body = await req.json();
 
+    // Process skills if present in the update
+    if (body.skills) {
+      body.skills = Array.isArray(body.skills) 
+        ? body.skills.flatMap(skill => {
+            if (typeof skill === 'string' && skill.includes(',')) {
+              return skill.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            }
+            return skill;
+          })
+        : [];
+    }
+
     const updated = await Job.findOneAndUpdate(
       { _id: jobId, companyId },
       body,

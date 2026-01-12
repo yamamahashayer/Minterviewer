@@ -143,6 +143,15 @@ export default function ProfileScreen() {
   }
 
   
+  const handleRetry = () => {
+    setError(null);
+    setLoading(true);
+    // Trigger the profile loading effect again by updating a dummy state
+    setRetryCount(prev => prev + 1);
+  };
+
+  const [retryCount, setRetryCount] = useState(0);
+
   /* ================= LOAD PROFILE ================= */
 
   useEffect(() => {
@@ -184,9 +193,9 @@ export default function ProfileScreen() {
           joinedDate: joined,
           company: mentee?.company ?? "—",
           education: mentee?.education ?? "—",
-          skills: mentee?.skills ?? [],
+          skills: Array.isArray(mentee?.skills) ? mentee.skills : [],
           active: mentee?.active ?? true,
-          area_of_expertise: user?.area_of_expertise ?? [],
+          area_of_expertise: Array.isArray(user?.area_of_expertise) ? user.area_of_expertise : [],
           linkedin: user?.linkedin_url ?? "",
           github: user?.github ?? "",
         };
@@ -196,12 +205,32 @@ export default function ProfileScreen() {
         setError(null);
       } catch (e: any) {
         console.error('ProfileScreen: Error loading profile:', e);
-        setError(`Failed to load profile: ${e.message || String(e)}`);
+        console.error('ProfileScreen: Error details:', {
+          message: e.message,
+          response: e.response?.data,
+          status: e.response?.status,
+          config: e.config
+        });
+        
+        let errorMessage = 'Failed to load profile';
+        if (e.response?.status === 401) {
+          errorMessage = 'Authentication expired. Please log in again.';
+        } else if (e.response?.status === 404) {
+          errorMessage = 'Profile not found. Please contact support.';
+        } else if (e.response?.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        } else if (e.message.includes('Network error')) {
+          errorMessage = 'Network error. Please check your connection.';
+        } else if (e.message) {
+          errorMessage = `Failed to load profile: ${e.message}`;
+        }
+        
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
     })();
-  }, [isAuthenticated, menteeId, user]);
+  }, [isAuthenticated, menteeId, user, retryCount]);
 
   /* ================= LOAD ACTIVITIES ================= */
 
@@ -211,8 +240,19 @@ export default function ProfileScreen() {
     (async () => {
       try {
         setActivitiesLoading(true);
+        console.log('ProfileScreen: Loading activities for menteeId:', menteeId);
         const j = await menteeService.getActivities(menteeId);
+        console.log('ProfileScreen: Activities received:', j);
         setActivities(j?.items || []);
+      } catch (e: any) {
+        console.error('ProfileScreen: Error loading activities:', e);
+        console.error('ProfileScreen: Activities error details:', {
+          message: e.message,
+          response: e.response?.data,
+          status: e.response?.status
+        });
+        // Don't set error state for activities, just log it and show empty state
+        setActivities([]);
       } finally {
         setActivitiesLoading(false);
       }
@@ -248,9 +288,9 @@ export default function ProfileScreen() {
           : "—",
         company: updated.mentee?.company ?? "—",
         education: updated.mentee?.education ?? "—",
-        skills: updated.mentee?.skills ?? [],
+        skills: Array.isArray(updated.mentee?.skills) ? updated.mentee.skills : [],
         active: updated.mentee?.active ?? true,
-        area_of_expertise: updated.user?.area_of_expertise ?? [],
+        area_of_expertise: Array.isArray(updated.user?.area_of_expertise) ? updated.user.area_of_expertise : [],
         linkedin: updated.user?.linkedin_url ?? "",
         github: updated.user?.github ?? "",
       };
@@ -286,8 +326,15 @@ export default function ProfileScreen() {
       <MenteeLayout>
         <View style={styles.center}>
           <Text style={[styles.errorText, { color: colors.danger }]}>
-            Failed to load profile: {error}
+            {error}
           </Text>
+          <TouchableOpacity 
+            style={[styles.retryButton, { backgroundColor: colors.primary }]} 
+            onPress={handleRetry}
+          >
+            <Ionicons name="refresh-outline" size={20} color="#fff" />
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
         </View>
       </MenteeLayout>
     );
@@ -430,7 +477,7 @@ export default function ProfileScreen() {
         {/* SKILLS SECTION */}
         <View style={[styles.sectionCard, themedCard(isDark)]}>
           <Text style={[styles.sectionTitle, themedText(isDark)]}>Skills</Text>
-          {profile.skills.length ? (
+          {profile.skills && Array.isArray(profile.skills) && profile.skills.length ? (
             <View style={styles.skillsContainer}>
               {profile.skills.map((skill, i) => (
                 <View key={i} style={styles.skillItem}>
@@ -464,7 +511,7 @@ export default function ProfileScreen() {
         </View>
 
         {/* EXPERTISE SECTION */}
-        {profile.area_of_expertise.length > 0 && (
+        {profile.area_of_expertise && Array.isArray(profile.area_of_expertise) && profile.area_of_expertise.length > 0 && (
           <View style={[styles.sectionCard, themedCard(isDark)]}>
             <Text style={[styles.sectionTitle, themedText(isDark)]}>Areas of Expertise</Text>
             <View style={styles.expertiseContainer}>
@@ -517,7 +564,7 @@ export default function ProfileScreen() {
                 Loading activity...
               </Text>
             </View>
-          ) : activities.length ? (
+          ) : activities && Array.isArray(activities) && activities.length ? (
             <View style={styles.timelineContainer}>
               {/* Timeline Line */}
               <View style={[styles.timelineLine, { backgroundColor: isDark ? '#374151' : '#e5e7eb' }]} />
@@ -790,6 +837,21 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+    marginTop: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   timelineContainer: {
     position: "relative",
