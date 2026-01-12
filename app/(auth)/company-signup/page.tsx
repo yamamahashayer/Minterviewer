@@ -126,13 +126,12 @@ export default function CompanySignup() {
       {/* LEFT PANEL */}
       <div className="hidden md:flex flex-col justify-center px-20 border-r border-white/10">
         <div className="max-w-md">
+          <img
+          src="/Covring2.png"
+          alt="Minterviewer"
+          className="w-95 mb-8"
+        />
 
-          <div className="flex items-center gap-3 mb-10">
-            <div className="w-12 h-12 rounded-xl bg-[#00E5C1] flex items-center justify-center">
-              <Building2 className="w-6 h-6 text-[#0B0F19]" />
-            </div>
-            <h1 className="text-3xl font-semibold">Minterviewer</h1>
-          </div>
 
           <h2 className="text-4xl font-bold leading-tight mb-4">
             Create Your <span className="text-[#00E5C1]">Company Account</span>
@@ -146,15 +145,15 @@ export default function CompanySignup() {
           <ul className="space-y-4 text-gray-300">
             <li className="flex items-center gap-3">
               <span className="w-3 h-3 bg-[#00E5C1] rounded-full" />
-              AI Candidate Matching
+             Candidate–Job Matching Based on Skills
             </li>
             <li className="flex items-center gap-3">
               <span className="w-3 h-3 bg-[#00E5C1] rounded-full" />
-              Smart Scheduling Tools
+              Interview Reviews & Performance Insights
             </li>
             <li className="flex items-center gap-3">
               <span className="w-3 h-3 bg-[#00E5C1] rounded-full" />
-              Secure Dashboard Access
+             Centralized Hiring Dashboard
             </li>
           </ul>
         </div>
