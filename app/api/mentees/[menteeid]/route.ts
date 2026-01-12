@@ -29,8 +29,7 @@ export async function GET(req: Request, ctx: any) {
       path: "user",
       select: "full_name email phoneNumber Country profile_photo short_bio",
     })
-
-      .lean();
+      .lean() as any;
 
     if (!mentee) {
       return NextResponse.json(
@@ -51,8 +50,9 @@ export async function GET(req: Request, ctx: any) {
     phone: mentee.user?.phoneNumber,   // ✅
     active: mentee.active,
     joinedDate: mentee.joined_date,    // خليها جوه profile
+    skills: mentee.skills ?? [],
+    classified_skills: mentee.classified_skills ?? null,
   },
-  skills: mentee.skills ?? [],
 });
 
 

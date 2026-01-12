@@ -89,6 +89,16 @@ export async function POST(req, ctx) {
       humanType,
     } = body;
 
+    // Process skills: split comma-separated string into array of individual skills
+    const processedSkills = Array.isArray(skills) 
+      ? skills.flatMap(skill => {
+          if (typeof skill === 'string' && skill.includes(',')) {
+            return skill.split(',').map(s => s.trim()).filter(s => s.length > 0);
+          }
+          return skill;
+        })
+      : [];
+
     const job = await Job.create({
       companyId,
       title,
@@ -97,7 +107,7 @@ export async function POST(req, ctx) {
       level,
       salaryRange,
       description,
-      skills,
+      skills: processedSkills,
       deadline,
       enableCVAnalysis,
       interviewType,

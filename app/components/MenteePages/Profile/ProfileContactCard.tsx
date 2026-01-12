@@ -146,7 +146,7 @@ function Field({
               : "text-purple-600 hover:text-purple-500"
           }`}
         >
-          {label}
+          {value}
         </a>
       )}
     </div>

@@ -193,7 +193,7 @@ export default function SuggestedMenteesList({
   }, [job?.skills, suggestions]);
 
   const sortedRecommendations = useMemo(() => {
-    return [...calculateRecommendations].filter(mentee => mentee.matchScore > 30).sort((a, b) => {
+    return [...calculateRecommendations].filter(mentee => mentee.matchScore >= 10).sort((a, b) => {
       if (sortBy === "match")
         return b.matchScore - a.matchScore;
       return b.performanceScore - a.performanceScore;
