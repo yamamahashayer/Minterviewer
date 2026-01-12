@@ -167,11 +167,17 @@ export default function LoginPage() {
 
           </CardContent>
 
-          <CardFooter className="justify-center">
+          <CardFooter className="justify-center flex-col space-y-3">
             <p className="text-gray-400 text-sm">
               Don’t have an account?
               <Link href="/signup" className="text-[#00FFB2] ml-1">
                 Sign up
+              </Link>
+            </p>
+            <p className="text-gray-400 text-sm">
+              Looking to hire?
+              <Link href="/company-signup" className="text-[#00FFB2] ml-1">
+              Join as a Company             
               </Link>
             </p>
           </CardFooter>
