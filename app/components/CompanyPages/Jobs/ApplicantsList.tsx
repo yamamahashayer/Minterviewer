@@ -77,7 +77,7 @@ export default function ApplicantsList({
 
   const hasInterviewScore = (applicant: any): boolean => {
     return applicant.evaluation?.interviewScore !== undefined && applicant.evaluation?.interviewScore !== null ||
-           applicant.interviewScore !== undefined && applicant.interviewScore !== null;
+      applicant.interviewScore !== undefined && applicant.interviewScore !== null;
   };
 
   /* ================= PERFORMANCE SCORE CALCULATION ================= */
@@ -86,10 +86,10 @@ export default function ApplicantsList({
       const cvScore = getCVScore(applicant);
       const interviewScore = getInterviewScore(applicant);
       const atsScore = getATSScore(applicant);
-      
+
       // Use mentee's overall_score instead of calculated performance
       const performanceScore = applicant.mentee?.overall_score || 0;
-      
+
       return {
         ...applicant,
         performanceScore: Math.round(performanceScore),
@@ -124,9 +124,8 @@ export default function ApplicantsList({
 
   return (
     <div
-      className={`p-6 rounded-2xl space-y-4 ${
-        isDark ? "bg-[#1b2333] text-white" : "bg-white text-black"
-      }`}
+      className={`p-6 rounded-2xl space-y-4 ${isDark ? "bg-[#1b2333] text-white" : "bg-white text-black"
+        }`}
     >
       {/* ================= HEADER ================= */}
       <div className="flex justify-between items-center">
@@ -161,11 +160,10 @@ export default function ApplicantsList({
       {/* ================= JOB SUMMARY ================= */}
       {job && (
         <div
-          className={`rounded-xl p-4 border ${
-            isDark
+          className={`rounded-xl p-4 border ${isDark
               ? "bg-gradient-to-br from-[rgba(255,255,255,0.05)] to-[rgba(255,255,255,0.01)] border-[rgba(94,234,212,0.2)]"
               : "bg-gray-50 border-[#ddd6fe]"
-          }`}
+            }`}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Job Title */}
@@ -182,31 +180,28 @@ export default function ApplicantsList({
               <div>
                 {job.interviewType === "ai" ? (
                   <span
-                    className={`px-2 py-1 text-xs rounded-full font-medium ${
-                      isDark
+                    className={`px-2 py-1 text-xs rounded-full font-medium ${isDark
                         ? "bg-emerald-500/20 text-emerald-300"
                         : "bg-indigo-100 text-indigo-700"
-                    }`}
+                      }`}
                   >
                     AI Interview
                   </span>
                 ) : job.interviewType === "human" ? (
                   <span
-                    className={`px-2 py-1 text-xs rounded-full font-medium ${
-                      isDark
+                    className={`px-2 py-1 text-xs rounded-full font-medium ${isDark
                         ? "bg-white/10 text-gray-300"
                         : "bg-gray-100 text-gray-700"
-                    }`}
+                      }`}
                   >
                     Human Interview
                   </span>
                 ) : (
                   <span
-                    className={`px-2 py-1 text-xs rounded-full font-medium ${
-                      isDark
+                    className={`px-2 py-1 text-xs rounded-full font-medium ${isDark
                         ? "bg-gray-600/30 text-gray-400"
                         : "bg-gray-100 text-gray-500"
-                    }`}
+                      }`}
                   >
                     None
                   </span>
@@ -220,21 +215,19 @@ export default function ApplicantsList({
               <div>
                 {job.enableCVAnalysis ? (
                   <span
-                    className={`px-2 py-1 text-xs rounded-full font-medium ${
-                      isDark
+                    className={`px-2 py-1 text-xs rounded-full font-medium ${isDark
                         ? "bg-teal-500/20 text-teal-300"
                         : "bg-purple-100 text-purple-700"
-                    }`}
+                      }`}
                   >
                     Enabled
                   </span>
                 ) : (
                   <span
-                    className={`px-2 py-1 text-xs rounded-full font-medium ${
-                      isDark
+                    className={`px-2 py-1 text-xs rounded-full font-medium ${isDark
                         ? "bg-gray-600/30 text-gray-400"
                         : "bg-gray-100 text-gray-500"
-                    }`}
+                      }`}
                   >
                     Disabled
                   </span>
@@ -250,11 +243,10 @@ export default function ApplicantsList({
                   job.skills.slice(0, 3).map((skill: string, idx: number) => (
                     <span
                       key={idx}
-                      className={`px-2 py-1 text-xs rounded-full ${
-                        isDark
+                      className={`px-2 py-1 text-xs rounded-full ${isDark
                           ? "bg-gray-700 text-gray-100 border border-gray-600"
                           : "bg-gray-100 text-gray-800"
-                      }`}
+                        }`}
                     >
                       {skill}
                     </span>
@@ -285,32 +277,30 @@ export default function ApplicantsList({
               return (
                 <div
                   key={candidate._id}
-                  className={`flex-shrink-0 w-64 rounded-xl p-4 border transition-all duration-200 hover:shadow-lg ${
-                    isDark
+                  className={`flex-shrink-0 w-64 rounded-xl p-4 border transition-all duration-200 hover:shadow-lg ${isDark
                       ? "bg-gradient-to-br from-[rgba(255,255,255,0.05)] to-[rgba(255,255,255,0.01)] border-[rgba(94,234,212,0.2)] hover:border-[rgba(94,234,212,0.4)]"
                       : "bg-white border-[#ddd6fe] hover:border-purple-300 shadow-md"
-                  }`}
+                    }`}
                 >
                   {/* Rank and Name */}
                   <div className="flex items-center gap-3 mb-3">
                     <div
-                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
-                        candidate.rank === 1
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${candidate.rank === 1
                           ? isDark
                             ? "bg-yellow-500/20 text-yellow-300"
                             : "bg-yellow-100 text-yellow-700"
                           : candidate.rank === 2
-                          ? isDark
-                            ? "bg-gray-500/20 text-gray-300"
-                            : "bg-gray-100 text-gray-700"
-                          : candidate.rank === 3
-                          ? isDark
-                            ? "bg-orange-500/20 text-orange-300"
-                            : "bg-orange-100 text-orange-700"
-                          : isDark
-                          ? "bg-gray-600/20 text-gray-400"
-                          : "bg-gray-100 text-gray-600"
-                      }`}
+                            ? isDark
+                              ? "bg-gray-500/20 text-gray-300"
+                              : "bg-gray-100 text-gray-700"
+                            : candidate.rank === 3
+                              ? isDark
+                                ? "bg-orange-500/20 text-orange-300"
+                                : "bg-orange-100 text-orange-700"
+                              : isDark
+                                ? "bg-gray-600/20 text-gray-400"
+                                : "bg-gray-100 text-gray-600"
+                        }`}
                     >
                       {candidate.rank}
                     </div>
@@ -323,35 +313,32 @@ export default function ApplicantsList({
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Performance Score */}
                   <div className="mb-3">
-                    <div className={`text-2xl font-bold ${
-                      candidate.performanceScore >= 80
+                    <div className={`text-2xl font-bold ${candidate.performanceScore >= 80
                         ? "text-green-600"
                         : candidate.performanceScore >= 60
-                        ? "text-yellow-600"
-                        : "text-red-600"
-                    }`}>
+                          ? "text-yellow-600"
+                          : "text-red-600"
+                      }`}>
                       {candidate.performanceScore}%
                     </div>
                     <div className="text-xs opacity-60">Performance</div>
                   </div>
-                  
+
                   {/* Component Scores */}
                   <div className="grid grid-cols-2 gap-2 text-sm">
                     {showCV && (
-                      <div className={`text-center p-2 rounded-lg ${
-                        isDark ? "bg-[rgba(255,255,255,0.05)]" : "bg-gray-50"
-                      }`}>
+                      <div className={`text-center p-2 rounded-lg ${isDark ? "bg-[rgba(255,255,255,0.05)]" : "bg-gray-50"
+                        }`}>
                         <div className="font-medium">{candidate.cvScore}</div>
                         <div className="text-xs opacity-60">CV</div>
                       </div>
                     )}
                     {showInterview && (
-                      <div className={`text-center p-2 rounded-lg ${
-                        isDark ? "bg-[rgba(255,255,255,0.05)]" : "bg-gray-50"
-                      }`}>
+                      <div className={`text-center p-2 rounded-lg ${isDark ? "bg-[rgba(255,255,255,0.05)]" : "bg-gray-50"
+                        }`}>
                         <div className="font-medium">{candidate.interviewScore}</div>
                         <div className="text-xs opacity-60">Interview</div>
                       </div>
@@ -368,11 +355,10 @@ export default function ApplicantsList({
       <div className="overflow-x-auto rounded-xl border">
         <table className="w-full text-sm">
           <thead
-            className={`text-xs uppercase ${
-              isDark
+            className={`text-xs uppercase ${isDark
                 ? "bg-[#20283d] text-gray-300"
                 : "bg-gray-100 text-gray-600"
-            }`}
+              }`}
           >
             <tr>
               <Th>Candidate</Th>
@@ -380,7 +366,6 @@ export default function ApplicantsList({
               <Th>Performance</Th>
               {showCV && <Th>CV Score</Th>}
               {showCV && <Th>ATS</Th>}
-              {showInterview && <Th>Interview Status</Th>}
               {showInterview && <Th>Interview Score</Th>}
               <Th className="text-center">Actions</Th>
             </tr>
@@ -393,11 +378,10 @@ export default function ApplicantsList({
               return (
                 <tr
                   key={a._id}
-                  className={`border-b ${
-                    isDark
+                  className={`border-b ${isDark
                       ? "border-gray-700 hover:bg-[#1f263a]"
                       : "border-gray-200 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   <Td>
                     <div className="font-medium">
@@ -420,13 +404,12 @@ export default function ApplicantsList({
                   </Td>
 
                   <Td>
-                    <div className={`font-bold text-lg ${
-                      a.performanceScore >= 80
+                    <div className={`font-bold text-lg ${a.performanceScore >= 80
                         ? "text-green-600"
                         : a.performanceScore >= 60
-                        ? "text-yellow-600"
-                        : "text-red-600"
-                    }`}>
+                          ? "text-yellow-600"
+                          : "text-red-600"
+                      }`}>
                       {a.performanceScore}%
                     </div>
                   </Td>
@@ -436,25 +419,6 @@ export default function ApplicantsList({
                   )}
                   {showCV && (
                     <Td>{a.atsScore != null ? `${a.atsScore}%` : "—"}</Td>
-                  )}
-                  {showInterview && (
-                    <Td>
-                      {a.status === "interview_completed" ? (
-                        <span className="text-green-600 dark:text-green-400 font-medium">
-                          ✓ Completed
-                        </span>
-                      ) : a.status === "interview_pending" ? (
-                        <span className="text-yellow-600 dark:text-yellow-400">
-                          Pending
-                        </span>
-                      ) : a.interviewId ? (
-                        <span className="text-blue-600 dark:text-blue-400">
-                          In Progress
-                        </span>
-                      ) : (
-                        <span className="opacity-50">Not started</span>
-                      )}
-                    </Td>
                   )}
                   {showInterview && (
                     <Td>
@@ -483,8 +447,8 @@ export default function ApplicantsList({
                     {a.analysisId ? (
                       <button
                         onClick={() =>
-                          (window.location.href =
-                            `/company/cv-analysis/${a.analysisId}`)
+                        (window.location.href =
+                          `/company/cv-analysis/${a.analysisId}`)
                         }
                         className="flex items-center gap-2 mx-auto px-3 py-1 text-xs rounded-lg border hover:bg-white/10"
                       >
@@ -496,11 +460,11 @@ export default function ApplicantsList({
                     )}
 
                     {a.interviewId &&
-                    a.status === "interview_completed" ? (
+                      a.status === "interview_completed" ? (
                       <button
                         onClick={() =>
-                          (window.location.href =
-                            `/company/jobs/${job._id}/applicants/${a._id}/interview`)
+                        (window.location.href =
+                          `/company/jobs/${job._id}/applicants/${a._id}/interview`)
                         }
                         className="flex items-center gap-2 mx-auto px-3 py-1 text-xs rounded-lg border hover:bg-white/10 bg-purple-500/10 border-purple-500/30"
                       >
@@ -515,13 +479,13 @@ export default function ApplicantsList({
 
             {sortedApplicants.length === 0 && (
               <tr>
-                <td 
+                <td
                   colSpan={
                     3 + // Candidate, Contact, Performance
                     (showCV ? 2 : 0) + // CV Score, ATS
                     (showInterview ? 2 : 0) + // Interview Status, Interview Score
                     1 // Actions
-                  } 
+                  }
                   className="text-center py-10 opacity-60"
                 >
                   No applicants yet

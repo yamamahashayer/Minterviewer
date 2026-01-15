@@ -58,18 +58,28 @@ export async function GET(req, ctx) {
       _id: { $in: analysisIds },
     }).lean();
 
-    // Fetch interviews
-    const interviews = await JobInterview.find({
-      _id: { $in: interviewIds }
+    // Fetch interviews by ID (if applicant has interviewId set)
+    const interviews = interviewIds.length > 0 
+      ? await JobInterview.find({
+          _id: { $in: interviewIds }
+        }).lean()
+      : [];
+    
+    // ALSO fetch JobInterviews by jobId+menteeId (for applicants without interviewId set)
+    const jobInterviewsByMentee = await JobInterview.find({
+      jobId: jobId,
+      menteeId: { $in: menteeIds }
     }).lean();
     
     // Fallback to AiInterview for older records
-    const legacyInterviews = await AiInterview.find({
-      _id: { $in: interviewIds }
-    }).lean();
+    const legacyInterviews = interviewIds.length > 0
+      ? await AiInterview.find({
+          _id: { $in: interviewIds }
+        }).lean()
+      : [];
 
-    // Combine interviews
-    const allInterviews = [...interviews, ...legacyInterviews];
+    // Combine all interviews
+    const allInterviews = [...interviews, ...jobInterviewsByMentee, ...legacyInterviews];
 
     /* ================= MAPS ================= */
     const menteeMap = new Map(
@@ -80,9 +90,17 @@ export async function GET(req, ctx) {
       analyses.map((a) => [a._id.toString(), a])
     );
 
-    const interviewMap = new Map(
+    // Create maps: one by _id and one by menteeId for fallback
+    const interviewMapById = new Map(
       allInterviews.map((i) => [i._id.toString(), i])
     );
+    
+    const interviewMapByMentee = new Map();
+    allInterviews.forEach((i) => {
+      if (i.menteeId) {
+        interviewMapByMentee.set(i.menteeId.toString(), i);
+      }
+    });
 
     /* ================= RESPONSE ================= */
     const applicants = job.applicants.map((app) => {
@@ -90,9 +108,25 @@ export async function GET(req, ctx) {
       const analysis = app.analysisId
         ? analysisMap.get(app.analysisId.toString())
         : null;
-      const interview = app.interviewId
-        ? interviewMap.get(app.interviewId.toString())
-        : null;
+      
+      // Try to find interview by interviewId first, then by menteeId
+      let interview = null;
+      if (app.interviewId) {
+        interview = interviewMapById.get(app.interviewId.toString());
+      }
+      if (!interview) {
+        // Fallback: find by menteeId if interviewId is missing
+        interview = interviewMapByMentee.get(app.menteeId.toString());
+      }
+
+      console.log(`📊 Applicant ${app.menteeId} - Interview Scores:`, {
+        interviewId: app.interviewId,
+        found: !!interview,
+        overallScore: interview?.overallScore,
+        technicalScore: interview?.technicalScore,
+        communicationScore: interview?.communicationScore,
+        confidenceScore: interview?.confidenceScore,
+      });
 
       return {
         _id: app._id,
@@ -112,7 +146,21 @@ export async function GET(req, ctx) {
 
         cvScore: analysis?.score ?? null,
         atsScore: analysis?.atsScore ?? null,
-        interviewScore: app.evaluation?.interviewScore ?? interview?.overallScore ?? null,
+        interviewScore: interview?.overallScore ?? null,
+        
+        // Interview performance metrics
+        interviewPerformance: interview ? {
+          overallScore: interview.overallScore || null,
+          technicalScore: interview.technicalScore || null,
+          communicationScore: interview.communicationScore || null,
+          confidenceScore: interview.confidenceScore || null,
+          strengths: interview.strengths || [],
+          improvements: interview.improvements || [],
+          feedback: interview.feedback || null,
+          duration: interview.duration || null,
+          completedAt: interview.completedAt || null,
+          status: interview.status || null,
+        } : null,
 
         analysisId: app.analysisId || null,
         interviewId: app.interviewId || null,
