@@ -9,6 +9,15 @@ export async function POST(req: Request) {
     try {
         const { interviewId, scores, strengths, improvements, duration, questions, feedback } = await req.json();
 
+        console.log("🟡 save-job-interview API - Received data:", {
+            interviewId,
+            scores,
+            strengths,
+            improvements,
+            feedback,
+            duration
+        });
+
         if (!interviewId) {
             return NextResponse.json(
                 { ok: false, message: "Interview ID is required" },
@@ -53,15 +62,31 @@ export async function POST(req: Request) {
 
         await interview.save();
 
+        console.log("🟢 Interview saved with scores:", {
+            _id: interview._id,
+            overallScore: interview.overallScore,
+            technicalScore: interview.technicalScore,
+            communicationScore: interview.communicationScore,
+            confidenceScore: interview.confidenceScore,
+            status: interview.status
+        });
+
         // 3. Update Job Application Status
         const job = await Job.findById(interview.jobId);
         if (job) {
+            console.log("🔍 Updating job applicants. Job ID:", job._id, "Total applicants:", job.applicants.length);
+            console.log("Looking for menteeId:", interview.menteeId.toString());
+
             const applicantIndex = job.applicants.findIndex(
                 (app: any) => app.menteeId.toString() === interview.menteeId.toString()
             );
 
+            console.log("📝 Applicant index found:", applicantIndex);
+            console.log("All applicant menteeIds:", job.applicants.map((a: any) => a.menteeId.toString()));
+
             if (applicantIndex !== -1) {
                 // Update existing applicant
+                console.log(`✏️ Updating existing applicant at index ${applicantIndex}`);
                 job.applicants[applicantIndex].status = "interview_completed";
                 job.applicants[applicantIndex].interviewId = interview._id;
                 job.applicants[applicantIndex].interviewCompletedAt = new Date();
@@ -71,6 +96,7 @@ export async function POST(req: Request) {
                 };
             } else {
                 // Create new applicant entry (fallback)
+                console.log(`➕ Creating new applicant entry (fallback)`);
                 job.applicants.push({
                     menteeId: interview.menteeId,
                     interviewId: interview._id,
@@ -81,7 +107,15 @@ export async function POST(req: Request) {
                     },
                 });
             }
+
             await job.save();
+
+            console.log("✅ Job saved. Updated applicant:", {
+                menteeId: interview.menteeId,
+                interviewId: interview._id,
+            });
+        } else {
+            console.log("❌ Job not found for interview:", interview.jobId);
         }
 
         return NextResponse.json({

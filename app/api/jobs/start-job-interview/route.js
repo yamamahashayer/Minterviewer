@@ -83,6 +83,13 @@ export async function POST(req) {
             questions: [], // Will be filled later or via generate endpoint
         });
 
+        console.log("🎤 JobInterview created:", {
+            interviewId: interview._id,
+            jobId: job._id,
+            menteeId: menteeId,
+            applicantsInJob: job.applicants.filter(a => a.menteeId.toString() === menteeId.toString()).length,
+        });
+
         // 3. Prepare Context for UI
         const jobContext = {
             title: job.title,

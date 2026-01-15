@@ -163,6 +163,7 @@ ${hasVideoData ? '- Include visualAnalysis for each question based on observed b
         if (!parsed.overallScore || !Array.isArray(parsed.perQuestionFeedback)) {
             console.error("Missing required fields in response:", {
                 hasOverallScore: !!parsed.overallScore,
+                overallScoreValue: parsed.overallScore,
                 hasPerQuestionFeedback: Array.isArray(parsed.perQuestionFeedback)
             });
             return NextResponse.json(
@@ -170,6 +171,13 @@ ${hasVideoData ? '- Include visualAnalysis for each question based on observed b
                 { status: 500 }
             );
         }
+
+        console.log("✅ Parsed report scores:", {
+            overallScore: parsed.overallScore,
+            technicalScore: parsed.technicalScore,
+            communicationScore: parsed.communicationScore,
+            confidenceScore: parsed.confidenceScore,
+        });
 
         // Debug: Log parsed response structure
         console.log("Parsed response perQuestionFeedback:", parsed?.perQuestionFeedback?.length, "questions");
